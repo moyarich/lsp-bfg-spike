@@ -1,0 +1,39 @@
+run_workload_mode: sequential
+
+workloads:
+
+    - workload_name: tpch_ao_row
+      database_name: gpsqltest_tpch_ao_row
+      load_data_flag: false
+      data_volumn_type: total
+      data_volumn_size: 1
+      table_setting:
+          ao: true
+          orientiation: ROW
+          row_group_size: 1048576
+          page_size: 8388608
+          compression_type: QuickLZ
+          compression_level: 1
+          partitions: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_ao_co
+      dbname: gpsqltest_tpch_ao_row
+      load_data_flag: false
+      data_volumn_type: total
+      data_volumn_size: 1
+      table_setting:
+          ao: true
+          orientiation: ROW
+          row_group_size: 1048576
+          page_size: 8388608
+          compression_type: QuickLZ
+          compression_level: 1
+          partitions: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
