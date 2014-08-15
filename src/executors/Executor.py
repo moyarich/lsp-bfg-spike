@@ -10,8 +10,9 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
-    def __init__(self, workloads_list):
+    def __init__(self, workloads_list, workloads_content):
         self.workloads_list = workloads_list
+        self.workloads_content = workloads_content
         self.workloads_inst = []
         self.should_stop = False
 
@@ -22,12 +23,23 @@ class Executor(object):
 
         # instantiate and prepare workloads
         for wl in self.workloads_list:
-            wn = wl['workload_name'].strip()
-            wc = wn.split('_')[0].upper()
-            if wc == 'TPCH':
-                self.workloads_inst.append(TpchWorkload(wl, self.test_report_dir))
+            # check if the detailed definition of current workload exist
+            workload_exist = False
+            workload_def = None
+            for wc in self.workloads_content:
+                if wc['workload_name'] == wl:
+                    workload_exist = True
+                    workload_def = wc
+            
+            if not workload_exist:
+                print 'Detaled definition of workload %s no found in schedule file' % (wl)
+
+            # Find appropreciate workload type for current workload
+            wt = wl.split('_')[0].upper()
+            if wt == 'TPCH':
+                self.workloads_inst.append(TpchWorkload(workload_def, self.test_report_dir))
             else:
-                print 'Invalid workload name %s in schedule file.' % (wn)
+                print 'No appropreciate workload type found for workload %s' % (wl)
 
     def cleanup(self):
         pass

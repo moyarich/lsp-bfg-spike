@@ -11,8 +11,8 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class SequentialExecutor(Executor):
-    def __init__(self, workloads_dict):
-        Executor.__init__(self, workloads_dict)
+    def __init__(self, workloads_list, workloads_content):
+        Executor.__init__(self, workloads_list, workloads_content)
         self.AllProcess = []
 
     def handle_finished_workload(self, pid):

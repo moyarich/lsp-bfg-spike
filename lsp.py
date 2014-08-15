@@ -44,7 +44,7 @@ except ImportError:
 if __name__ == '__main__':
     # parse user options
     parser = OptionParser()
-    parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule to be ran')
+    parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
     (options, args) = parser.parse_args()
     schedule = options.schedule
     if schedule is None:
@@ -56,26 +56,29 @@ if __name__ == '__main__':
     with open(schedule_file, 'r') as fschedule:
         schedule_parser = yaml.load(fschedule)
 
-    # parse all workloads in the list
-    workloads_list = schedule_parser['workloads']
-    print workloads_list
+    # parse list of the workloads for execution
+    workloads_list = schedule_parser['workloads_list']
+    workloads_list = [wl.strip(' ') for wl in workloads_list.split(',')]
     if len(workloads_list) == 0:
         print 'No workload is specified in schedule file'
         sys.exit(-1)
 
+    # parse detailed definition of the workloads
+    workloads_content = schedule_parser['workloads_content']
+
     # select appropriate executor to run workloads
     workloads_executor = None 
     try:
-        execution_mode = schedule_parser['run_workload_mode'].upper()
-        print execution_mode
-        if execution_mode == 'SEQUENTIAL':
-            workloads_executor = SequentialExecutor(workloads_list)
-        elif execution_mode == 'CONCURRENT':
-            workloads_executor = ConcurrentExecutor(workloads_list)
-        elif execution_mode == 'DYNAMIC':
-            workloads_executor = DynamicExecutor(workloads_list)
+        workloads_mode = schedule_parser['workloads_mode'].upper()
+
+        if workloads_mode == 'SEQUENTIAL':
+            workloads_executor = SequentialExecutor(workloads_list, workloads_content)
+        elif workloads_mode == 'CONCURRENT':
+            workloads_executor = ConcurrentExecutor(workloads_list, workloads_content)
+        elif workloads_mode == 'DYNAMIC':
+            workloads_executor = DynamicExecutor(workloads_list, workloads_content)
         else:
-            print 'Invalid execution mode ' + run_workload_mode + ' specified in schedule file.'
+            print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
             sys.exit(-1)
     except Exception as e:
         print 'Error while selecting appropreciate executor for workloads: ' + str(e)
