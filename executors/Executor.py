@@ -1,8 +1,9 @@
 import os
+import sys
 import datetime
 
 try:
-    from workloads.TPCH.Tpch import TpchWorkload
+    from workloads.TPCH.Tpch import Tpch
 except ImportError:
     sys.stderr.write('LSP needs TpchWorkload in workloads/TPCH/Tpch.py\n')
     sys.exit(2)
@@ -29,7 +30,7 @@ class Executor(object):
             for ws in self.workloads_specification:
                 if ws['workload_name'] == wl:
                     wl_exist = True
-                    wd_specs = ws
+                    wl_specs = ws
             
             if not wl_exist:
                 print 'Detaled definition of workload %s no found in schedule file' % (wl)
@@ -37,10 +38,10 @@ class Executor(object):
             # Find appropreciate workload type for current workload
             workload_category = wl.split('_')[0].upper()
             workload_directory = LSP_HOME + os.sep + 'workloads' + os.sep + workload_category
-            os.system('mkdir -p %s' (workload_directory))
+            os.system('mkdir -p %s' % (workload_directory))
 
-            if wt == 'TPCH':
-                self.workloads_instance.append(Tpch(workload_specification, workload_directory, self.report_directory))
+            if workload_category == 'TPCH':
+                self.workloads_instance.append(Tpch(wl_specs, workload_directory, self.report_directory))
             else:
                 print 'No appropreciate workload type found for workload %s' % (wl)
 

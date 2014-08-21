@@ -9,8 +9,8 @@ workloads_content:
       database_name: gpsqltest_tpch_ao_row
       user: gpadmin
       table_setting:
-          data_volumn_type: total
-          data_volumn_size: 1
+          data_volume_type: total
+          data_volume_size: 1
           append_only: true
           orientation: ROW
           row_group_size: 1048576
@@ -28,8 +28,8 @@ workloads_content:
       database_name: gpsqltest_tpch_ao_row
       user: gpadmin
       table_setting:
-          data_volumn_type: total
-          data_volumn_size: 1
+          data_volume_type: total
+          data_volume_size: 1
           append_only: true
           orientation: ROW
           row_group_size: 1048576

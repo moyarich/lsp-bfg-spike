@@ -33,7 +33,7 @@ class SequentialExecutor(Executor):
 
         # execute workloads sequentially
         for wi in self.workloads_instance:
-            p = Process(target=wi.start)
+            p = Process(target=wi.execute)
             p.start()
             while True:
                 if p.is_alive():

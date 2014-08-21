@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import datetime
 import random
 from multiprocessing import Process, Queue, Value , Array
 
@@ -46,7 +47,7 @@ class Workload(object):
         self.num_iteration = int(str(workload_specification['num_iteration']).strip())
      
         # prepare report directory for workload
-        if test_report_dir != '':
+        if report_directory != '':
             self.report_directory = os.path.join(report_directory, self.workload_name)
         else:
             print 'Test report directory is not available before preparing report directory for workload %s' % (self.workload_name)
@@ -84,9 +85,9 @@ class Workload(object):
         self.workload_directory = workload_directory
 
         # set output log, error log, and report
-        self.output_file = os.path.join(self.workload_report_dir, 'output.csv')
-        self.error_file  = os.path.join(self.workload_report_dir, 'error.csv')
-        self.report_file = os.path.join(self.workload_report_dir, 'report.csv')
+        self.output_file = os.path.join(self.report_directory, 'output.csv')
+        self.error_file  = os.path.join(self.report_directory, 'error.csv')
+        self.report_file = os.path.join(self.report_directory, 'report.csv')
 
         # should always run the workload by default
         self.should_stop = False
@@ -114,7 +115,7 @@ class Workload(object):
         if not os.path.exists(queries_directory):
             return
 
-        query_files = [for file in os.listdir(queries_directory) if file.endswith('.sql')]
+        query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
         if self.run_workload_mode == 'SEQUENTIAL':
             query_files = sorted(query_files)
         else:
@@ -123,7 +124,7 @@ class Workload(object):
         cnx = pg.connect(dbname = self.database_name)
         # run all sql file under queries forder
         for qf in query_files:
-            beg_time = datetime.now()
+            beg_time = datetime.datetime.now()
             qfh = QueryFile(os.path.join(queries_directory, qf))
             # run all query in sql file
             for q in qfh:
@@ -136,16 +137,16 @@ class Workload(object):
                     self.error( q)
                     self.error( 'ans:' )
                     self.error( str(e) )
-            end_time = datetime.now()
+            end_time = datetime.datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-            self.output('%s %s: %s ms' % (self.workload_name, qf, duration)
-            self.report('%s %s: %s ms' % (self.workload_name, qf, duration)
+            self.output('%s %s: %s ms' % (self.workload_name, qf, duration))
+            self.report('%s %s: %s ms' % (self.workload_name, qf, duration))
  
         cnx.close()
 
     def run_workload(self):
-        if not self.need_run_query:
+        if not self.run_workload_flag:
             self.output('Skip Query Running....')
             return
  

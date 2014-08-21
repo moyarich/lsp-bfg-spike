@@ -39,60 +39,59 @@ class Tpch(Workload):
         Workload.__init__(self, workload_specification, workload_directory, report_directory)
 
         # init tpch specific configuration such as tpch table_settings
-        ts = workload['table_setting']
-        try:
-            # Calculate scale factor for TPC-H workload
-            self.data_volumn_type = workload['data_volumn_type'].upper()
-            self.data_volumn_size = workload['data_volumn_size']
-        
-            self.scale_factor = 1
-            if self.data_volumn_type == 'TOTAL':
-                self.scale_factor = self.data_volumn_size
-            elif self.data_volumn_type == 'PER_NODE':
-                nnodes = len(Config().getSegHostNames())
-                self.scale_factor = self.data_volumn_size * nnodes
-            elif self.data_volumn_type == 'PER_SEGMENT':
-                nsegs = Config().getNPrimarySegments()
-                self.scale_factor = self.data_volumn_size * nsegs
-            else:
-                self.error('Error in calculating data volumn for workloads %s: data_volumn_type=%s, data_volumn_size=%s' % (self.workload_name, self.data_volumn_type, self.data_volumn_size))
-                exit(-1)
+        ts = workload_specification['table_setting']
 
-            # Parse table setting
-            if ts['append_only']:
-                self.append_only = ts['append_only']
-                assert self.append_only in [True, False]
+        # Calculate scale factor for TPC-H workload
+        self.data_volume_type = ts['data_volume_type'].upper()
+        self.data_volume_size = ts['data_volume_size']
+        
+        self.scale_factor = 1
+        if self.data_volume_type == 'TOTAL':
+            self.scale_factor = self.data_volume_size
+        elif self.data_volume_type == 'PER_NODE':
+            nnodes = len(Config().getSegHostNames())
+            self.scale_factor = self.data_volume_size * nnodes
+        elif self.data_volume_type == 'PER_SEGMENT':
+            nsegs = Config().getNPrimarySegments()
+            self.scale_factor = self.data_volume_size * nsegs
+        else:
+            self.error('Error in calculating data volumn for workloads %s: data_volume_type=%s, data_volume_size=%s' % (self.workload_name, self.data_volume_type, self.data_volume_size))
+            exit(-1)
+
+        # Parse table setting
+        if ts['append_only']:
+            self.append_only = ts['append_only']
+        assert self.append_only in [True, False]
+       
+        if ts['orientation']:
+            self.orientation = ts['orientation'].upper()
+        assert self.orientation in ['PARQUET', 'ROW', 'COLUMN']
+        
+        if ts['row_group_size']:
+            self.row_group_size = int(ts['row_group_size'])
             
-            if ts['orientation']:
-                self.orientation = ts['orientation'].upper()
-                assert self.orientation in ['PARQUET', 'ROW', 'COLUMN']
-            
-            if ts['row_group_size']:
-                self.row_group_size = int(ts['row_group_size'])
-            
-            if ts['page_size']:
-                self.page_size = int(ts['page_size'])
-            
-            if ts['compression_type']:
-                self.compression_type = ts['compression_type'].upper()
-                assert self.orientation in ['PARQUET'] and self.compression_type in ['SNAPPY', 'GZIP'] or \
-                       self.orientation in ['ROW', 'COLUMN'] and self.compression_type in ['QUICKLZ', 'ZLIB']
-            
-            if ts['compression_level']:
-                self.compression_level = int(ts['compression_level'])
-                assert self.compression_type in ['GZIP', 'QUICKLZ', 'ZLIB']
-            
-            if ts['partitions']:
-                self.partitions = ts['partitions']
-            else:
-                self.partitions = False
-            assert self.partitions in [True, False]
- 
+        if ts['page_size']:
+            self.page_size = int(ts['page_size'])
+        
+        if ts['compression_type']:
+            self.compression_type = ts['compression_type'].upper()
+        assert self.orientation in ['PARQUET'] and self.compression_type in ['SNAPPY', 'GZIP'] or \
+               self.orientation in ['ROW', 'COLUMN'] and self.compression_type in ['QUICKLZ', 'ZLIB']
+        
+        if ts['compression_level']:
+            self.compression_level = int(ts['compression_level'])
+        assert self.compression_type in ['GZIP', 'QUICKLZ', 'ZLIB']
+        
+        if ts['partitions']:
+            self.partitions = ts['partitions']
+        else:
+            self.partitions = False
+        assert self.partitions in [True, False]
 
         # prepare name with suffix for table and corresponding sql statement to create it
         sep = '_'
         tbl_suffix = ''
-        sql_suffix = ' '
+        sql_suffix = ''
 
         if self.append_only:
             tbl_suffix = tbl_suffix + sep + 'ao'
@@ -117,7 +116,8 @@ class Tpch(Workload):
                     sql_suffix = sql_suffix + sep + 'compresstype = ' + self.compression_type + ', '
             else:
                 tbl_suffix = tbl_suffix + sep + 'nocomp'
-                                                                                                                                                                                                                                                                          if self.orientation == 'parquet':
+
+            if self.orientation == 'parquet':
                 sql_suffix = sql_suffix + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
 
             if self.partitions:
@@ -125,14 +125,14 @@ class Tpch(Workload):
             else:
                 tbl_suffix += '_nopart'
 
-         self.tbl_suffix = tbl_suffix
-         self.sql_suffix = sql_suffix
+        self.tbl_suffix = tbl_suffix
+        self.sql_suffix = sql_suffix
 
     def setup(self):
         pass
            
     def load_data(self):
-        if not self.need_load_data:
+        if not self.load_data_flag:
             self.output( '[INFO] %s skip data load... '% self.workload_name )
             return True
         # load all 8 tables 
@@ -141,8 +141,7 @@ class Tpch(Workload):
                             scale_factor = self.scale_factor, append_only = self.append_only, orientation = self.orientation, \
                             page_size = self.page_size, row_group_size = self.row_group_size, \
                             compression_type = self.compression_type, compression_level = self.compression_level, \
-                            partitions = self.partitions, tables = tables, output_file = os.path.join(self.report_directory, tpch_load.out)
-
+                            partitions = self.partitions, tables = tables, output_file = os.path.join(self.report_directory, tpch_load.out))
         loader.load()
 
         # create revenue  view 
