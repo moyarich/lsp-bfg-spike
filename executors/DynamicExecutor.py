@@ -5,15 +5,16 @@ from multiprocessing import Process, Queue, Value , Array
 try:
     from Executor import Executor
 except ImportError:
-    sys.stderr.write('LSP needs Executor in src/executors/Executor.py.\n')
+    sys.stderr.write('LSP needs Executor in executors/Executor.py\n')
     sys.exit(2)
 
 LSP_HOME = os.getenv('LSP_HOME')
 
-class ConcurrentExecutor(Executor):
+class DynamicExecutor(Executor):
     def __init__(self, workloads_dict):
         Executor.__init__(self, workloads_dict)
         self.AllProcess = []
+        self.TARGET_CPU_USAGE = 30.0
 
     def cleanup(self):
         ''' cleanup function , will be called after execution'''
@@ -25,6 +26,9 @@ class ConcurrentExecutor(Executor):
 
     def handle_workload_not_done(self, process):
         ''' function that called evert time when current workload not done'''
+        pass
+
+    def getCpuUsage(self):
         pass
 
     def execute(self):
@@ -51,6 +55,22 @@ class ConcurrentExecutor(Executor):
 
 
 
+        # setup executor
+        setup()
+        # run workloads
+        while True:
+            if getCpuStatic() < 90: 
+                print "new process"
+                p = Process(target=f, args=(cpus,))
+                AllProcess.append(p)
+                p.start()
+            for process in AllProcess:
+                process.join(timeout = 1)
+                if process.is_alive():
+                    print "process %d is still alive , continue join other process"%process.pid
+                else:
+                    print "process %d quit"%process.pid
+                    AllProcess.remove(process)
+
         # clean up after execution 
-        
         self.cleanup()

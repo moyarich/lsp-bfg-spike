@@ -15,120 +15,95 @@ except ImportError:
     sys.stderr.write('LSP needs Log in lib/utils/Log.py.\n')
     sys.exit(2)
 
-# Arguments to the program
+
 class TpchLoader(object):
-    def __init__(self, dbname = "gpadmin", port = 5432, npsegs = 0,\
-            scale = 0, append_only = False, orientation= "row", pagesize = 0, \
-            rowgroup_size = 0, compress_type = "quicklz1", compress_level = 1,\
-            partition = False, \
-            tables = ["nation", "lineitem", "orders","region","part","supplier","partsupp", "customer"],\
-            ofile = "/tmp/tpchloader.log"):
+    def __init__(self, database_name = 'gpadmin', user = 'gpadmin', \
+            scale_factor = 1, append_only = True, orientation= 'ROW', page_size = 1048576, \
+            row_group_size = 8388608, compression_type = None, compression_level = None, partitions = False, \
+            tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
+            tbl_suffix = '', sql_suffix = '', output_file = '/tmp/tpch_load.out'):
 
-        self.dbname = dbname
-        self.port = port
-        self.npsegs = npsegs
-        self.scale = scale
-        self.append_only = append_only
-        self.orientation = orientation
-        self.pagesize = pagesize
-        self.rowgroup_size = rowgroup_size
-        self.compress_type = compress_type
-        self.compress_level = compress_level
-        self.partition = partition
+        self.database_name = None if database_name is None else database_name.lower()
+        self.user = user.lower()
+        self.scale_factor = scale_factor
+        self.append_only = True if append_only is None else append_only
+        self.orientation = 'row' if orientation is None else orientation.lower()
+        self.page_size = page_size
+        self.row_group_size = row_group_size
+        self.compression_type = None if compression_type is None else compression_type.lower()
+        self.compression_level = None if compression_level is None else compression_level
+        self.partitions = 0 if partitions is None else partitions
         self.tables = tables
-        self.ofile = ofile
-
-        # join table name suffix and sql suffix
-        sep = "_"
-        table_suffix = ""
-        sql_suffix = " "
-        if self.append_only:
-            table_suffix = table_suffix + sep + "ao"
-            sql_suffix = sql_suffix + "appendonly = true, "
-        else:
-            table_suffix = table_suffix + sep + "heap"
-
-        table_suffix = table_suffix + sep + self.orientation + sep + self.compress_type + sep + self.compress_level
-        sql_suffix = sql_suffix + "orientation = %s, compresstype = %s, compresslevel= %s"%(self.orientation, self.compress_type, self.compress_level)
-
-        if self.orientation == "parquet":
-            sql_suffix = sql_suffix + "pagesize = %s, rowgroupsize = %s"%(self.pagesize, self.rowgroup_size) 
-
-        if self.partition:
-            table_suffix += "_part"
-
-        self.table_suffix = table_suffix
+        self.tbl_suffix = tbl_suffix
         self.sql_suffix = sql_suffix
-
+        self.output_file = output_file
 
         # connect to db
         try: 
-            self.cnx = pg.connect(dbname = self.dbname)
+            self.cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
-            cnx = pg.connect(dbname = "postgres")
-            cnx.query("create database %s"%self.dbname)
+            cnx = pg.connect(dbname = 'postgres')
+            cnx.query('create database %s' % (self.database_name))
             cnx.close()
         finally:
-            self.cnx = pg.connect(dbname = self.dbname)
+            self.cnx = pg.connect(dbname = self.database_name)
 
-    def __del__(self):
+    def __close_database_coneection__(self):
         ''' close connection to database'''
         self.cnx.close()
 
     def log(self, msg):
-        Log(self.ofile, msg)
+        Log(self.output_file, msg)
 
-    def get_partition_suffix(self, size = 128, table_name = ""):
-        start_date = date(1992, 01, 01)
+    def get_partition_suffix(self, num_partitions = 128, table_name = ''):
+        beg_date = date(1992, 01, 01)
         end_date = date(1999, 01, 01)
-        interval_days = (end_date - start_date).days/size
+        duration_days = (end_date - beg_date).days / num_partitions
 
-        suffix = '''
+        part = '''
                  PARTITION BY RANGE(o_orderdate)
                  (
-                 '''
-        for idx in range(1, size + 1):
-            start = start_date + timedelta(days = (idx-1)*interval_days)
-            end = start_date + timedelta(days = idx*interval_days)
-            if idx != size:
-                suffix = suffix + '''
+               '''
+        for i in range(1, num_partitions+1):
+            beg_cur = beg_date + timedelta(days = (i-1)*duration_days)
+            end_cur = beg_date + timedelta(days = i*duration_days)
+            if i != num_partitions:
+                part += '''
                      PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s ),
-                      '''%(idx, start, end, interval_days, table_name, idx, self.sql_suffix)
+                        '''%(i, beg_cur, end_cur, duration_days, table_name, i, self.sql_suffix)
             else:
-                suffix = suffix + '''
+                part += '''
                      PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )
-                      '''%(idx, start, end, interval_days, table_name, idx, self.sql_suffix)
+                        '''%(i, beg_cur, end_cur, duration_days, table_name, i, self.sql_suffix)
                 
-        suffix = suffix + '''
+        part += '''
                      );
-                     '''
-        return suffix
+                '''
+        return part
         
 
-    def run_query(self, cmd):
-        result = self.cnx.query(cmd)
-        if result == None:
-            return ""
-        return result
+    def run_sql(self, sql):
+        out = self.cnx.query(sql)
+        if out == None:
+            return ''
+        return out
 
-    def drop_table(self, name):
-        ''' drop table if exist '''
-        cmd = "drop table if exists %s cascade;"%name
-        self.log(cmd)
-        self.run_query(cmd)
+    def drop_table(self, table_name):
+        sql = 'DROP TABLE IF EXISTS %s CASCADE;' % (table_name)
+        self.log(sql)
+        self.run_query(sql)
 
     def drop_external_table(self, name):
-        ''' drop external table if exist '''
-        cmd = "drop external web table if exists %s;"%name
-        self.log(cmd)
-        self.run_query(cmd)
+        cmd = 'DROP EXTERNAL WEB TABLE IF EXISTS %s;' % (table_name)
+        self.log(sql)
+        self.run_query(sql)
 
     def create_load_nation_table(self):
         # drop table if exist
-        self.log("[INFO]: start load nation table")
+        self.log('[INFO]: start load nation table')
         try:
-            table_name = "nation" + self.table_suffix
-            e_table_name = "e_" + "nation" + self.table_suffix
+            table_name = 'nation' + self.tbl_suffix
+            e_table_name = 'e_' + 'nation' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -139,7 +114,7 @@ class TpchLoader(object):
                                 N_COMMENT    VARCHAR(152)) WITH (%s);'''%(table_name, self.sql_suffix)
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
 
             # create nation external table
@@ -147,33 +122,33 @@ class TpchLoader(object):
                                 N_NAME       CHAR(25) ,
                                 N_REGIONKEY  INTEGER ,
                                 N_COMMENT    VARCHAR(152)) 
-                            execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"' on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
+                            execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\'' on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to nation table from e_nation table
 
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_timne = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
  
         except Exception, e :
-            self.log("[Fail]: Load nation table failed")
+            self.log('[Fail]: Load nation table failed')
             self.log(str(e))
             return False
 
     def create_load_region_table(self):
         # drop table if exist
-        self.log("[INFO]: start load region table")
+        self.log('[INFO]: start load region table')
         try:
-            table_name = "region" + self.table_suffix
-            e_table_name = "e_" + "region" + self.table_suffix
+            table_name = 'region' + self.tbl_suffix
+            e_table_name = 'e_' + 'region' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -183,44 +158,44 @@ class TpchLoader(object):
                             R_COMMENT    VARCHAR(152)) WITH (%s);'''%(table_name, self.sql_suffix)
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
 
             # create region external table
             cmd = '''CREATE external web TABLE %s  ( R_REGIONKEY  INTEGER ,
                             R_NAME       CHAR(25) ,
                             R_COMMENT    VARCHAR(152)) 
-                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T r -s %s\"'
+                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T r -s %s\''
                         on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
 
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to region table from e_region table
 
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
  
         except Exception, e :
-            self.log("[Fail]: Load region table failed")
+            self.log('[Fail]: Load region table failed')
             self.log(str(e))
             return False
 
 
     def create_load_part_table(self):
         # drop table if exist
-        self.log("[INFO]: start load part table")
+        self.log('[INFO]: start load part table')
         try:
-            table_name = "part" + self.table_suffix
-            e_table_name = "e_" + "part" + self.table_suffix
+            table_name = 'part' + self.tbl_suffix
+            e_table_name = 'e_' + 'part' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -237,7 +212,7 @@ class TpchLoader(object):
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
 
             # create part external table
@@ -250,36 +225,36 @@ class TpchLoader(object):
                           P_CONTAINER   CHAR(10) ,
                           P_RETAILPRICE DECIMAL(15,2) ,
                           P_COMMENT     VARCHAR(23) ) 
-                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T P -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
+                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T P -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to part table from e_part table
 
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
 
         except Exception, e :
-            self.log("[Fail]: Load part table failed")
+            self.log('[Fail]: Load part table failed')
             self.log(str(e))
             return False
 
 
     def create_load_supplier_table(self):
         # drop table if exist
-        self.log("[INFO]: start load supplier table")
+        self.log('[INFO]: start load supplier table')
         try:
-            table_name = "supplier" + self.table_suffix
-            e_table_name = "e_" + "supplier" + self.table_suffix
+            table_name = 'supplier' + self.tbl_suffix
+            e_table_name = 'e_' + 'supplier' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -294,7 +269,7 @@ class TpchLoader(object):
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
 
             # create supplier external table
@@ -305,36 +280,36 @@ class TpchLoader(object):
                              S_PHONE       CHAR(15) ,
                              S_ACCTBAL     DECIMAL(15,2) ,
                              S_COMMENT     VARCHAR(101) ) 
-                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T s -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
+                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T s -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to supplier table from e_supplier table
 
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
 
         except Exception, e :
-            self.log("[Fail]: Load supplier table failed")
+            self.log('[Fail]: Load supplier table failed')
             self.log(str(e))
             return False
 
 
     def create_load_partsupp_table(self):
         # drop table if exist
-        self.log("[INFO]: start load partsupp table")
+        self.log('[INFO]: start load partsupp table')
         try:
-            table_name = "partsupp" + self.table_suffix
-            e_table_name = "e_" + "partsupp" + self.table_suffix
+            table_name = 'partsupp' + self.tbl_suffix
+            e_table_name = 'e_' + 'partsupp' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -347,7 +322,7 @@ class TpchLoader(object):
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # create partsupp external table
             cmd = '''CREATE external web TABLE %s ( PS_PARTKEY     INTEGER ,
@@ -355,26 +330,26 @@ class TpchLoader(object):
                              PS_AVAILQTY    INTEGER ,
                              PS_SUPPLYCOST  DECIMAL(15,2)  ,
                              PS_COMMENT     VARCHAR(199) ) 
-                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T S -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
+                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T S -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to partsupp table from e_partsupp table
 
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
 
         except Exception, e :
-            self.log("[Fail]: Load partsupp table failed")
+            self.log('[Fail]: Load partsupp table failed')
             self.log(str(e))
             return False
 
@@ -383,10 +358,10 @@ class TpchLoader(object):
 
     def create_load_customer_table(self):
         # drop table if exist
-        self.log("[INFO]: start load customer table")
+        self.log('[INFO]: start load customer table')
         try:
-            table_name = "customer" + self.table_suffix
-            e_table_name = "e_" + "customer" + self.table_suffix
+            table_name = 'customer' + self.tbl_suffix
+            e_table_name = 'e_' + 'customer' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -402,7 +377,7 @@ class TpchLoader(object):
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
 
             # create customer external table
@@ -410,7 +385,7 @@ class TpchLoader(object):
                                 N_NAME       CHAR(25) ,
                                 N_REGIONKEY  INTEGER ,
                                 N_COMMENT    VARCHAR(152)) 
-                            execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"' on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
+                            execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\'' on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
 
             cmd = '''CREATE external web TABLE %s ( C_CUSTKEY     INTEGER ,
                              C_NAME        VARCHAR(25) ,
@@ -420,26 +395,26 @@ class TpchLoader(object):
                              C_ACCTBAL     DECIMAL(15,2) ,
                              C_MKTSEGMENT  CHAR(10) ,
                              C_COMMENT     VARCHAR(117) ) 
-                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T c -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
+                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T c -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to customer table from e_customer table
 
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
 
         except Exception, e :
-            self.log("[Fail]: Load customer table failed")
+            self.log('[Fail]: Load customer table failed')
             self.log(str(e))
             return False
 
@@ -448,10 +423,10 @@ class TpchLoader(object):
      
     def create_load_orders_table(self):
         # drop table if exist
-        self.log("[INFO]: start load orders table")
+        self.log('[INFO]: start load orders table')
         try:
-            table_name = "orders" + self.table_suffix
-            e_table_name = "e_" + "orders" + self.table_suffix
+            table_name = 'orders' + self.tbl_suffix
+            e_table_name = 'e_' + 'orders' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -470,7 +445,7 @@ class TpchLoader(object):
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
 
             # create orders external table
@@ -483,28 +458,28 @@ class TpchLoader(object):
                            O_CLERK          CHAR(15) ,
                            O_SHIPPRIORITY   INTEGER ,
                            O_COMMENT        VARCHAR(79) ) 
-                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T O -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
+                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T O -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
                         on %s format 'text' (delimiter '|')
                         log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale, self.npsegs, self.npsegs, table_name)
 
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to orders table from e_orders table
 
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
 
         except Exception, e :
-            self.log("[Fail]: Load orders table failed")
+            self.log('[Fail]: Load orders table failed')
             self.log(str(e))
             return False
 
@@ -513,10 +488,10 @@ class TpchLoader(object):
 
     def create_load_lineitem_table(self):
         # drop table if exist
-        self.log("[INFO]: start load lineitem table")
+        self.log('[INFO]: start load lineitem table')
         try:
-            table_name = "lineitem" + self.table_suffix
-            e_table_name = "e_" + "lineitem" + self.table_suffix
+            table_name = 'lineitem' + self.tbl_suffix
+            e_table_name = 'e_' + 'lineitem' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -542,7 +517,7 @@ class TpchLoader(object):
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # create lineitem external table
             cmd = '''CREATE EXTERNAL WEB TABLE %s ( L_ORDERKEY    INT8 ,
@@ -561,50 +536,46 @@ class TpchLoader(object):
                               L_SHIPINSTRUCT CHAR(25) ,
                               L_SHIPMODE     CHAR(10) ,
                               L_COMMENT      VARCHAR(44) )
-                              EXECUTE 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T L -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"' 
+                              EXECUTE 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T L -s %s -N %s -n $((GP_SEGMENT_ID + 1))\'' 
                               on %s format 'text' (delimiter '|')
                               log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale, self.npsegs, self.npsegs, table_name)
 
 
             self.log(cmd)
             result = self.run_query(cmd)
-            self.log("CREATE TABLE")
+            self.log('CREATE TABLE')
 
             # insert data to lineitem table from e_lineitem table
-            cmd = "insert into %s select * from %s;"%(table_name, e_table_name)
+            cmd = 'insert into %s select * from %s;'%(table_name, e_table_name)
             self.log(cmd)
-            start = datetime.now()
+            beg_time = datetime.now()
             result = self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("INSERT  " + result)
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.log('INSERT  ' + result)
+            self.log('%s ms'%(duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
 
         except Exception, e :
-            self.log("[Fail]: Load lineitem table failed")
+            self.log('[Fail]: Load lineitem table failed')
             self.log(str(e))
             return False
      
     def vacuum_analyze(self):
         try:
-            cmd = "VACUUM ANALYZE;"
-            start = datetime.now()
-            self.run_query(cmd)
-            end = datetime.now()
-            interval = end - start
-            self.log("vacuum analyze")
-            self.log("%s ms"%(interval.days*24*3600*1000 + interval.seconds*1000 + interval.microseconds/1000))
+            sql = 'VACUUM ANALYZE;'
+            beg_time = datetime.now()
+            self.run_sql(sql)
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            self.output('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
+            self.report('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
 
         except Exception, e:
-            self.log("VACUUM ANALYZE Failed.")
-            self.log(str(e))
+            self.log('VACUUM ANALYZE failure: %s' % (str(e)))
             return False
             
     def load(self):
         for table in self.tables:
-            func = "self.create_load_" + table + "_table"
+            func = 'self.create_load_' + table + '_table'
             eval(func)()
         self.vacuum_analyze()
-    
-
-

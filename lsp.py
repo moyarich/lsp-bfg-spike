@@ -16,26 +16,30 @@ except ImportError:
 LSP_HOME = os.path.abspath(os.path.dirname(__file__))
 os.environ['LSP_HOME'] = LSP_HOME
 
-SRC_DIR = LSP_HOME + os.sep + 'src'
-if SRC_DIR not in sys.path:
-    sys.path.append(SRC_DIR)
+EXECUTOR_DIR = LSP_HOME + os.sep + 'executors'
+if EXECUTOR_DIR not in sys.path:
+    sys.path.append(EXECUTOR_DIR)
+
+WORKLOAD_DIR = LSP_HOME + os.sep + 'workloads'
+if WORKLOAD_DIR not in sys.path:
+    sys.path.append(WORKLOAD_DIR)
 
 try:
     from executors.SequentialExecutor import SequentialExecutor
 except ImportError:
-    sys.stderr.write('LSP needs SequentialExecutor in src/executors/SequentialExecutor.py.\n')
+    sys.stderr.write('LSP needs SequentialExecutor in executors/SequentialExecutor.py.\n')
     sys.exit(2)
 
 try:
     from executors.ConcurrentExecutor import ConcurrentExecutor
 except ImportError:
-    sys.stderr.write('LSP needs ConcurrentExecutor in src/executors/ConcurrentExecutor.py.\n')
+    sys.stderr.write('LSP needs ConcurrentExecutor in executors/ConcurrentExecutor.py.\n')
     sys.exit(2)
 
 try:
     from executors.DynamicExecutor import DynamicExecutor
 except ImportError:
-    sys.stderr.write('LSP needs DynamicExecutor in src/executors/DynamicExecutor.py.\n')
+    sys.stderr.write('LSP needs DynamicExecutor in executors/DynamicExecutor.py.\n')
     sys.exit(2)
 
 
@@ -52,7 +56,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # parse schedule file
-    schedule_file = LSP_HOME + '/schedules/' + schedule + '.yml'
+    schedule_file = LSP_HOME + os.sep + 'schedules' + os.sep + schedule + '.yml'
     with open(schedule_file, 'r') as fschedule:
         schedule_parser = yaml.load(fschedule)
 

@@ -5,14 +5,14 @@ from multiprocessing import Process, Queue, Value , Array
 try:
     from Executor import Executor
 except ImportError:
-    sys.stderr.write('LSP needs Executor in src/executors/Executor.py.\n')
+    sys.stderr.write('LSP needs Executor in executors/Executor.py\n')
     sys.exit(2)
 
 LSP_HOME = os.getenv('LSP_HOME')
 
 class SequentialExecutor(Executor):
-    def __init__(self, workloads_list, workloads_content):
-        Executor.__init__(self, workloads_list, workloads_content)
+    def __init__(self, workloads_list, workloads_specification):
+        Executor.__init__(self, workloads_list, workloads_specification)
         self.AllProcess = []
 
     def handle_finished_workload(self, pid):
@@ -32,8 +32,8 @@ class SequentialExecutor(Executor):
         self.setup()
 
         # execute workloads sequentially
-        for wl in self.workloads_inst:
-            p = Process(target=wl.start)
+        for wi in self.workloads_instance:
+            p = Process(target=wi.start)
             p.start()
             while True:
                 if p.is_alive():
