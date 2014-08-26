@@ -9,7 +9,7 @@ from
  c_custkey,
  count(o_orderkey)
  from
- customerTABLESUFFIX left outer join ordersTABLESUFFIX on
+ TABLESUFFIX_customer left outer join TABLESUFFIX_orders on
  c_custkey = o_custkey
  and o_comment not like '%express%deposits%'
  group by
@@ -31,7 +31,7 @@ from
  c_custkey,
  count(o_orderkey)
  from
- customerTABLESUFFIX left outer join ordersTABLESUFFIX on
+ TABLESUFFIX_customer left outer join TABLESUFFIX_orders on
  c_custkey = o_custkey
  and o_comment not like '%express%deposits%'
  group by

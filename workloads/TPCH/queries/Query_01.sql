@@ -12,7 +12,7 @@ select
  avg(l_discount) as avg_disc,
  count(*) as count_order
 from
- lineitemTABLESUFFIX
+ TABLESUFFIX_lineitem
 where
  l_shipdate <= date'1998-12-01' - interval '65 days'
 group by
@@ -35,7 +35,7 @@ select
  avg(l_discount) as avg_disc,
  count(*) as count_order
 from
- lineitemTABLESUFFIX
+ TABLESUFFIX_lineitem
 where
  l_shipdate <= date'1998-12-01' - interval '65 days'
 group by

@@ -15,8 +15,8 @@ select
  else 0
  end) as low_line_count
 from
- ordersTABLESUFFIX,
- lineitemTABLESUFFIX
+ TABLESUFFIX_orders,
+ TABLESUFFIX_lineitem
 where
  o_orderkey = l_orderkey
  and l_shipmode in ('REG AIR', 'FOB')
@@ -45,8 +45,8 @@ select
  else 0
  end) as low_line_count
 from
- ordersTABLESUFFIX,
- lineitemTABLESUFFIX
+ TABLESUFFIX_orders,
+ TABLESUFFIX_lineitem
 where
  o_orderkey = l_orderkey
  and l_shipmode in ('REG AIR', 'FOB')

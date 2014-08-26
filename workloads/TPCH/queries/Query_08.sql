@@ -3,7 +3,7 @@ explain
 select
  o_year,
  sum(case
- when nationTABLESUFFIX = 'ETHIOPIA' then volume
+ when TABLESUFFIX_nation = 'ETHIOPIA' then volume
  else 0
  end) / sum(volume) as mkt_share
 from
@@ -11,16 +11,16 @@ from
  select
  extract(year from o_orderdate) as o_year,
  l_extendedprice * (1 - l_discount) as volume,
- n2.n_name as nationTABLESUFFIX
+ n2.n_name as TABLESUFFIX_nation
  from
- partTABLESUFFIX,
- supplierTABLESUFFIX,
- lineitemTABLESUFFIX,
- ordersTABLESUFFIX,
- customerTABLESUFFIX,
- nationTABLESUFFIX n1,
- nationTABLESUFFIX n2,
- regionTABLESUFFIX
+ TABLESUFFIX_part,
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_customer,
+ TABLESUFFIX_nation n1,
+ TABLESUFFIX_nation n2,
+ TABLESUFFIX_region
  where
  p_partkey = l_partkey
  and s_suppkey = l_suppkey
@@ -43,7 +43,7 @@ order by
 select
  o_year,
  sum(case
- when nationTABLESUFFIX = 'ETHIOPIA' then volume
+ when TABLESUFFIX_nation = 'ETHIOPIA' then volume
  else 0
  end) / sum(volume) as mkt_share
 from
@@ -51,16 +51,16 @@ from
  select
  extract(year from o_orderdate) as o_year,
  l_extendedprice * (1 - l_discount) as volume,
- n2.n_name as nationTABLESUFFIX
+ n2.n_name as TABLESUFFIX_nation
  from
- partTABLESUFFIX,
- supplierTABLESUFFIX,
- lineitemTABLESUFFIX,
- ordersTABLESUFFIX,
- customerTABLESUFFIX,
- nationTABLESUFFIX n1,
- nationTABLESUFFIX n2,
- regionTABLESUFFIX
+ TABLESUFFIX_part,
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_customer,
+ TABLESUFFIX_nation n1,
+ TABLESUFFIX_nation n2,
+ TABLESUFFIX_region
  where
  p_partkey = l_partkey
  and s_suppkey = l_suppkey

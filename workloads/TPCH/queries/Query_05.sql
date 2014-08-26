@@ -4,12 +4,12 @@ select
  n_name,
  sum(l_extendedprice * (1 - l_discount)) as revenue
 from
- customerTABLESUFFIX,
- ordersTABLESUFFIX,
- lineitemTABLESUFFIX,
- supplierTABLESUFFIX,
- nationTABLESUFFIX,
- regionTABLESUFFIX
+ TABLESUFFIX_customer,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_nation,
+ TABLESUFFIX_region
 where
  c_custkey = o_custkey
  and l_orderkey = o_orderkey
@@ -30,12 +30,12 @@ select
  n_name,
  sum(l_extendedprice * (1 - l_discount)) as revenue
 from
- customerTABLESUFFIX,
- ordersTABLESUFFIX,
- lineitemTABLESUFFIX,
- supplierTABLESUFFIX,
- nationTABLESUFFIX,
- regionTABLESUFFIX
+ TABLESUFFIX_customer,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_nation,
+ TABLESUFFIX_region
 where
  c_custkey = o_custkey
  and l_orderkey = o_orderkey

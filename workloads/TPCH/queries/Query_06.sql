@@ -3,7 +3,7 @@ explain
 select
  sum(l_extendedprice * l_discount) as revenue
 from
- lineitemTABLESUFFIX
+ TABLESUFFIX_lineitem
 where
  l_shipdate >= date '1997-01-01'
  and l_shipdate < date '1997-01-01' + interval '1 year'
@@ -14,7 +14,7 @@ where
 select
  sum(l_extendedprice * l_discount) as revenue
 from
- lineitemTABLESUFFIX
+ TABLESUFFIX_lineitem
 where
  l_shipdate >= date '1997-01-01'
  and l_shipdate < date '1997-01-01' + interval '1 year'

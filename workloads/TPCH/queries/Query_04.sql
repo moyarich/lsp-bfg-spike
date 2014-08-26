@@ -4,7 +4,7 @@ select
  o_orderpriority,
  count(*) as order_count
 from
- ordersTABLESUFFIX
+ TABLESUFFIX_orders
 where
  o_orderdate >= date '1997-02-01'
  and o_orderdate < date '1997-02-01' + interval '3 month'
@@ -12,7 +12,7 @@ where
  select
  *
  from
- lineitemTABLESUFFIX
+ TABLESUFFIX_lineitem
  where
  l_orderkey = o_orderkey
  and l_commitdate < l_receiptdate
@@ -27,7 +27,7 @@ select
  o_orderpriority,
  count(*) as order_count
 from
- ordersTABLESUFFIX
+ TABLESUFFIX_orders
 where
  o_orderdate >= date '1997-02-01'
  and o_orderdate < date '1997-02-01' + interval '3 month'
@@ -35,7 +35,7 @@ where
  select
  *
  from
- lineitemTABLESUFFIX
+ TABLESUFFIX_lineitem
  where
  l_orderkey = o_orderkey
  and l_commitdate < l_receiptdate

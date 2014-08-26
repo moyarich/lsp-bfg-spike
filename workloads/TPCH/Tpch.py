@@ -141,7 +141,8 @@ class Tpch(Workload):
                             scale_factor = self.scale_factor, append_only = self.append_only, orientation = self.orientation, \
                             page_size = self.page_size, row_group_size = self.row_group_size, \
                             compression_type = self.compression_type, compression_level = self.compression_level, \
-                            partitions = self.partitions, tables = tables, output_file = os.path.join(self.report_directory, tpch_load.out))
+                            partitions = self.partitions, tables = tables, tpch_load_log = os.path.join(self.report_directory, 'tpch_load.log'), \
+                            output_file = self.output_file, error_file = self.error_file, report_file = self.report_file)
         loader.load()
 
         # create revenue  view 
@@ -162,7 +163,7 @@ class Tpch(Workload):
                          and l_shipdate < date '1997-04-01' + interval '90 days'
                          group by
                          l_suppkey;
-                '''%('lineitem' + self.table_suffix)
+                '''%(self.table_suffix + 'lineitem')
         (result, out) = psql.runcmd(query, dbname = self.database_name)
         if not result:
             self.error( '%s \n failed %s\n'%(query, out) )

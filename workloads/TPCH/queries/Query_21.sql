@@ -4,10 +4,10 @@ select
  s_name,
  count(*) as numwait
 from
- supplierTABLESUFFIX,
- lineitemTABLESUFFIX l1,
- ordersTABLESUFFIX,
- nationTABLESUFFIX
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_lineitem l1,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_nation
 where
  s_suppkey = l1.l_suppkey
  and o_orderkey = l1.l_orderkey
@@ -17,7 +17,7 @@ where
  select
  *
  from
- lineitemTABLESUFFIX l2
+ TABLESUFFIX_lineitem l2
  where
  l2.l_orderkey = l1.l_orderkey
  and l2.l_suppkey <> l1.l_suppkey
@@ -26,7 +26,7 @@ where
  select
  *
  from
- lineitemTABLESUFFIX l3
+ TABLESUFFIX_lineitem l3
  where
  l3.l_orderkey = l1.l_orderkey
  and l3.l_suppkey <> l1.l_suppkey
@@ -46,10 +46,10 @@ select
  s_name,
  count(*) as numwait
 from
- supplierTABLESUFFIX,
- lineitemTABLESUFFIX l1,
- ordersTABLESUFFIX,
- nationTABLESUFFIX
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_lineitem l1,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_nation
 where
  s_suppkey = l1.l_suppkey
  and o_orderkey = l1.l_orderkey
@@ -59,7 +59,7 @@ where
  select
  *
  from
- lineitemTABLESUFFIX l2
+ TABLESUFFIX_lineitem l2
  where
  l2.l_orderkey = l1.l_orderkey
  and l2.l_suppkey <> l1.l_suppkey
@@ -68,7 +68,7 @@ where
  select
  *
  from
- lineitemTABLESUFFIX l3
+ TABLESUFFIX_lineitem l3
  where
  l3.l_orderkey = l1.l_orderkey
  and l3.l_suppkey <> l1.l_suppkey

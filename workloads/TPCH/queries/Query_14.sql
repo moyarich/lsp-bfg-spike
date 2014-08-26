@@ -7,8 +7,8 @@ select
  else 0
  end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
 from
- lineitemTABLESUFFIX,
- partTABLESUFFIX
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_part
 where
  l_partkey = p_partkey
  and l_shipdate >= date '1997-04-01'
@@ -22,8 +22,8 @@ select
  else 0
  end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
 from
- lineitemTABLESUFFIX,
- partTABLESUFFIX
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_part
 where
  l_partkey = p_partkey
  and l_shipdate >= date '1997-04-01'

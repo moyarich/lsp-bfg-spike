@@ -42,7 +42,6 @@ class Shell:
         """
 
         self.lastcmd = cmd
-        log('  Exec %s: %s' % (cmdtype, self.lastcmd))
         p = os.popen(self.lastcmd)
         ret = []
 
@@ -58,7 +57,6 @@ class Shell:
         rc = p.close()
         if fp:
             fp.close()
-        log('    rc: ', str(rc))
         return (not rc, ret)
 
     
@@ -86,7 +84,6 @@ class Shell:
         if(cmd.find("psql")>=0 and cmd.find(" -c ")>0):
             return self.run(cmd)
         else:
-            log('  Exec with Timeout: ', cmd)
             process = subprocess.Popen(cmd, env=None, shell=True, executable='/bin/bash',stdout=subprocess.PIPE,stderr=subprocess.PIPE)
             if timeout>0:
                 start = datetime.datetime.now()
@@ -132,7 +129,6 @@ class Shell:
             while True:
                 if loop != 0 and (counter > loop) == True:
                     break
-                log('  Exec Count %s: ' % counter)
                 self.run(cmd)
                 counter += 1
         except:

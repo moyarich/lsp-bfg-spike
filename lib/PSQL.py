@@ -42,13 +42,16 @@ import os
 import sys
 import time
 
-MYD = os.path.abspath(os.path.dirname(__file__))
-mkpath = lambda *x: os.path.join(MYD, *x)
+LSP_HOME = os.getenv('LSP_HOME')
+lib = os.path.join(LSP_HOME, 'lib')
+if lib not in sys.path:
+        sys.path.append(lib)
 
-if MYD in sys.path:
-    sys.path.remove(MYD)
-    sys.path.append(MYD)
-
+try:
+    from Shell import Shell
+except ImportError:
+    sys.stderr.write('LSP needs shell n lib/Shell.py\n')
+    sys.exit(2)
 
 class PSQL:
     '''
@@ -82,13 +85,13 @@ class PSQL:
         @poram background: run PSQL command in the background
         '''
         if dbname == None:
-            dbname = DBNAME
+            dbname = os.environ['PGDATABASE']
             
         if username == None:
-            username = PGUSER
+            username = os.environ['PGUSER']
             
         if host is None:
-            host = "-h %s" % PGHOST
+            host = "-h %s" % ('localhost')
         else:
             host = "-h %s" % host
 
@@ -120,8 +123,8 @@ class PSQL:
         else:
             ofile = '> %s 2>&1' % ofile
 
-        return shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s %s' %
-                                (PGOPTIONS, dbname, host, port, username, password, flag, arg, ofile, background), 
+        return Shell().run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
+                                (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), 
                                  timeout=timeout)
 
     def runcmd(self, cmd, dbname=None, ofile = '-', pFlags = '-t -q', username=None,

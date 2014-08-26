@@ -123,6 +123,7 @@ class Workload(object):
 
         cnx = pg.connect(dbname = self.database_name)
         # run all sql file under queries forder
+        self.output('-- Start running queries for %s:' % (self.workload_name))
         for qf in query_files:
             beg_time = datetime.datetime.now()
             qfh = QueryFile(os.path.join(queries_directory, qf))
@@ -140,8 +141,9 @@ class Workload(object):
             end_time = datetime.datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-            self.output('%s %s: %s ms' % (self.workload_name, qf, duration))
-            self.report('%s %s: %s ms' % (self.workload_name, qf, duration))
+            self.output('Workload=%s Query=%s: %d ms' % (self.workload_name, qf, duration))
+            self.report('Workload=%s Query=%s: %d ms' % (self.workload_name, qf, duration))
+        self.output('-- End running queries for %s:' % (self.workload_name))
  
         cnx.close()
 
@@ -195,9 +197,9 @@ class Workload(object):
         Report(self.report_file, msg)
 
     def execute(self):
-        '''
-        this function is main entry of workload , user should not override this function. 
-        '''
+        self.output('-- Start running workload %s' % (self.workload_name))
+        self.report('-- Start running workload %s' % (self.workload_name))
+
         # setup
         self.setup()
 
@@ -213,5 +215,5 @@ class Workload(object):
         # clean up 
         self.clean_up()
         
-        self.output('workload [%s]  finished' % (self.workload_name))
-        self.report('workload [%s]  finished' % (self.workload_name))
+        self.output('-- End running workload %s' % (self.workload_name))
+        self.report('-- End running workload %s' % (self.workload_name))

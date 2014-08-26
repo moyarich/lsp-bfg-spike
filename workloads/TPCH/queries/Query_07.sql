@@ -13,12 +13,12 @@ from
  extract(year from l_shipdate) as l_year,
  l_extendedprice * (1 - l_discount) as volume
  from
- supplierTABLESUFFIX,
- lineitemTABLESUFFIX,
- ordersTABLESUFFIX,
- customerTABLESUFFIX,
- nationTABLESUFFIX n1,
- nationTABLESUFFIX n2
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_customer,
+ TABLESUFFIX_nation n1,
+ TABLESUFFIX_nation n2
  where
  s_suppkey = l_suppkey
  and o_orderkey = l_orderkey
@@ -56,12 +56,12 @@ from
  extract(year from l_shipdate) as l_year,
  l_extendedprice * (1 - l_discount) as volume
  from
- supplierTABLESUFFIX,
- lineitemTABLESUFFIX,
- ordersTABLESUFFIX,
- customerTABLESUFFIX,
- nationTABLESUFFIX n1,
- nationTABLESUFFIX n2
+ TABLESUFFIX_supplier,
+ TABLESUFFIX_lineitem,
+ TABLESUFFIX_orders,
+ TABLESUFFIX_customer,
+ TABLESUFFIX_nation n1,
+ TABLESUFFIX_nation n2
  where
  s_suppkey = l_suppkey
  and o_orderkey = l_orderkey
