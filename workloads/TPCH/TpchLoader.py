@@ -27,7 +27,7 @@ class TpchLoader(object):
             scale_factor = 1, append_only = True, orientation= 'ROW', page_size = 1048576, \
             row_group_size = 8388608, compression_type = None, compression_level = None, partitions = None, \
             tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
-            tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log',
+            tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log',\
             output_file = '/tmp/tpch_output', error_file = '/tmp/tpch_error', report_file = '/tmp/tpch_report'):
 
         self.database_name = None if database_name is None else database_name.lower()
@@ -97,7 +97,7 @@ class TpchLoader(object):
         return part
         
 
-    def run_sql(self, sql):
+    def run_query(self, sql):
         out = self.cnx.query(sql)
         if out == None:
             return ''
@@ -105,12 +105,12 @@ class TpchLoader(object):
 
     def drop_table(self, table_name):
         sql = 'DROP TABLE IF EXISTS %s CASCADE;' % (table_name)
-        self.log(sql)
+        self.output(sql)
         self.run_query(sql)
 
-    def drop_external_table(self, name):
-        cmd = 'DROP EXTERNAL WEB TABLE IF EXISTS %s;' % (table_name)
-        self.log(sql)
+    def drop_external_table(self, table_name):
+        sql = 'DROP EXTERNAL WEB TABLE IF EXISTS %s;' % (table_name)
+        self.output(sql)
         self.run_query(sql)
 
     def create_load_nation_table(self):
@@ -118,8 +118,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for nation:')
         self.report('-- Start loading data for nation:')
         try:
-            table_name = 'nation' + self.tbl_suffix
-            e_table_name = 'e_' + 'nation' + self.tbl_suffix
+            table_name = 'nation_' + self.tbl_suffix
+            e_table_name = 'e_' + 'nation_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -137,13 +137,14 @@ class TpchLoader(object):
                                 N_NAME       CHAR(25) ,
                                 N_REGIONKEY  INTEGER ,
                                 N_COMMENT    VARCHAR(152)) 
-                            execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\'' on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
+                            execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"' 
+                            on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
             self.output(cmd)
             result = self.run_query(cmd)
             self.output(result)
 
             # insert data to nation table from e_nation table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)
@@ -165,8 +166,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for region:')
         self.report('-- Start loading data for region:')
         try:
-            table_name = 'region' + self.tbl_suffix
-            e_table_name = 'e_' + 'region' + self.tbl_suffix
+            table_name = 'region_' + self.tbl_suffix
+            e_table_name = 'e_' + 'region_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -182,7 +183,7 @@ class TpchLoader(object):
             cmd = '''CREATE EXTERNAL WEB TABLE %s  ( R_REGIONKEY  INTEGER ,
                             R_NAME       CHAR(25) ,
                             R_COMMENT    VARCHAR(152)) 
-                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T r -s %s\''
+                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T r -s %s\"'
                         on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
 
             self.output(cmd)
@@ -190,7 +191,7 @@ class TpchLoader(object):
             self.output(result)
 
             # insert data to region table from e_region table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)
@@ -212,8 +213,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for part:')
         self.report('-- Start loading data for part:')
         try:
-            table_name = 'part' + self.tbl_suffix
-            e_table_name = 'e_' + 'part' + self.tbl_suffix
+            table_name = 'part_' + self.tbl_suffix
+            e_table_name = 'e_' + 'part_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -242,7 +243,7 @@ class TpchLoader(object):
                           P_CONTAINER   CHAR(10) ,
                           P_RETAILPRICE DECIMAL(15,2) ,
                           P_COMMENT     VARCHAR(23) ) 
-                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T P -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
+                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T P -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
 
             self.output(cmd)
@@ -250,7 +251,7 @@ class TpchLoader(object):
             self.output(result)
 
             # insert data to part table from e_part table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)
@@ -298,7 +299,7 @@ class TpchLoader(object):
                              S_PHONE       CHAR(15) ,
                              S_ACCTBAL     DECIMAL(15,2) ,
                              S_COMMENT     VARCHAR(101) ) 
-                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T s -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
+                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T s -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
 
             self.output(cmd)
@@ -306,7 +307,7 @@ class TpchLoader(object):
             self.output(result)
 
             # insert data to supplier table from e_supplier table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)
@@ -328,8 +329,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for partsupp:')
         self.output('-- Report loading data for partsupp:')
         try:
-            table_name = 'partsupp' + self.tbl_suffix
-            e_table_name = 'e_' + 'partsupp' + self.tbl_suffix
+            table_name = 'partsupp_' + self.tbl_suffix
+            e_table_name = 'e_' + 'partsupp_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -340,9 +341,9 @@ class TpchLoader(object):
                              PS_SUPPLYCOST  DECIMAL(15,2)  NOT NULL,
                              PS_COMMENT     VARCHAR(199) NOT NULL ) WITH (%s);'''%(table_name, self.sql_suffix)
 
-            self.log(cmd)
+            self.output(cmd)
             result = self.run_query(cmd)
-            self.log('CREATE TABLE')
+            self.output(result)
 
             # create partsupp external table
             cmd = '''CREATE EXTERNAL WEB TABLE %s ( PS_PARTKEY     INTEGER ,
@@ -350,7 +351,7 @@ class TpchLoader(object):
                              PS_AVAILQTY    INTEGER ,
                              PS_SUPPLYCOST  DECIMAL(15,2)  ,
                              PS_COMMENT     VARCHAR(199) ) 
-                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T S -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
+                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T S -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
 
             self.output(cmd)
@@ -358,7 +359,7 @@ class TpchLoader(object):
             self.output(result)
 
             # insert data to partsupp table from e_partsupp table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)
@@ -380,8 +381,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for customer:')
         self.report('-- Start loading data for customer:')
         try:
-            table_name = 'customer' + self.tbl_suffix
-            e_table_name = 'e_' + 'customer' + self.tbl_suffix
+            table_name = 'customer_' + self.tbl_suffix
+            e_table_name = 'e_' + 'customer_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -404,7 +405,8 @@ class TpchLoader(object):
                                 N_NAME       CHAR(25) ,
                                 N_REGIONKEY  INTEGER ,
                                 N_COMMENT    VARCHAR(152)) 
-                            execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\'' on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
+                            execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"'
+                            on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
 
             cmd = '''CREATE EXTERNAL WEB TABLE %s ( C_CUSTKEY     INTEGER ,
                              C_NAME        VARCHAR(25) ,
@@ -422,7 +424,7 @@ class TpchLoader(object):
             self.output(result)
 
             # insert data to customer table from e_customer table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)
@@ -444,8 +446,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for orders:')
         self.report('-- Start loading data for orders:')
         try:
-            table_name = 'orders' + self.tbl_suffix
-            e_table_name = 'e_' + 'orders' + self.tbl_suffix
+            table_name = 'orders_' + self.tbl_suffix
+            e_table_name = 'e_' + 'orders_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -476,7 +478,7 @@ class TpchLoader(object):
                            O_CLERK          CHAR(15) ,
                            O_SHIPPRIORITY   INTEGER ,
                            O_COMMENT        VARCHAR(79) ) 
-                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T O -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
+                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T O -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
                         on %s format 'text' (delimiter '|')
                         log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale, self.npsegs, self.npsegs, table_name)
 
@@ -486,7 +488,7 @@ class TpchLoader(object):
             self.output(result)
 
             # insert data to orders table from e_orders table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)
@@ -554,7 +556,7 @@ class TpchLoader(object):
                               L_SHIPINSTRUCT CHAR(25) ,
                               L_SHIPMODE     CHAR(10) ,
                               L_COMMENT      VARCHAR(44) )
-                              EXECUTE 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T L -s %s -N %s -n $((GP_SEGMENT_ID + 1))\'' 
+                              EXECUTE 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T L -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"' 
                               on %s format 'text' (delimiter '|')
                               log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale, self.npsegs, self.npsegs, table_name)
 
@@ -564,7 +566,7 @@ class TpchLoader(object):
             self.output(result)
 
             # insert data to lineitem table from e_lineitem table
-            cmd = 'INSERT INTO %s SELECT * FROM %s;'%(table_name, e_table_name)
+            cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_query(cmd)

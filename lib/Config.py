@@ -17,12 +17,8 @@ if MYD in sys.path:
     sys.path.remove(MYD)
     sys.path.append(MYD)
 
-import useodbc
-from useodbc import useODBC
-from gpdbSystem import GpdbSystem
 from Shell import shell
 from PSQL import psql
-from cdbfastUtil import *
 
 # ============================================================================
 class Config:
@@ -213,14 +209,5 @@ class Config:
                 print r.dbid
                 return r.hostname
         return None 
-
-    def isDebug(self):
-        '''
-        Checks if server build is DEBUG 
-        '''
-        gpdbsystem = GpdbSystem()
-        if gpdbsystem.GetGpdbVersion()[0].find('debug') > 0 :
-            return True
-        return False
 
 config = Config()
