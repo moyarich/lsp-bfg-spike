@@ -32,6 +32,12 @@ except ImportError:
     sys.stderr.write('LSP needs psql in lib/PSQL.py\n')
     sys.exit(2)
 
+try:
+    from Config import Config
+except ImportError:
+    sys.stderr.write('LSP needs Config in lib/Config.py\n')
+    sys.exit(2)
+
 
 class Tpch(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory): 
@@ -45,6 +51,7 @@ class Tpch(Workload):
         self.data_volume_type = ts['data_volume_type'].upper()
         self.data_volume_size = ts['data_volume_size']
         
+        self.nsegs = Config().getNPrimarySegments()
         self.scale_factor = 1
         if self.data_volume_type == 'TOTAL':
             self.scale_factor = self.data_volume_size
@@ -52,8 +59,7 @@ class Tpch(Workload):
             nnodes = len(Config().getSegHostNames())
             self.scale_factor = self.data_volume_size * nnodes
         elif self.data_volume_type == 'PER_SEGMENT':
-            nsegs = Config().getNPrimarySegments()
-            self.scale_factor = self.data_volume_size * nsegs
+            self.scale_factor = self.data_volume_size * self.nsegs
         else:
             self.error('Error in calculating data volumn for workloads %s: data_volume_type=%s, data_volume_size=%s' % (self.workload_name, self.data_volume_type, self.data_volume_size))
             exit(-1)
@@ -89,41 +95,37 @@ class Tpch(Workload):
         assert self.partitions in [True, False]
 
         # prepare name with suffix for table and corresponding sql statement to create it
-        sep = '_'
         tbl_suffix = ''
         sql_suffix = ''
 
         if self.append_only:
-            tbl_suffix = tbl_suffix + sep + 'ao'
-            sql_suffix = sql_suffix + 'appendonly = true, '
+            tbl_suffix = tbl_suffix + 'ao'
+            sql_suffix = sql_suffix + 'appendonly = true'
         else:
-            tbl_suffix = tbl_suffix + sep + 'heap'
-            sql_suffix = sql_suffix + 'appendonly = false, '
+            tbl_suffix = tbl_suffix + '_heap'
+            sql_suffix = sql_suffix + 'appendonly = false'
 
-            tbl_suffix = tbl_suffix + sep + self.orientation
-            sql_suffix = sql_suffix + sep + 'orientation = ' + self.orientation + ', '
+        tbl_suffix = tbl_suffix + '_' + self.orientation
+        sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
 
-            if self.orientation == 'parquet':
-                sql_suffix = sql_suffix + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
+        if self.orientation == 'parquet':
+            sql_suffix = sql_suffix + ', ' + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
 
-            if self.compression_type is not None:
-                if self.compression_level is not None:
-                    tbl_suffix = tbl_suffix + sep + self.compression_type + str(self.compression_level)
-                    sql_suffix = sql_suffix + sep + 'compresstype = ' + self.compression_type + ','
-                    sql_suffix = sql_suffix + sep + 'compresslevel = ' + str(self.compression_level) + ','
-                else:
-                    tbl_suffix = tbl_suffix + sep + self.compression_type
-                    sql_suffix = sql_suffix + sep + 'compresstype = ' + self.compression_type + ', '
+        if self.compression_type is not None:
+            if self.compression_level is not None:
+                tbl_suffix = tbl_suffix + '_' + self.compression_type + '_' + str(self.compression_level)
+                sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type 
+                sql_suffix = sql_suffix + ', ' + 'compresslevel = ' + str(self.compression_level)
             else:
-                tbl_suffix = tbl_suffix + sep + 'nocomp'
+                tbl_suffix = tbl_suffix + '_' + self.compression_type
+                sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type
+        else:
+            tbl_suffix = tbl_suffix + '_nocomp'
 
-            if self.orientation == 'parquet':
-                sql_suffix = sql_suffix + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
-
-            if self.partitions:
-                tbl_suffix += '_part'
-            else:
-                tbl_suffix += '_nopart'
+        if self.partitions:
+            tbl_suffix += '_part'
+        else:
+            tbl_suffix += '_nopart'
 
         self.tbl_suffix = tbl_suffix
         self.sql_suffix = sql_suffix
@@ -138,10 +140,11 @@ class Tpch(Workload):
         # load all 8 tables 
         tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer']
         loader = TpchLoader(database_name = self.database_name, user = self.user, \
-                            scale_factor = self.scale_factor, append_only = self.append_only, orientation = self.orientation, \
+                            scale_factor = self.scale_factor, nsegs = self.nsegs, append_only = self.append_only, orientation = self.orientation, \
                             page_size = self.page_size, row_group_size = self.row_group_size, \
                             compression_type = self.compression_type, compression_level = self.compression_level, \
-                            partitions = self.partitions, tables = tables, tpch_load_log = os.path.join(self.report_directory, 'tpch_load.log'), \
+                            partitions = self.partitions, tables = tables, tbl_suffix = self.tbl_suffix, sql_suffix = self.sql_suffix, \
+                            tpch_load_log = os.path.join(self.report_directory, 'tpch_load.log'), \
                             output_file = self.output_file, error_file = self.error_file, report_file = self.report_file)
         loader.load()
 
@@ -163,7 +166,7 @@ class Tpch(Workload):
                          and l_shipdate < date '1997-04-01' + interval '90 days'
                          group by
                          l_suppkey;
-                '''%(self.table_suffix + 'lineitem')
+                '''%('lineitem_' + self.table_suffix)
         (result, out) = psql.runcmd(query, dbname = self.database_name)
         if not result:
             self.error( '%s \n failed %s\n'%(query, out) )

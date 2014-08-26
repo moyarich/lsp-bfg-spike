@@ -24,15 +24,16 @@ except ImportError:
 
 class TpchLoader(object):
     def __init__(self, database_name = 'gpadmin', user = 'gpadmin', \
-            scale_factor = 1, append_only = True, orientation= 'ROW', page_size = 1048576, \
-            row_group_size = 8388608, compression_type = None, compression_level = None, partitions = None, \
-            tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
-            tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log',\
-            output_file = '/tmp/tpch_output', error_file = '/tmp/tpch_error', report_file = '/tmp/tpch_report'):
+        scale_factor = 1, nsegs = 1, nappend_only = True, orientation= 'ROW', page_size = 1048576, \
+        row_group_size = 8388608, compression_type = None, compression_level = None, partitions = None, \
+        tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
+        tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log',\
+        output_file = '/tmp/tpch_output', error_file = '/tmp/tpch_error', report_file = '/tmp/tpch_report'):
 
         self.database_name = None if database_name is None else database_name.lower()
         self.user = user.lower()
         self.scale_factor = scale_factor
+        self.nsegs = nsegs
         self.append_only = True if append_only is None else append_only
         self.orientation = 'row' if orientation is None else orientation.lower()
         self.page_size = page_size
@@ -47,6 +48,8 @@ class TpchLoader(object):
         self.output_file = output_file
         self.error_file = error_file
         self.report_file = report_file
+        
+
 
         # connect to db
         try: 
@@ -97,7 +100,7 @@ class TpchLoader(object):
         return part
         
 
-    def run_query(self, sql):
+    def run_sql(self, sql):
         out = self.cnx.query(sql)
         if out == None:
             return ''
@@ -106,12 +109,12 @@ class TpchLoader(object):
     def drop_table(self, table_name):
         sql = 'DROP TABLE IF EXISTS %s CASCADE;' % (table_name)
         self.output(sql)
-        self.run_query(sql)
+        self.run_sql(sql)
 
     def drop_external_table(self, table_name):
         sql = 'DROP EXTERNAL WEB TABLE IF EXISTS %s;' % (table_name)
         self.output(sql)
-        self.run_query(sql)
+        self.run_sql(sql)
 
     def create_load_nation_table(self):
         # drop table if exist
@@ -129,7 +132,7 @@ class TpchLoader(object):
                                 N_REGIONKEY  INTEGER NOT NULL,
                                 N_COMMENT    VARCHAR(152)) WITH (%s);'''%(table_name, self.sql_suffix)
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create nation external table
@@ -138,16 +141,16 @@ class TpchLoader(object):
                                 N_REGIONKEY  INTEGER ,
                                 N_COMMENT    VARCHAR(152)) 
                             execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"' 
-                            on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
+                            on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor)
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to nation table from e_nation table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_timne = datetime.now()
             duration = end_time - beg_time
@@ -176,7 +179,7 @@ class TpchLoader(object):
                             R_NAME       CHAR(25) NOT NULL,
                             R_COMMENT    VARCHAR(152)) WITH (%s);'''%(table_name, self.sql_suffix)
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create region external table
@@ -184,17 +187,17 @@ class TpchLoader(object):
                             R_NAME       CHAR(25) ,
                             R_COMMENT    VARCHAR(152)) 
                         execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T r -s %s\"'
-                        on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
+                        on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to region table from e_region table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_time = datetime.now()
             duration = end_time - beg_time
@@ -230,7 +233,7 @@ class TpchLoader(object):
                           P_COMMENT     VARCHAR(23) NOT NULL ) WITH (%s);'''%(table_name, self.sql_suffix)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create part external table
@@ -244,17 +247,17 @@ class TpchLoader(object):
                           P_RETAILPRICE DECIMAL(15,2) ,
                           P_COMMENT     VARCHAR(23) ) 
                         execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T P -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
-                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
+                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to part table from e_part table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_time = datetime.now()
             duration = end_time - beg_time
@@ -288,7 +291,7 @@ class TpchLoader(object):
                              S_COMMENT     VARCHAR(101) NOT NULL) WITH (%s);'''%(table_name, self.sql_suffix)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create supplier external table
@@ -300,17 +303,17 @@ class TpchLoader(object):
                              S_ACCTBAL     DECIMAL(15,2) ,
                              S_COMMENT     VARCHAR(101) ) 
                         execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T s -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
-                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
+                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to supplier table from e_supplier table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_time = datetime.now()
             duration = end_time - beg_time
@@ -342,7 +345,7 @@ class TpchLoader(object):
                              PS_COMMENT     VARCHAR(199) NOT NULL ) WITH (%s);'''%(table_name, self.sql_suffix)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create partsupp external table
@@ -352,17 +355,17 @@ class TpchLoader(object):
                              PS_SUPPLYCOST  DECIMAL(15,2)  ,
                              PS_COMMENT     VARCHAR(199) ) 
                         execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T S -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
-                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
+                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to partsupp table from e_partsupp table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_time = datetime.now()
             duration = end_time - beg_time
@@ -397,7 +400,7 @@ class TpchLoader(object):
                              C_COMMENT     VARCHAR(117) NOT NULL) WITH (%s);'''%(table_name, self.sql_suffix)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create customer external table
@@ -406,7 +409,7 @@ class TpchLoader(object):
                                 N_REGIONKEY  INTEGER ,
                                 N_COMMENT    VARCHAR(152)) 
                             execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"'
-                            on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale)
+                            on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor)
 
             cmd = '''CREATE EXTERNAL WEB TABLE %s ( C_CUSTKEY     INTEGER ,
                              C_NAME        VARCHAR(25) ,
@@ -417,17 +420,17 @@ class TpchLoader(object):
                              C_MKTSEGMENT  CHAR(10) ,
                              C_COMMENT     VARCHAR(117) ) 
                         execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T c -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
-                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale, self.npsegs, self.npsegs)
+                        on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to customer table from e_customer table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_time = datetime.now()
             duration = end_time - beg_time
@@ -465,7 +468,7 @@ class TpchLoader(object):
                 cmd = cmd + self.get_partition_suffix(128, table_name)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create orders external table
@@ -480,18 +483,18 @@ class TpchLoader(object):
                            O_COMMENT        VARCHAR(79) ) 
                         execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T O -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
                         on %s format 'text' (delimiter '|')
-                        log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale, self.npsegs, self.npsegs, table_name)
+                        log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs, table_name)
 
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to orders table from e_orders table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_time = datetime.now()
             duration = end_time - beg_time
@@ -536,7 +539,7 @@ class TpchLoader(object):
                 cmd = cmd + self.get_partition_suffix(128, table_name)
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # create lineitem external table
@@ -558,18 +561,18 @@ class TpchLoader(object):
                               L_COMMENT      VARCHAR(44) )
                               EXECUTE 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T L -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"' 
                               on %s format 'text' (delimiter '|')
-                              log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale, self.npsegs, self.npsegs, table_name)
+                              log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs, table_name)
 
 
             self.output(cmd)
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
 
             # insert data to lineitem table from e_lineitem table
             cmd = '''INSERT INTO %s SELECT * FROM %s;'''%(table_name, e_table_name)
             self.output(cmd)
             beg_time = datetime.now()
-            result = self.run_query(cmd)
+            result = self.run_sql(cmd)
             self.output(result)
             end_time = datetime.now()
             duration = end_time - beg_time
