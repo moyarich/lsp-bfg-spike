@@ -33,9 +33,9 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from Config import Config
+    from Config import config
 except ImportError:
-    sys.stderr.write('LSP needs Config in lib/Config.py\n')
+    sys.stderr.write('LSP needs config in lib/Config.py\n')
     sys.exit(2)
 
 
@@ -51,12 +51,12 @@ class Tpch(Workload):
         self.data_volume_type = ts['data_volume_type'].upper()
         self.data_volume_size = ts['data_volume_size']
         
-        self.nsegs = Config().getNPrimarySegments()
+        self.nsegs = config.getNPrimarySegments()
         self.scale_factor = 1
         if self.data_volume_type == 'TOTAL':
             self.scale_factor = self.data_volume_size
         elif self.data_volume_type == 'PER_NODE':
-            nnodes = len(Config().getSegHostNames())
+            nnodes = len(config.getSegHostNames())
             self.scale_factor = self.data_volume_size * nnodes
         elif self.data_volume_type == 'PER_SEGMENT':
             self.scale_factor = self.data_volume_size * self.nsegs

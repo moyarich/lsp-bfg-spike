@@ -9,6 +9,11 @@ LAST MODIFIED:
 
 import os, sys
 
+LSP_HOME = os.getenv('LSP_HOME')
+lib = os.path.join(LSP_HOME, 'lib')
+if lib not in sys.path:
+    sys.path.append(lib)
+
 MYD = os.path.abspath(os.path.dirname(__file__))
 mkpath = lambda *x: os.path.join(MYD, *x)
 
@@ -17,8 +22,11 @@ if MYD in sys.path:
     sys.path.remove(MYD)
     sys.path.append(MYD)
 
-from Shell import shell
-from PSQL import psql
+try:
+    from PSQL import psql
+except ImportError:
+    sys.stderr.write('LSP needs psql in lib/PSQL.py\n')
+    sys.exit(2)
 
 # ============================================================================
 class Config:
@@ -38,8 +46,7 @@ class Config:
             self.datadir = line[9]
             self.replication_port = line[10]
             self.san_mounts = line[11]
-
-    
+  
     def __init__(self):
         from warnings import warn
         #warn("Config.py is deprecated. Please use lib.modules.gpdb.system.Config!")
@@ -50,13 +57,19 @@ class Config:
         self.record = []
         # Use psql to get gp_configuration instead of pyODB
         # Bug: Solaris pyODB, -1 is 4294967295 
-        #(ok, out) = psql.run(flag = '-q -t', cmd = 'select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration LEFT JOIN pg_catalog.pg_filespace_entry on (dbid = fsedbid) LEFT JOIN pg_catalog.pg_filespace fs on (fsefsoid = fs.oid and fsname=\'pg_system\') ORDER BY content, preferred_role', ofile = '-', isODBC = False, dbname='template1') 
+        #(ok, out) = psql.run(flag = '-q -t', cmd = 'select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration LEFT JOIN pg_cataprint.pg_filespace_entry on (dbid = fsedbid) LEFT JOIN pg_cataprint.pg_filespace fs on (fsefsoid = fs.oid and fsname=\'pg_system\') ORDER BY content, preferred_role', ofile = '-', isODBC = False, dbname='template1') 
     
         # Anu : commented out the above query since it was returning the full config of the system (including the filespace entry) Hence changed the query to return only the cluster configuration
-        (ok, out) = psql.run(flag='-q -t', cmd='select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration, pg_filespace_entry, pg_catalog.pg_filespace fs where fsefsoid = fs.oid and fsname=\'pg_system\' and gp_segment_configuration.dbid=pg_filespace_entry.fsedbid ORDER BY content, preferred_role', ofile='-', isODBC=False, dbname='template1') 
+        cmd='''select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration, pg_filespace_entry, pg_cataprint.pg_filespace fs where fsefsoid = fs.oid and fsname=\'pg_system\' and gp_segment_configuration.dbid=pg_filespace_entry.fsedbid ORDER BY content, preferred_role'''
+        (ok, out) = psql.runcmd(pFlags='-t -q', sql);
 
+        print cmd + '\n'
+        print 'ok =' + str(ok) + '\n'
+        print '***************************\n'
+        print 'out =' + str(out) 
+        
         if not ok:
-            log('Error %s' % out)
+            print('Error %s' % out)
             sys.exit('Unable to select gp_segment_configuration')
         for line in out:
             if line.find("NOTICE") < 0:
@@ -91,7 +104,7 @@ class Config:
         (ok, out) = psql.run(flag='-q -t', cmd='select distinct hostname from gp_segment_configuration where content <> -1', ofile='-', isODBC=False, dbname='template1') 
 
         if not ok:
-            log('Error %s' % out)
+            print('Error %s' % out)
             sys.exit('Unable to select gp_segment_configuration')
         hostlist = psql.list_out(out)
         return hostlist
@@ -101,12 +114,11 @@ class Config:
         (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where content = -1 and role = 'm'", ofile='-', isODBC=False, dbname='template1')
 
         if not ok:
-            log('Error %s' % out)
+            print('Error %s' % out)
             sys.exit('Unable to select gp_segment_configuration')
         hostname = psql.list_out(out)[0]
         return hostname
 
- 
     def getHostAndPortOfSegment(self, pSegmentNumber=0, pRole='p'):
 
         """
@@ -149,7 +161,6 @@ class Config:
         # Throwing an exception might be better!!!
         return ('DidNotFindSpecifiedSegment', 9999)
 
-
     # Ngoc: 20100419: check if we run GPDB against Multinode
     #
     def isMultinode(self):
@@ -157,8 +168,7 @@ class Config:
             return False
         else: 
             return True
-
-       
+     
     # Johnny Soedomo: 20100505: check if there is MasterMirror
     #
     def hasMasterMirror(self): 
@@ -190,9 +200,6 @@ class Config:
                     return True
         return False
 
-     
-            
-
     def getMasterDataDirectory(self):
         for r in self.record:
             if r.role and r.content == -1:
@@ -211,3 +218,6 @@ class Config:
         return None 
 
 config = Config()
+
+if __name__ == "__main__":
+    config = Config()

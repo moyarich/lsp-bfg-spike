@@ -18,7 +18,7 @@ workloads_content:
           compression_type: QuickLZ
           compression_level: 1
           partitions: 0
-      load_data_flag: false
+      load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
