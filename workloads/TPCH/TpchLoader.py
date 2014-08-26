@@ -24,7 +24,7 @@ except ImportError:
 
 class TpchLoader(object):
     def __init__(self, database_name = 'gpadmin', user = 'gpadmin', \
-        scale_factor = 1, nsegs = 1, nappend_only = True, orientation= 'ROW', page_size = 1048576, \
+        scale_factor = 1, nsegs = 1, append_only = True, orientation= 'ROW', page_size = 1048576, \
         row_group_size = 8388608, compression_type = None, compression_level = None, partitions = None, \
         tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
         tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log',\
@@ -49,8 +49,6 @@ class TpchLoader(object):
         self.error_file = error_file
         self.report_file = report_file
         
-
-
         # connect to db
         try: 
             self.cnx = pg.connect(dbname = self.database_name)
@@ -99,7 +97,6 @@ class TpchLoader(object):
                 '''
         return part
         
-
     def run_sql(self, sql):
         out = self.cnx.query(sql)
         if out == None:
@@ -109,12 +106,14 @@ class TpchLoader(object):
     def drop_table(self, table_name):
         sql = 'DROP TABLE IF EXISTS %s CASCADE;' % (table_name)
         self.output(sql)
-        self.run_sql(sql)
+        result = self.run_sql(sql)
+        self.output(result)
 
     def drop_external_table(self, table_name):
         sql = 'DROP EXTERNAL WEB TABLE IF EXISTS %s;' % (table_name)
         self.output(sql)
-        self.run_sql(sql)
+        result = self.run_sql(sql)
+        self.output(result)
 
     def create_load_nation_table(self):
         # drop table if exist
@@ -152,7 +151,7 @@ class TpchLoader(object):
             beg_time = datetime.now()
             result = self.run_sql(cmd)
             self.output(result)
-            end_timne = datetime.now()
+            end_time = datetime.now()
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -276,8 +275,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for supplier:')
         self.report('-- Start loading data for supplier:')
         try:
-            table_name = 'supplier' + self.tbl_suffix
-            e_table_name = 'e_' + 'supplier' + self.tbl_suffix
+            table_name = 'supplier_' + self.tbl_suffix
+            e_table_name = 'e_' + 'supplier_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -330,7 +329,7 @@ class TpchLoader(object):
     def create_load_partsupp_table(self):
         # drop table if exist
         self.output('-- Start loading data for partsupp:')
-        self.output('-- Report loading data for partsupp:')
+        self.report('-- Report loading data for partsupp:')
         try:
             table_name = 'partsupp_' + self.tbl_suffix
             e_table_name = 'e_' + 'partsupp_' + self.tbl_suffix
@@ -404,13 +403,6 @@ class TpchLoader(object):
             self.output(result)
 
             # create customer external table
-            cmd = '''CREATE EXTERNAL WEB TABLE %s (N_NATIONKEY  INTEGER ,
-                                N_NAME       CHAR(25) ,
-                                N_REGIONKEY  INTEGER ,
-                                N_COMMENT    VARCHAR(152)) 
-                            execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"'
-                            on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor)
-
             cmd = '''CREATE EXTERNAL WEB TABLE %s ( C_CUSTKEY     INTEGER ,
                              C_NAME        VARCHAR(25) ,
                              C_ADDRESS     VARCHAR(40) ,
@@ -419,7 +411,7 @@ class TpchLoader(object):
                              C_ACCTBAL     DECIMAL(15,2) ,
                              C_MKTSEGMENT  CHAR(10) ,
                              C_COMMENT     VARCHAR(117) ) 
-                        execute 'bash -c \'$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T c -s %s -N %s -n $((GP_SEGMENT_ID + 1))\''
+                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T c -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
                         on %s format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs)
 
             self.output(cmd)
@@ -464,7 +456,7 @@ class TpchLoader(object):
                            O_CLERK          CHAR(15) NOT NULL,
                            O_SHIPPRIORITY   INTEGER NOT NULL,
                            O_COMMENT        VARCHAR(79) NOT NULL) WITH (%s);'''%(table_name, self.sql_suffix)
-            if self.partition:
+            if self.partitions:
                 cmd = cmd + self.get_partition_suffix(128, table_name)
 
             self.output(cmd)
@@ -513,8 +505,8 @@ class TpchLoader(object):
         self.output('-- Start loading data for lineitem:')
         self.report('-- Start loading data for lineitem:')
         try:
-            table_name = 'lineitem' + self.tbl_suffix
-            e_table_name = 'e_' + 'lineitem' + self.tbl_suffix
+            table_name = 'lineitem_' + self.tbl_suffix
+            e_table_name = 'e_' + 'lineitem_' + self.tbl_suffix
             self.drop_table(table_name)
             self.drop_external_table(e_table_name)
 
@@ -535,7 +527,7 @@ class TpchLoader(object):
                               L_SHIPINSTRUCT CHAR(25) NOT NULL,
                               L_SHIPMODE     CHAR(10) NOT NULL,
                               L_COMMENT      VARCHAR(44) NOT NULL) WITH (%s);'''%(table_name, self.sql_suffix)
-            if self.partition:
+            if self.partitions:
                 cmd = cmd + self.get_partition_suffix(128, table_name)
 
             self.output(cmd)

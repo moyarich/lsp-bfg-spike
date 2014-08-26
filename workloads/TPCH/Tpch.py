@@ -32,12 +32,6 @@ except ImportError:
     sys.stderr.write('LSP needs psql in lib/PSQL.py\n')
     sys.exit(2)
 
-try:
-    from Config import config
-except ImportError:
-    sys.stderr.write('LSP needs config in lib/Config.py\n')
-    sys.exit(2)
-
 
 class Tpch(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory): 
@@ -51,7 +45,7 @@ class Tpch(Workload):
         self.data_volume_type = ts['data_volume_type'].upper()
         self.data_volume_size = ts['data_volume_size']
         
-        self.nsegs = config.getNPrimarySegments()
+        self.nsegs = 2 #config.getNPrimarySegments()
         self.scale_factor = 1
         if self.data_volume_type == 'TOTAL':
             self.scale_factor = self.data_volume_size
