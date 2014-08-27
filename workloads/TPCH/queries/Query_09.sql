@@ -1,22 +1,22 @@
 -- start ignore
 explain
 select
- TABLESUFFIX_nation,
+ nation_TABLESUFFIX,
  o_year,
  sum(amount) as sum_profit
 from
  (
  select
- n_name as TABLESUFFIX_nation,
+ n_name as nation_TABLESUFFIX,
  extract(year from o_orderdate) as o_year,
  l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
  from
- TABLESUFFIX_part,
- TABLESUFFIX_supplier,
- TABLESUFFIX_lineitem,
- TABLESUFFIX_partsupp,
- TABLESUFFIX_orders,
- TABLESUFFIX_nation
+ part_TABLESUFFIX,
+ supplier_TABLESUFFIX,
+ lineitem_TABLESUFFIX,
+ partsupp_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ nation_TABLESUFFIX
  where
  s_suppkey = l_suppkey
  and ps_suppkey = l_suppkey
@@ -27,30 +27,30 @@ from
  and p_name like '%aquamarine%'
  ) as profit
 group by
- TABLESUFFIX_nation,
+ nation_TABLESUFFIX,
  o_year
 order by
- TABLESUFFIX_nation,
+ nation_TABLESUFFIX,
  o_year desc;
 -- end ignore
 
 select
- TABLESUFFIX_nation,
+ nation_TABLESUFFIX,
  o_year,
  sum(amount) as sum_profit
 from
  (
  select
- n_name as TABLESUFFIX_nation,
+ n_name as nation_TABLESUFFIX,
  extract(year from o_orderdate) as o_year,
  l_extendedprice * (1 - l_discount) - ps_supplycost * l_quantity as amount
  from
- TABLESUFFIX_part,
- TABLESUFFIX_supplier,
- TABLESUFFIX_lineitem,
- TABLESUFFIX_partsupp,
- TABLESUFFIX_orders,
- TABLESUFFIX_nation
+ part_TABLESUFFIX,
+ supplier_TABLESUFFIX,
+ lineitem_TABLESUFFIX,
+ partsupp_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ nation_TABLESUFFIX
  where
  s_suppkey = l_suppkey
  and ps_suppkey = l_suppkey
@@ -61,8 +61,8 @@ from
  and p_name like '%aquamarine%'
  ) as profit
 group by
- TABLESUFFIX_nation,
+ nation_TABLESUFFIX,
  o_year
 order by
- TABLESUFFIX_nation,
+ nation_TABLESUFFIX,
  o_year desc;

@@ -140,7 +140,7 @@ class TpchLoader(object):
                                 N_NAME       CHAR(25) ,
                                 N_REGIONKEY  INTEGER ,
                                 N_COMMENT    VARCHAR(152)) 
-                            execute 'bash -c \"/usr/local/hawq/bin/dbgen -b /usr/local/hawq/bin/dists.dss -T n -s %s\"' 
+                            execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s %s\"' 
                             on 1 format 'text' (delimiter '|');'''%(e_table_name, self.scale_factor)
             self.output(cmd)
             result = self.run_sql(cmd)
@@ -474,7 +474,7 @@ class TpchLoader(object):
                            O_CLERK          CHAR(15) ,
                            O_SHIPPRIORITY   INTEGER ,
                            O_COMMENT        VARCHAR(79) ) 
-                        execute 'bash -c \"/usr/local/hawq/bin/dbgen -b /usr/local/hawq/bin/dists.dss -T O -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
+                        execute 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T O -s %s -N %s -n $((GP_SEGMENT_ID + 1))\"'
                         on %s format 'text' (delimiter '|')
                         log errors into %s_errtbl segment reject limit 100 percent;'''%(e_table_name, self.scale_factor, self.nsegs, self.nsegs, table_name)
 

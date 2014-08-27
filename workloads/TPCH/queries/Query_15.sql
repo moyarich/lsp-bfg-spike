@@ -7,7 +7,7 @@ select
  s_phone,
  total_revenue
 from
- TABLESUFFIX_supplier,
+ supplier_TABLESUFFIX,
  revenue
 where
  s_suppkey = supplier_no
@@ -28,7 +28,7 @@ select
  s_phone,
  total_revenue
 from
- TABLESUFFIX_supplier,
+ supplier_TABLESUFFIX,
  revenue
 where
  s_suppkey = supplier_no

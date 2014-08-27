@@ -6,9 +6,9 @@ select
  o_orderdate,
  o_shippriority
 from
- TABLESUFFIX_customer,
- TABLESUFFIX_orders,
- TABLESUFFIX_lineitem
+ customer_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ lineitem_TABLESUFFIX
 where
  c_mktsegment = 'FURNITURE'
  and c_custkey = o_custkey
@@ -31,9 +31,9 @@ select
  o_orderdate,
  o_shippriority
 from
- TABLESUFFIX_customer,
- TABLESUFFIX_orders,
- TABLESUFFIX_lineitem
+ customer_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ lineitem_TABLESUFFIX
 where
  c_mktsegment = 'FURNITURE'
  and c_custkey = o_custkey

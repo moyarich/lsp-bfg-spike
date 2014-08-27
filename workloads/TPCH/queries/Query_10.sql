@@ -10,10 +10,10 @@ select
  c_phone,
  c_comment
 from
- TABLESUFFIX_customer,
- TABLESUFFIX_orders,
- TABLESUFFIX_lineitem,
- TABLESUFFIX_nation
+ customer_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ lineitem_TABLESUFFIX,
+ nation_TABLESUFFIX
 where
  c_custkey = o_custkey
  and l_orderkey = o_orderkey
@@ -45,10 +45,10 @@ select
  c_phone,
  c_comment
 from
- TABLESUFFIX_customer,
- TABLESUFFIX_orders,
- TABLESUFFIX_lineitem,
- TABLESUFFIX_nation
+ customer_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ lineitem_TABLESUFFIX,
+ nation_TABLESUFFIX
 where
  c_custkey = o_custkey
  and l_orderkey = o_orderkey

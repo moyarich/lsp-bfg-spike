@@ -8,15 +8,15 @@ select
  o_totalprice,
  sum(l_quantity)
 from
- TABLESUFFIX_customer,
- TABLESUFFIX_orders,
- TABLESUFFIX_lineitem
+ customer_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ lineitem_TABLESUFFIX
 where
  o_orderkey in (
  select
  l_orderkey
  from
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
  group by
  l_orderkey having
  sum(l_quantity) > 314
@@ -43,15 +43,15 @@ select
  o_totalprice,
  sum(l_quantity)
 from
- TABLESUFFIX_customer,
- TABLESUFFIX_orders,
- TABLESUFFIX_lineitem
+ customer_TABLESUFFIX,
+ orders_TABLESUFFIX,
+ lineitem_TABLESUFFIX
 where
  o_orderkey in (
  select
  l_orderkey
  from
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
  group by
  l_orderkey having
  sum(l_quantity) > 314

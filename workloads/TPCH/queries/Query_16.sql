@@ -6,8 +6,8 @@ select
  p_size,
  count(distinct ps_suppkey) as supplier_cnt
 from
- TABLESUFFIX_partsupp,
- TABLESUFFIX_part
+ partsupp_TABLESUFFIX,
+ part_TABLESUFFIX
 where
  p_partkey = ps_partkey
  and p_brand <> 'Brand#45'
@@ -17,7 +17,7 @@ where
  select
  s_suppkey
  from
- TABLESUFFIX_supplier
+ supplier_TABLESUFFIX
  where
  s_comment like '%Customer%Complaints%'
  )
@@ -39,8 +39,8 @@ select
  p_size,
  count(distinct ps_suppkey) as supplier_cnt
 from
- TABLESUFFIX_partsupp,
- TABLESUFFIX_part
+ partsupp_TABLESUFFIX,
+ part_TABLESUFFIX
 where
  p_partkey = ps_partkey
  and p_brand <> 'Brand#45'
@@ -50,7 +50,7 @@ where
  select
  s_suppkey
  from
- TABLESUFFIX_supplier
+ supplier_TABLESUFFIX
  where
  s_comment like '%Customer%Complaints%'
  )

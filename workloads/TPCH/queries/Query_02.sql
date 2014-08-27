@@ -10,11 +10,11 @@ select
  s_phone,
  s_comment
 from
- TABLESUFFIX_part,
- TABLESUFFIX_supplier,
- TABLESUFFIX_partsupp,
- TABLESUFFIX_nation,
- TABLESUFFIX_region
+ part_TABLESUFFIX,
+ supplier_TABLESUFFIX,
+ partsupp_TABLESUFFIX,
+ nation_TABLESUFFIX,
+ region_TABLESUFFIX
 where
  p_partkey = ps_partkey
  and s_suppkey = ps_suppkey
@@ -27,10 +27,10 @@ where
  select
  min(ps_supplycost)
  from
- TABLESUFFIX_partsupp,
- TABLESUFFIX_supplier,
- TABLESUFFIX_nation,
- TABLESUFFIX_region
+ partsupp_TABLESUFFIX,
+ supplier_TABLESUFFIX,
+ nation_TABLESUFFIX,
+ region_TABLESUFFIX
  where
  p_partkey = ps_partkey
  and s_suppkey = ps_suppkey
@@ -56,11 +56,11 @@ select
  s_phone,
  s_comment
 from
- TABLESUFFIX_part,
- TABLESUFFIX_supplier,
- TABLESUFFIX_partsupp,
- TABLESUFFIX_nation,
- TABLESUFFIX_region
+ part_TABLESUFFIX,
+ supplier_TABLESUFFIX,
+ partsupp_TABLESUFFIX,
+ nation_TABLESUFFIX,
+ region_TABLESUFFIX
 where
  p_partkey = ps_partkey
  and s_suppkey = ps_suppkey
@@ -73,10 +73,10 @@ where
  select
  min(ps_supplycost)
  from
- TABLESUFFIX_partsupp,
- TABLESUFFIX_supplier,
- TABLESUFFIX_nation,
- TABLESUFFIX_region
+ partsupp_TABLESUFFIX,
+ supplier_TABLESUFFIX,
+ nation_TABLESUFFIX,
+ region_TABLESUFFIX
  where
  p_partkey = ps_partkey
  and s_suppkey = ps_suppkey

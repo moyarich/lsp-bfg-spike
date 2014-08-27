@@ -3,8 +3,8 @@ explain
 select
  sum(l_extendedprice) / 7.0 as avg_yearly
 from
- TABLESUFFIX_lineitem,
- TABLESUFFIX_part
+ lineitem_TABLESUFFIX,
+ part_TABLESUFFIX
 where
  p_partkey = l_partkey
  and p_brand = 'Brand#54'
@@ -13,7 +13,7 @@ where
  select
  0.2 * avg(l_quantity)
  from
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
  where
  l_partkey = p_partkey
  );
@@ -22,8 +22,8 @@ where
 select
  sum(l_extendedprice) / 7.0 as avg_yearly
 from
- TABLESUFFIX_lineitem,
- TABLESUFFIX_part
+ lineitem_TABLESUFFIX,
+ part_TABLESUFFIX
 where
  p_partkey = l_partkey
  and p_brand = 'Brand#54'
@@ -32,7 +32,7 @@ where
  select
  0.2 * avg(l_quantity)
  from
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
  where
  l_partkey = p_partkey
  );

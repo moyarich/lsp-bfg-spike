@@ -4,15 +4,15 @@ select
  s_name,
  s_address
 from
- TABLESUFFIX_supplier,
- TABLESUFFIX_nation
+ supplier_TABLESUFFIX,
+ nation_TABLESUFFIX
 where
  s_suppkey in (
  select
  distinct (ps_suppkey)
  from
- TABLESUFFIX_partsupp,
- TABLESUFFIX_part
+ partsupp_TABLESUFFIX,
+ part_TABLESUFFIX
  where
  ps_partkey=p_partkey
  and p_name like 'blush%'
@@ -20,7 +20,7 @@ where
  select
  0.5 * sum(l_quantity)
  from
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
  where
  l_partkey = ps_partkey
  and l_suppkey = ps_suppkey
@@ -38,15 +38,15 @@ select
  s_name,
  s_address
 from
- TABLESUFFIX_supplier,
- TABLESUFFIX_nation
+ supplier_TABLESUFFIX,
+ nation_TABLESUFFIX
 where
  s_suppkey in (
  select
  distinct (ps_suppkey)
  from
- TABLESUFFIX_partsupp,
- TABLESUFFIX_part
+ partsupp_TABLESUFFIX,
+ part_TABLESUFFIX
  where
  ps_partkey=p_partkey
  and p_name like 'blush%'
@@ -54,7 +54,7 @@ where
  select
  0.5 * sum(l_quantity)
  from
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
  where
  l_partkey = ps_partkey
  and l_suppkey = ps_suppkey

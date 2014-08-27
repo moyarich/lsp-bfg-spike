@@ -10,7 +10,7 @@ from
  substr(c_phone, 1, 2) as cntrycode,
  c_acctbal
  from
- TABLESUFFIX_customer
+ customer_TABLESUFFIX
  where
  substr(c_phone, 1, 2) in
  ('15', '29', '27', '17', '31', '22', '19')
@@ -18,7 +18,7 @@ from
  select
  avg(c_acctbal)
  from
- TABLESUFFIX_customer
+ customer_TABLESUFFIX
  where
  c_acctbal > 0.00
  and substr(c_phone, 1, 2) in
@@ -28,7 +28,7 @@ from
  select
  *
  from
- TABLESUFFIX_orders
+ orders_TABLESUFFIX
  where
  o_custkey = c_custkey
  )
@@ -49,7 +49,7 @@ from
  substr(c_phone, 1, 2) as cntrycode,
  c_acctbal
  from
- TABLESUFFIX_customer
+ customer_TABLESUFFIX
  where
  substr(c_phone, 1, 2) in
  ('15', '29', '27', '17', '31', '22', '19')
@@ -57,7 +57,7 @@ from
  select
  avg(c_acctbal)
  from
- TABLESUFFIX_customer
+ customer_TABLESUFFIX
  where
  c_acctbal > 0.00
  and substr(c_phone, 1, 2) in
@@ -67,7 +67,7 @@ from
  select
  *
  from
- TABLESUFFIX_orders
+ orders_TABLESUFFIX
  where
  o_custkey = c_custkey
  )
