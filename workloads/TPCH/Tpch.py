@@ -96,7 +96,7 @@ class Tpch(Workload):
             tbl_suffix = tbl_suffix + 'ao'
             sql_suffix = sql_suffix + 'appendonly = true'
         else:
-            tbl_suffix = tbl_suffix + '_heap'
+            tbl_suffix = tbl_suffix + 'heap'
             sql_suffix = sql_suffix + 'appendonly = false'
 
         tbl_suffix = tbl_suffix + '_' + self.orientation
@@ -132,7 +132,7 @@ class Tpch(Workload):
             self.output( '[INFO] %s skip data load... '% self.workload_name )
             return True
         # load all 8 tables 
-        tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer']
+        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem']
         loader = TpchLoader(database_name = self.database_name, user = self.user, \
                             scale_factor = self.scale_factor, nsegs = self.nsegs, append_only = self.append_only, orientation = self.orientation, \
                             page_size = self.page_size, row_group_size = self.row_group_size, \
@@ -144,7 +144,7 @@ class Tpch(Workload):
 
         # create revenue  view 
         query  = 'DROP VIEW IF EXISTS revenue;'
-        (result, out) = psql.runcmd(query, dbname = self.database_name)
+        (result, out) = psql.runcmd(cmd = query, dbname = self.database_name)
         if not result:
             self.error( '%s \n failed %s\n'%(query, out) )
             return False
@@ -161,7 +161,7 @@ class Tpch(Workload):
                          group by
                          l_suppkey;
                 '''%('lineitem_' + self.table_suffix)
-        (result, out) = psql.runcmd(query, dbname = self.database_name)
+        (result, out) = psql.runcmd(cmd = query, dbname = self.database_name)
         if not result:
             self.error( '%s \n failed %s\n'%(query, out) )
             return False

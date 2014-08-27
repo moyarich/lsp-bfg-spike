@@ -48,8 +48,6 @@ class Config:
             self.san_mounts = line[11]
   
     def __init__(self):
-        from warnings import warn
-        #warn("Config.py is deprecated. Please use lib.modules.gpdb.system.Config!")
         self.record = []
         self.fill()
     
@@ -61,7 +59,7 @@ class Config:
     
         # Anu : commented out the above query since it was returning the full config of the system (including the filespace entry) Hence changed the query to return only the cluster configuration
         cmd='''select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration, pg_filespace_entry, pg_cataprint.pg_filespace fs where fsefsoid = fs.oid and fsname=\'pg_system\' and gp_segment_configuration.dbid=pg_filespace_entry.fsedbid ORDER BY content, preferred_role'''
-        (ok, out) = psql.runcmd(pFlags='-t -q', sql);
+        (ok, out) = psql.runcmd(cmd = cmd, dbname='template1', ofile = '-', pFlags = '-t -q');
 
         print cmd + '\n'
         print 'ok =' + str(ok) + '\n'
@@ -71,11 +69,11 @@ class Config:
         if not ok:
             print('Error %s' % out)
             sys.exit('Unable to select gp_segment_configuration')
-        for line in out:
-            if line.find("NOTICE") < 0:
-                line = line.strip()
-                if line:
-                    self.record.append(Config.Record(line))
+   #     for line in out:
+    #        if line.find("NOTICE") < 0:
+     #           line = line.strip()
+      #          if line:
+       #             self.record.append(Config.Record(line))
     
     def get(self):
         return self.record
@@ -216,8 +214,6 @@ class Config:
                 print r.dbid
                 return r.hostname
         return None 
-
-config = Config()
 
 if __name__ == "__main__":
     config = Config()

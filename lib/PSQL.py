@@ -68,8 +68,8 @@ class PSQL:
         print self.__class__.__name__
 
     def run(self, dbname = None, ifile = None, ofile = None, cmd = None, 
-            flag = '-e', timeout=900, username = None, PGOPTIONS = None,
-            host = None, port = None, background = False):
+        flag = '-e', timeout = 900, username = None, PGOPTIONS = None,
+        host = None, port = None, background = False):
         '''
         Run a command or file against psql. Return True if OK.
         @param dbname: database name
@@ -127,8 +127,8 @@ class PSQL:
                                 (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), 
                                  timeout=timeout)
 
-    def runcmd(self, cmd, dbname=None, ofile = '-', pFlags = '-t -q', username=None,
-               PGOPTIONS=None, host = None, port = None, background=False):
+    def runcmd(self, cmd, dbname = None, ofile = '-', pFlags = '-t -q', username = None,
+        PGOPTIONS = None, host = None, port = None, background = False):
         '''
         Run command, psql -c cmd
         @param cmd: command line
@@ -139,13 +139,13 @@ class PSQL:
         @param port: port
 
         '''
-        return self.run(cmd = cmd, dbname = dbname, ofile = ofile, flag=pFlags, username=username, 
-                        PGOPTIONS=PGOPTIONS, host = host, port = port, background=background)
+        return self.run(cmd = cmd, dbname = dbname, ofile = ofile, flag = pFlags, username = username, 
+                        PGOPTIONS = PGOPTIONS, host = host, port = port, background = background)
 
 
-    def runfile(self, ifile, flag='', timeout=900, dbname=None, outputPath="", outputFile="", 
-                username=None, password=None, PGOPTIONS=None, host = None, port = None,
-                background=False):
+    def runfile(self, ifile, flag='', timeout = 900, dbname = None, outputPath = "", outputFile = "", 
+        username = None, password = None, PGOPTIONS = None, host = None, port = None,
+        background = False):
         '''
         Run SQL File, psql -f ifile
         @param ifile: Input File
@@ -159,14 +159,14 @@ class PSQL:
         if not psql.SKIP:
             if len(outputFile) == 0:
                 (ok, out) = self.run(ifile = ifile, ofile = outFile(ifile, outputPath), flag = flag, 
-                                     timeout=timeout, dbname=dbname, username=username, password=password, 
-                                     PGOPTIONS=PGOPTIONS, host = host, port = port,
-                                     background=background)
+                                     timeout = timeout, dbname = dbname, username = username, password = password, 
+                                     PGOPTIONS = PGOPTIONS, host = host, port = port,
+                                     background = background)
             else:
                 (ok, out) = self.run(ifile = ifile, ofile = outFile(outputFile, outputPath), flag = flag, 
-                                     timeout=timeout, dbname=dbname, username=username, password=password, 
-                                     PGOPTIONS=PGOPTIONS, host = host, port = port,
-                                     background=background)
+                                     timeout = timeout, dbname = dbname, username = username, password = password, 
+                                     PGOPTIONS = PGOPTIONS, host = host, port = port,
+                                     background = background)
             return (ok, out)
         return True
     
@@ -180,9 +180,7 @@ class PSQL:
                test_list.append(test)
         return test_list
 
-
 psql = PSQL()
-
 
 if __name__ == "__main__":
     psql = PSQL()
