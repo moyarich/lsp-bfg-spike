@@ -21,7 +21,7 @@ SELECT
  SUM((l_quantity * 2) / (l_linenumber *3)),
  COUNT(*)
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 WHERE
  l_linenumber > 2
 GROUP BY
@@ -55,7 +55,7 @@ SELECT
  SUM((l_quantity * 2) / (l_linenumber *3)),
  COUNT(*)
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 WHERE
  l_linenumber > 2
 GROUP BY

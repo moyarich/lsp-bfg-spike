@@ -1,18 +1,18 @@
 -- START_IGNORE
 EXPLAIN
 SELECT
- AVG(a.p_retailprice * b.l_quantity) as avg_total_price
+ AVG(p.p_retailprice * l.l_quantity) as avg_total_price
 FROM
- partTABLESUFFIX_part a,
- lineitemTABLESUFFIX_lineitem b
+ part_TABLESUFFIX_part p,
+ lineitem_TABLESUFFIX l
 WHERE
- partTABLESUFFIa.p_partkey = lineitemTABLESUFFIb.l_partkey;
+ p.p_partkey = l.l_partkey;
 -- END_IGNORE
 
 SELECT
- AVG(a.p_retailprice * b.l_quantity) AS avg_total_price
+ AVG(p.p_retailprice * l.l_quantity) AS avg_total_price
 FROM
- TABLESUFFIX_part a,
- TABLESUFFIX_lineitem b
+ part_TABLESUFFIX p,
+ lineitem_TABLESUFFIX l
 WHERE
- a.p_partkey = b.l_partkey;
+ p.p_partkey = l.l_partkey;

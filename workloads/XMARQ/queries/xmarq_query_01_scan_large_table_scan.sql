@@ -3,7 +3,7 @@ EXPLAIN
 SELECT
  *
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 WHERE
  l_linenumber<0;
 -- END_IGNORE
@@ -11,6 +11,6 @@ WHERE
 SELECT
  *
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 WHERE
  l_linenumber<0;

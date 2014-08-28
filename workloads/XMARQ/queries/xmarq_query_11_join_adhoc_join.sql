@@ -1,18 +1,18 @@
 -- START_IGNORE
 EXPLAIN
 SELECT
- SUM(a.l_quantity) as total_quantity
+ SUM(l.l_quantity) as total_quantity
 FROM
- TABLESUFFIX_part a,
- TABLESUFFIX_lineitem b
+ part_TABLESUFFIX p,
+ lineitem_TABLESUFFIX l
 WHERE
- a.p_partkey = b.l_partkey;
+ p.p_partkey = l.l_partkey;
 -- END_IGNORE
 
 SELECT
- SUM(a.l_quantity) as total_quantity
+ SUM(l.l_quantity) as total_quantity
 FROM
- TABLESUFFIX_part a,
- TABLESUFFIX_lineitem b
+ part_TABLESUFFIX p,
+ lineitem_TABLESUFFIX l
 WHERE
- a.p_partkey = b.l_partkey;
+ p.p_partkey = l.l_partkey;

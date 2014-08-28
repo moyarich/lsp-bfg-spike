@@ -1,30 +1,30 @@
 -- START_IGNORE
 EXPLAIN
 SELECT
- SUM(ct1.c_acctbal) as total_acctbal
-FROM TABLESUFFIX_customer ct1
+ SUM(c1.c_acctbal) as total_acctbal
+FROM customer_TABLESUFFIX c1
 WHERE
- ct1.c_custkey NOT IN(
+ c1.c_custkey NOT IN(
   SELECT
-   DISTINCT ct2.c_custkey
+   DISTINCT c2.c_custkey
   FROM
-   TABLESUFFIX_customer ct2,
-   TABLESUFFIX_orders ot
+   customer_TABLESUFFIX c2,
+   orders_TABLESUFFIX o
   WHERE
-   ct2.c_custkey = ot.o_custkey
+   c2.c_custkey = o.o_custkey
   ) a; 
 -- END_IGNORE
 
 SELECT
- SUM(ct1.c_acctbal) AS total_acctbal
-FROM TABLESUFFIX_customer ct1
+ SUM(c1.c_acctbal) AS total_acctbal
+FROM customer_TABLESUFFIX c1
 WHERE
- ct1.c_custkey NOT IN(
+ c1.c_custkey NOT IN(
   SELECT
-   DISTINCT ct2.c_custkey
+   DISTINCT c2.c_custkey
   FROM
-   TABLESUFFIX_customer ct2,
-   TABLESUFFIX_orders ot
+   customer_TABLESUFFIX c2,
+   orders_TABLESUFFIX o
   WHERE
-   ct2.c_custkey = ot.o_custkey
+   c2.c_custkey = o.o_custkey
   ) a;

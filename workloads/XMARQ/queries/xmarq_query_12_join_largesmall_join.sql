@@ -1,24 +1,24 @@
 -- START_IGNORE
 EXPLAIN
 SELECT
- nt.n_name,
- AVG(ct.c_acctbal) AS avg_acctbal
+ n.n_name,
+ AVG(c.c_acctbal) AS avg_acctbal
 FROM
- TABLESUFFIX_customer ct,
- TABLESUFFIX_nation nt
+ customer_TABLESUFFIX c,
+ nation_TABLESUFFIX n
 WHERE
- ct.c_nationkey = nt.n_nationkey
+ c.c_nationkey = n.n_nationkey
 GROUP BY
- nt.n_name;
+ n.n_name;
 -- END_IGNORE
 
 SELECT
- nt.n_name,
- AVG(ct.c_acctbal) AS avg_acctbal
+ n.n_name,
+ AVG(c.c_acctbal) AS avg_acctbal
 FROM
- TABLESUFFIX_customer ct,
- TABLESUFFIX_nation nt
+ customer_TABLESUFFIX c,
+ nation_TABLESUFFIX n
 WHERE
- ct.c_nationkey = nt.n_nationkey
+ c.c_nationkey = n.n_nationkey
 GROUP BY
- nt.n_name;
+ n.n_name;

@@ -5,7 +5,7 @@ SELECT
  o_orderpriority,
  AVG(o_totalprice) AS ave_o_totalprice
 FROM
-  TABLESUFFIX_orders
+  orders_TABLESUFFIX
 GROUP BY
  o_orderstatus,
  o_orderpriority;
@@ -16,7 +16,7 @@ SELECT
  o_orderpriority,
  AVG(o_totalprice) AS avg_o_totalprice
 FROM
- TABLESUFFIX_orders
+ orders_TABLESUFFIX
 GROUP BY
  o_orderstatus,
  o_orderpriority;

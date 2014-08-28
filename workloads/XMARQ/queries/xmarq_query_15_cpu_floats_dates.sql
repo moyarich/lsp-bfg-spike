@@ -3,7 +3,7 @@ EXPLAIN
 SELECT
  COUNT(*)
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 WHERE
  (l_quantity = 1.1e4
  OR l_quantity = 2.1e4
@@ -23,7 +23,7 @@ WHERE
 SELECT
  COUNT(*)
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 WHERE
  (l_quantity = 1.1e4
  OR l_quantity = 2.1e4

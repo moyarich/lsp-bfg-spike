@@ -4,7 +4,7 @@ SELECT
  l_receiptdate,
  COUNT(*) AS num
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 GROUP BY
  l_receiptdate
 ORDER BY
@@ -15,7 +15,7 @@ SELECT
  l_receiptdate,
  COUNT(*) AS num
 FROM
- TABLESUFFIX_lineitem
+ lineitem_TABLESUFFIX
 GROUP BY
  l_receiptdate
 ORDER BY
