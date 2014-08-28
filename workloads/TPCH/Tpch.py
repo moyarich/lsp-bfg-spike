@@ -142,30 +142,6 @@ class Tpch(Workload):
                             output_file = self.output_file, error_file = self.error_file, report_file = self.report_file)
         loader.load()
 
-        # create revenue  view 
-        query  = 'DROP VIEW IF EXISTS revenue;'
-        (result, out) = psql.runcmd(cmd = query, dbname = self.database_name)
-        if not result:
-            self.error( '%s \n failed %s\n'%(query, out) )
-            return False
-
-        query = '''CREATE VIEW revenue (supplier_no, total_revenue) AS
-                         select
-                         l_suppkey,
-                         sum(l_extendedprice * (1 - l_discount))
-                         from
-                         %s
-                         where
-                         l_shipdate >= date '1997-04-01'
-                         and l_shipdate < date '1997-04-01' + interval '90 days'
-                         group by
-                         l_suppkey;
-                '''%('lineitem_' + self.tbl_suffix)
-        (result, out) = psql.runcmd(cmd = query, dbname = self.database_name)
-        if not result:
-            self.error( '%s \n failed %s\n'%(query, out) )
-            return False
-
     def vacuum_analyze(self):
         pass
 

@@ -635,4 +635,5 @@ class TpchLoader(object):
         for table in self.tables:
             func = 'self.create_load_' + table + '_table'
             eval(func)()
+        self.create_view_revenue()
         self.vacuum_analyze()
