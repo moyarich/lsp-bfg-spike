@@ -1,0 +1,16 @@
+-- START_IGNORE
+EXPLAIN
+SELECT
+ AVG(p_retailprice)
+FROM
+ TABLESUFFIX_part
+WHERE
+ p_type = 'SMALL PLATED BRASS';
+-- END_IGNORE
+
+SELECT
+ AVG(p_retailprice)
+FROM
+ TABLESUFFIX_part
+WHERE
+ p_type = 'SMALL PLATED BRASS';

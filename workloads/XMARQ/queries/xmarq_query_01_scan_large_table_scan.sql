@@ -1,0 +1,16 @@
+-- START_IGNORE
+EXPLAIN
+SELECT
+ *
+FROM
+ TABLESUFFIX_lineitem
+WHERE
+ l_linenumber<0;
+-- END_IGNORE
+
+SELECT
+ *
+FROM
+ TABLESUFFIX_lineitem
+WHERE
+ l_linenumber<0;

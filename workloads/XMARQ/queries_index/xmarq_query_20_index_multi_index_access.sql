@@ -1,0 +1,18 @@
+-- START_IGNORE
+EXPLAIN
+SELECT
+ COUNT(*)
+FROM
+ TABLESUFFIX_orders
+WHERE
+ o_clerk = 'clerk#000006700'
+ OR o_orderkey = 50500;
+-- END_IGNORE
+
+SELECT
+ COUNT(*)
+FROM
+ TABLESUFFIX_orders
+WHERE
+ o_clerk = 'clerk#000006700'
+ OR o_orderkey = 50500;

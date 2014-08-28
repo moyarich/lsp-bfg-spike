@@ -1,0 +1,16 @@
+-- START_IGNORE
+EXPLAIN
+SELECT
+ DISTINCT o_clerk
+FROM
+ TABLESUFFIX_orders
+WHERE
+ o_clerk LIKE 'Clerk#0000067%';
+-- END_IGNORE
+
+SELECT
+ DISTINCT o_clerk
+FROM
+ TABLESUFFIX_orders
+WHERE
+ o_clerk LIKE 'Clerk#0000067%';
