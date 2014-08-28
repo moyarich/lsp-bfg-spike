@@ -45,7 +45,10 @@ class Tpch(Workload):
         self.data_volume_type = ts['data_volume_type'].upper()
         self.data_volume_size = ts['data_volume_size']
         
-        self.nsegs = 2 #config.getNPrimarySegments()
+        # Need to make it univerally applicable instead of hard-code number of segments
+        # config.getNPrimarySegments()
+        self.nsegs = 2
+
         self.scale_factor = 1
         if self.data_volume_type == 'TOTAL':
             self.scale_factor = self.data_volume_size
@@ -129,8 +132,9 @@ class Tpch(Workload):
            
     def load_data(self):
         if not self.load_data_flag:
-            self.output( '[INFO] %s skip data load... '% self.workload_name )
+            self.output( 'Skipping data loading for %s' % (self.workload_name))
             return True
+
         # load all 8 tables 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem']
         loader = TpchLoader(database_name = self.database_name, user = self.user, \

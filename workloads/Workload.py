@@ -129,25 +129,19 @@ class Workload(object):
             self.error( str(e) )
             exit(2)
 
-        # run all sql file under queries forder
+        # run all sql files in queries directory
         self.output('-- Start running queries for %s:' % (self.workload_name))
-        for qf in query_files:
+        for qf_name in query_files:
             beg_time = datetime.datetime.now()
-            qfh = QueryFile(os.path.join(queries_directory, qf))
-            query_file_no = str(qf)
-            # run all query in sql file
-            for q in qfh:
-                # run this query
+            qf_path = QueryFile(os.path.join(queries_directory, qf_name))
+            # run all queries in each sql file
+            for q in qf_path:
+                # run current query
                 try:
-                    q = q.replace('TABLESUFFIX',self.tbl_suffix)
-             #       print q + '**********\n'
+                    q = q.replace('TABLESUFFIX', self.tbl_suffix)
                     cnx.query(q)
                 except Exception, e:
-                    self.error(query_file_no + ' Run Fail:')
-                    self.error( 'sql:')
-                    self.error(q)
-                    self.error( 'ans:' )
-                    self.error( str(e) )
+                    self.error('Failed to run query %s: %s' % (qf_name, str(e)))
             end_time = datetime.datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds

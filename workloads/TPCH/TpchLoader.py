@@ -6,19 +6,19 @@ from datetime import datetime, date, timedelta
 try:
     from pygresql import pg
 except ImportError:
-    sys.stderr.write('LSP needs pygresql.\n')
+    sys.stderr.write('LSP needs pygresql\n')
     sys.exit(2)
 
 try:
     from utils.Log import Log
 except ImportError:
-    sys.stderr.write('LSP needs Log in lib/utils/Log.py.\n')
+    sys.stderr.write('LSP needs Log in lib/utils/Log.py\n')
     sys.exit(2)
 
 try:
     from utils.Report import Report
 except ImportError:
-    sys.stderr.write('LSP needs Report in lib/utils/Report.py.\n')
+    sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
     sys.exit(2)
 
 
@@ -28,7 +28,7 @@ class TpchLoader(object):
         scale_factor = 1, nsegs = 1, append_only = True, orientation= 'ROW', page_size = 1048576, \
         row_group_size = 8388608, compression_type = None, compression_level = None, partitions = None, \
         tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
-        tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log',\
+        tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log', \
         output_file = '/tmp/tpch_output', error_file = '/tmp/tpch_error', report_file = '/tmp/tpch_report'):
 
         self.database_name = None if database_name is None else database_name.lower()
@@ -55,13 +55,10 @@ class TpchLoader(object):
             self.cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
             cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s' % (self.database_name))
+            cnx.query('CREATE DATABASE %s;' % (self.database_name))
             cnx.close()
         finally:
             self.cnx = pg.connect(dbname = self.database_name)
-
-    def __close_database_coneection__(self):
-        self.cnx.close()
 
     def output(self, msg):
         Log(self.output_file, msg)
@@ -117,10 +114,10 @@ class TpchLoader(object):
         self.output(result)
 
     def create_load_nation_table(self):
-        # drop table if exist
         self.output('-- Start loading data for nation:')
         self.report('-- Start loading data for nation:')
         try:
+            # drop table if exist
             table_name = 'nation_' + self.tbl_suffix
             e_table_name = 'e_' + 'nation_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -165,10 +162,10 @@ class TpchLoader(object):
         self.report('-- End loading data for nation')
 
     def create_load_region_table(self):
-        # drop table if exist
         self.output('-- Start loading data for region:')
         self.report('-- Start loading data for region:')
         try:
+            # drop table if exist
             table_name = 'region_' + self.tbl_suffix
             e_table_name = 'e_' + 'region_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -212,10 +209,10 @@ class TpchLoader(object):
         self.report('-- End loading data for region')
 
     def create_load_part_table(self):
-        # drop table if exist
         self.output('-- Start loading data for part:')
         self.report('-- Start loading data for part:')
         try:
+            # drop table if exist
             table_name = 'part_' + self.tbl_suffix
             e_table_name = 'e_' + 'part_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -272,10 +269,10 @@ class TpchLoader(object):
         self.report('-- End loading data for part')
 
     def create_load_supplier_table(self):
-        # drop table if exist
         self.output('-- Start loading data for supplier:')
         self.report('-- Start loading data for supplier:')
         try:
+            # drop table if exist
             table_name = 'supplier_' + self.tbl_suffix
             e_table_name = 'e_' + 'supplier_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -328,10 +325,10 @@ class TpchLoader(object):
         self.report('-- End loading data for supplier')
 
     def create_load_partsupp_table(self):
-        # drop table if exist
         self.output('-- Start loading data for partsupp:')
         self.report('-- Report loading data for partsupp:')
         try:
+            # drop table if exist
             table_name = 'partsupp_' + self.tbl_suffix
             e_table_name = 'e_' + 'partsupp_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -380,10 +377,10 @@ class TpchLoader(object):
         self.output('-- End loading data for partsupp')
 
     def create_load_customer_table(self):
-        # drop table if exist
         self.output('-- Start loading data for customer:')
         self.report('-- Start loading data for customer:')
         try:
+            # drop table if exist
             table_name = 'customer_' + self.tbl_suffix
             e_table_name = 'e_' + 'customer_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -438,10 +435,10 @@ class TpchLoader(object):
         self.report('-- End loading data for customer')
 
     def create_load_orders_table(self):
-        # drop table if exist
         self.output('-- Start loading data for orders:')
         self.report('-- Start loading data for orders:')
         try:
+            # drop table if exist
             table_name = 'orders_' + self.tbl_suffix
             e_table_name = 'e_' + 'orders_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -502,10 +499,10 @@ class TpchLoader(object):
         self.report('-- End loading data for orders')
 
     def create_load_lineitem_table(self):
-        # drop table if exist
         self.output('-- Start loading data for lineitem:')
         self.report('-- Start loading data for lineitem:')
         try:
+            # drop table if exist
             table_name = 'lineitem_' + self.tbl_suffix
             e_table_name = 'e_' + 'lineitem_' + self.tbl_suffix
             self.drop_table(table_name)
@@ -580,15 +577,16 @@ class TpchLoader(object):
         self.report('-- End loading data for lineitem')
 
     def create_view_revenue(self):
-        # create revenue  view 
         self.output('-- Start creating revenue view:')
         self.report('-- Start creating revenue view:')
         try:
+            # drop view if exist
             cmd  = 'DROP VIEW IF EXISTS revenue;'
             self.output(cmd)
             result = self.run_sql(cmd)
             self.output(result)
 
+            # create revenue view 
             cmd = '''CREATE VIEW revenue (supplier_no, total_revenue) AS
                              select
                              l_suppkey,
