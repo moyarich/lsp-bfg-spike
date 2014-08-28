@@ -121,7 +121,7 @@ class Tpch(Workload):
         else:
             tbl_suffix += '_nopart'
 
-        self.tbl_suffix = tbl_suffix
+        self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
 
     def setup(self):

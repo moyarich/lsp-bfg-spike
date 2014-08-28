@@ -122,7 +122,13 @@ class Workload(object):
         else:
             query_files = random.shuffle(query_files)
 
-        cnx = pg.connect(dbname = self.database_name)
+        try: 
+            cnx = pg.connect(dbname = self.database_name)
+        except Exception, e:
+            self.error('Connect to Database %s is fail!' %(self.database_name))
+            self.error( str(e) )
+            exit(2)
+
         # run all sql file under queries forder
         self.output('-- Start running queries for %s:' % (self.workload_name))
         for qf in query_files:

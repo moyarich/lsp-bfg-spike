@@ -151,8 +151,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -198,8 +198,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -258,8 +258,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -314,8 +314,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -366,8 +366,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -424,8 +424,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -488,8 +488,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -566,8 +566,8 @@ class TpchLoader(object):
             self.output(cmd)
             beg_time = datetime.now()
             result = self.run_sql(cmd)
-            self.output(result)
             end_time = datetime.now()
+            self.output(result)
             duration = end_time - beg_time
             self.output('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
             self.report('Data loading for %s: %s ms' % (table_name, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
@@ -578,6 +578,45 @@ class TpchLoader(object):
 
         self.output('-- End loading data for lineitem')
         self.report('-- End loading data for lineitem')
+
+    def create_view_revenue(self):
+        # create revenue  view 
+        self.output('-- Start creating revenue view:')
+        self.report('-- Start creating revenue view:')
+        try:
+            cmd  = 'DROP VIEW IF EXISTS revenue;'
+            self.output(cmd)
+            result = self.run_sql(cmd)
+            self.output(result)
+
+            cmd = '''CREATE VIEW revenue (supplier_no, total_revenue) AS
+                             select
+                             l_suppkey,
+                             sum(l_extendedprice * (1 - l_discount))
+                             from
+                             %s
+                             where
+                             l_shipdate >= date '1997-04-01'
+                             and l_shipdate < date '1997-04-01' + interval '90 days'
+                             group by
+                             l_suppkey;
+                    '''%('lineitem_' + self.tbl_suffix)
+            
+            self.output(cmd)
+            beg_time = datetime.now()
+            result = self.run_sql(cmd)
+            end_time = datetime.now()
+            self.output(result)
+            duration = end_time - beg_time
+            self.output('Creating VIEW for %s: %s ms' % ('lineitem_' + self.tbl_suffix, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
+            self.report('Creating VIEW for %s: %s ms' % ('lineitem_' + self.tbl_suffix, duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
+
+        except Exception, e :
+            self.error('Create VIEW for %s failed: %s' % ('lineitem_' + self.tbl_suffix, str(e)))
+            return False
+
+        self.output('-- End creating revenue view')
+        self.report('-- End creating revenue view')
      
     def vacuum_analyze(self):
         try:
