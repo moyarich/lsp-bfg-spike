@@ -160,44 +160,11 @@ class Tpch(Workload):
                          and l_shipdate < date '1997-04-01' + interval '90 days'
                          group by
                          l_suppkey;
-                '''%('lineitem_' + self.table_suffix)
+                '''%('lineitem_' + self.tbl_suffix)
         (result, out) = psql.runcmd(cmd = query, dbname = self.database_name)
         if not result:
             self.error( '%s \n failed %s\n'%(query, out) )
             return False
-
-    def run_query(self):
-        self.src_dir = LSP_HOME + '/src/workloads/TPCH/'
-        queries_dir = os.path.join(self.src_dir, 'queries')
-        if not os.path.exists(queries_dir):
-            return
-        
-        query_files = [file for file in os.listdir(queries_dir) if file.endswith('.sql')]
-
-        cnx = pg.connect(dbname = self.database_name)
-        # run all sql file under queries forder
-        for file in query_files:
-            start = datetime.now()
-            qf = QueryFile(os.path.join(queries_dir, file))
-            # run all query in sql file
-            for query in qf:
-                # run this query
-                query = query.replace('TABLESUFFIX',self.table_suffix)
-                try:
-                    cnx.query(query)
-                except Exception, e:
-                    self.error('Query Fail:')
-                    self.error( 'sql:')
-                    self.error( query)
-                    self.error( 'ans:' )
-                    self.error( str(e) )
-            end = datetime.now()
-            interval = end - start
-            duration = interval.days*24*3600 + interval.seconds
-            self.output('%s,%s'%(file, duration))
-            self.report('%s,%s'%(file, duration))
-
-        cnx.close()
 
     def vacuum_analyze(self):
         pass

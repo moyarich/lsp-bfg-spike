@@ -45,6 +45,7 @@ class Workload(object):
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
         self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
         self.num_iteration = int(str(workload_specification['num_iteration']).strip())
+        self.tbl_suffix = ''
      
         # prepare report directory for workload
         if report_directory != '':
@@ -127,15 +128,18 @@ class Workload(object):
         for qf in query_files:
             beg_time = datetime.datetime.now()
             qfh = QueryFile(os.path.join(queries_directory, qf))
+            query_file_no = str(qf)
             # run all query in sql file
             for q in qfh:
                 # run this query
                 try:
+                    q = q.replace('TABLESUFFIX',self.tbl_suffix)
+             #       print q + '**********\n'
                     cnx.query(q)
                 except Exception, e:
-                    self.error('Query Fail:')
+                    self.error(query_file_no + ' Run Fail:')
                     self.error( 'sql:')
-                    self.error( q)
+                    self.error(q)
                     self.error( 'ans:' )
                     self.error( str(e) )
             end_time = datetime.datetime.now()

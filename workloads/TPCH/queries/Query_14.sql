@@ -7,7 +7,7 @@ select
  else 0
  end) / sum(l_extendedprice * (1 - l_discount)) as promo_revenue
 from
- lineitem_TABLESUFFIX
+ lineitem_TABLESUFFIX,
  part_TABLESUFFIX
 where
  l_partkey = p_partkey
