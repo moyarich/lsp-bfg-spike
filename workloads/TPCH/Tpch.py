@@ -134,10 +134,11 @@ class Tpch(Workload):
            
     def load_data(self):
         if not self.load_data_flag:
-            self.output( 'Skipping data loading for %s' % (self.workload_name))
+            self.output( 'Skip loading data for %s' % (self.workload_name))
+            self.report( 'Skip loading data for %s' % (self.workload_name))
             return True
 
-        # load all 8 tables 
+        # load all 8 tables and 1 view
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         loader = TpchLoader(database_name = self.database_name, user = self.user, \
                             scale_factor = self.scale_factor, nsegs = self.nsegs, append_only = self.append_only, orientation = self.orientation, \
@@ -153,12 +154,11 @@ class Tpch(Workload):
         self.vacuum_analyze()
 
     def vacuum_analyze(self):
-        '''VACUUM/ANALYZE against data for workload'''
+        '''VACUUM/ANALYZE data for workload'''
         try: 
             cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
-            self.error('Connect to Database %s is fail!' %(self.database_name))
-            self.error( str(e) )
+            self.error('Failed to connect to database %s: %s' % (self.database_name), str(e))
             exit(2)
         try:
             sql = 'VACUUM ANALYZE;'

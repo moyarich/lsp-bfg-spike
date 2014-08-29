@@ -121,12 +121,12 @@ class Workload(object):
         try: 
             cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
-            self.error('Connect to Database %s is fail!' %(self.database_name))
-            self.error( str(e) )
+            self.error('Failed to connect to database %s: %s' %(self.database_name, str(e)))
             exit(2)
 
         # run all sql files in queries directory
         self.output('-- Start running queries for %s:' % (self.workload_name))
+        self.report('-- Start running queries for %s:' % (self.workload_name))
         for qf_name in query_files:
             beg_time = datetime.datetime.now()
             qf_path = QueryFile(os.path.join(queries_directory, qf_name))
@@ -141,24 +141,28 @@ class Workload(object):
             end_time = datetime.datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-            self.output('Workload=%s Query=%s: %d ms' % (self.workload_name, qf_name, duration))
-            self.report('Workload=%s Query=%s: %d ms' % (self.workload_name, qf_name, duration))
-        self.output('-- End running queries for %s:' % (self.workload_name))
+            self.output('Query=%s: %d ms' % (qf_name, duration))
+            self.report('Query=%s: %d ms' % (qf_name, duration))
+        self.output('-- Complete running queries for %s:' % (self.workload_name))
+        self.report('-- Complete running queries for %s:' % (self.workload_name))
  
         cnx.close()
 
     def run_workload(self):
         if not self.run_workload_flag:
-            self.output('Skip Query Running....')
+            self.output('Skip running queries for workload')
+            self.report('Skip running queries for workload')
             return
 
         niteration = 1
         while niteration <= self.num_iteration:
-            self.output('Start interation %s ....' % (niteration))
+            self.output('Start iteration %d' % (niteration))
+            self.report('Start iteration %d' % (niteration))
             AllWorkers = []
             nconcurrency = 1
             while nconcurrency <= self.num_concurrency:
-                self.output('Process - %s  Start..' % (nconcurrency))
+                self.output('Start stream %s' % (nconcurrency))
+                self.report('Start stream %s' % (nconcurrency))
                 p = Process(target = self.run_queries)
                 AllWorkers.append(p)
                 nconcurrency += 1
@@ -180,11 +184,11 @@ class Workload(object):
                 if len(AllWorkers) != 0:
                     time.sleep(2)
 
-            self.output('interation %s Finished' % (niteration))
+            self.output('Complete iteration %d' % (niteration))
+            self.report('Complete iteration %d' % (niteration))
             niteration += 1
 
     def cleanup(self):
-        '''Cleanup environment after execution of workload'''
         pass
 
     def output(self, msg):
@@ -212,5 +216,5 @@ class Workload(object):
         # clean up 
         self.clean_up()
         
-        self.output('-- End running workload %s' % (self.workload_name))
-        self.report('-- End running workload %s' % (self.workload_name))
+        self.output('-- Complete running workload %s' % (self.workload_name))
+        self.report('-- Complete running workload %s' % (self.workload_name))

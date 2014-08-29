@@ -106,7 +106,6 @@ class TpchLoader(object):
             return ''
         return out
 
-    # table_name without suffix
     def replace_sql(self, sql, table_name):
         sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
@@ -122,16 +121,16 @@ class TpchLoader(object):
     def load_data(self):
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
-            self.error('Loading data is error, there is no directory: ' + data_directory)
+            self.error('Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
             return
 
         for table_name in self.tables:
             if table_name == 'revenue':
-                self.output('-- Start creating revenue view:')
-                self.report('-- Start creating revenue view:')
+                self.output('-- Start creating view revenue:')
+                self.report('-- Start creating view revenue:')
             else:
-                self.output('-- Start loading data for %s:' % (table_name))
-                self.report('-- Start loading data for %s:' % (table_name))
+                self.output('-- Start loading data for table %s:' % (table_name))
+                self.report('-- Start loading data for table %s:' % (table_name))
 
             qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
             beg_time = datetime.now()
@@ -144,23 +143,22 @@ class TpchLoader(object):
                     self.output(cmd)
                     self.output(result)
                 except Exception, e:
-                    self.error('Failed to loading table %s: %s' % (table_name, str(e)))                  
+                    self.error('Failed to load data for table %s: %s' % (table_name, str(e)))                  
 
             end_time = datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
             if table_name == 'revenue':
-                self.output('Creating VIEW for %s: %s ms' % ('lineitem_' + self.tbl_suffix, duration))
-                self.report('Creating VIEW for %s: %s ms' % ('lineitem_' + self.tbl_suffix, duration))
+                self.output('Creating view for %s: %s ms' % (table_name, duration))
+                self.report('Creating view for %s: %s ms' % (table_name, duration))
             else:
-                self.output('Data loading for %s: %s ms' % (table_name + self.tbl_suffix, duration))
-                self.report('Data loading for %s: %s ms' % (table_name + self.tbl_suffix, duration))
+                self.output('Data loading for %s: %s ms' % (table_name, duration))
+                self.report('Data loading for %s: %s ms' % (table_name, duration))
         
         self.output('-- End loading data for %s' % (table_name))
         self.report('-- End loading data for %s' % (table_name))
             
     def load(self):
-        # connect to db
         try: 
             self.cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
