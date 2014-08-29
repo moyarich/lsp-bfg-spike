@@ -1,5 +1,5 @@
 # workloads_list: tpch_ao_row, tpch_ao_co
-workloads_list: tpch_ao_row
+workloads_list: tpch_ao_row,tpch_ao_co
 
 workloads_mode: sequential
 
@@ -17,7 +17,7 @@ workloads_content:
           page_size: 8388608
           compression_type: QuickLZ
           compression_level: 1
-          partitions: 0
+          partitions: 128
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -31,13 +31,13 @@ workloads_content:
           data_volume_type: total
           data_volume_size: 1
           append_only: true
-          orientation: ROW
+          orientation: COLUMN
           row_group_size: 1048576
           page_size: 8388608
-          compression_type: QuickLZ
+          compression_type: None
           compression_level: 1
           partitions: 0
-      load_data_flag: false
+      load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
