@@ -57,16 +57,6 @@ class TpchLoader(object):
         self.error_file = error_file
         self.report_file = report_file
         self.workload_directory = workload_directory
-        
-        # connect to db
-        try: 
-            self.cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-            cnx.close()
-        finally:
-            self.cnx = pg.connect(dbname = self.database_name)
 
     def output(self, msg):
         Log(self.output_file, msg)
@@ -168,21 +158,17 @@ class TpchLoader(object):
         
         self.output('-- End loading data for %s' % (table_name))
         self.report('-- End loading data for %s' % (table_name))
-    
-    def vacuum_analyze(self):
-        try:
-            sql = 'VACUUM ANALYZE;'
-            beg_time = datetime.now()
-            self.run_sql(sql)
-            end_time = datetime.now()
-            duration = end_time - beg_time
-            self.output('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
-            self.report('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
-        except Exception, e:
-            self.error('VACUUM ANALYZE failure: %s' % (str(e)))
-            return False
             
     def load(self):
+        # connect to db
+        try: 
+            self.cnx = pg.connect(dbname = self.database_name)
+        except Exception, e:
+            cnx = pg.connect(dbname = 'postgres')
+            cnx.query('CREATE DATABASE %s;' % (self.database_name))
+            cnx.close()
+        finally:
+            self.cnx = pg.connect(dbname = self.database_name)
+            
         self.load_data()
-        self.vacuum_analyze()
-        self.cnx.close();
+        self.cnx.close()

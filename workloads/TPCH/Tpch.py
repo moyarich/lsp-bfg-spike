@@ -149,8 +149,5 @@ class Tpch(Workload):
                             workload_directory = self.workload_directory)
         loader.load()
 
-    def vacuum_analyze(self):
-        pass
-
     def clean_up(self):
         pass
