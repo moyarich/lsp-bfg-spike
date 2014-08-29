@@ -74,24 +74,31 @@ class TpchLoader(object):
         end_date = date(1999, 01, 01)
         duration_days = (end_date - beg_date).days / num_partitions
 
-        part = '''
-                 PARTITION BY RANGE(o_orderdate)
-                 (
-               '''
+        if table_name == 'lineitem':
+            part = '''
+                PARTITION BY RANGE(l_shipdate)
+                (
+                '''
+        elif table_name == 'orders':
+            part = '''
+                PARTITION BY RANGE(o_orderdate)
+                (
+                '''
+                
         for i in range(1, num_partitions+1):
             beg_cur = beg_date + timedelta(days = (i-1)*duration_days)
             end_cur = beg_date + timedelta(days = i*duration_days)
             if i != num_partitions:
                 part += '''
                      PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s ),
-                        '''%(i, beg_cur, end_cur, duration_days, table_name, i, self.sql_suffix)
+                        '''%(i, beg_cur, end_cur, duration_days, table_name + self.tbl_suffix, i, self.sql_suffix)
             else:
                 part += '''
                      PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )
-                        '''%(i, beg_cur, end_cur, duration_days, table_name, i, self.sql_suffix)
+                        '''%(i, beg_cur, end_cur, duration_days, table_name + self.tbl_suffix, i, self.sql_suffix)
                 
         part += '''
-                     );
+                     )
                 '''
         return part
         
@@ -101,17 +108,16 @@ class TpchLoader(object):
             return ''
         return out
 
-    def drop_table(self, table_name):
-        sql = 'DROP TABLE IF EXISTS %s CASCADE;' % (table_name)
-        self.output(sql)
-        result = self.run_sql(sql)
-        self.output(result)
-
-    def drop_external_table(self, table_name):
-        sql = 'DROP EXTERNAL WEB TABLE IF EXISTS %s;' % (table_name)
-        self.output(sql)
-        result = self.run_sql(sql)
-        self.output(result)
+    # table_name without suffix
+    def replace_sql(self, sql, table_name):
+        sql.replace('TABLESUFFIX', self.tbl_suffix)
+        sql.replace('SQLSUFFIX', self.sql_suffix)
+        sql.replace('SCALEFACTOR', self.scale_factor)
+        sql.replace('NUMSEGMENTS', self.nsegs)
+        if self.partitions == 0;
+            sql.replace('PARTITIONS', '')
+        else
+            part_suffix = get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
 
     def create_load_nation_table(self):
         self.output('-- Start loading data for nation:')
@@ -635,3 +641,4 @@ class TpchLoader(object):
             eval(func)()
         self.create_view_revenue()
         self.vacuum_analyze()
+        self.close();

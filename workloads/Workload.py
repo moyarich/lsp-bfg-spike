@@ -145,8 +145,8 @@ class Workload(object):
             end_time = datetime.datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-            self.output('Workload=%s Query=%s: %d ms' % (self.workload_name, qf, duration))
-            self.report('Workload=%s Query=%s: %d ms' % (self.workload_name, qf, duration))
+            self.output('Workload=%s Query=%s: %d ms' % (self.workload_name, qf_name, duration))
+            self.report('Workload=%s Query=%s: %d ms' % (self.workload_name, qf_name, duration))
         self.output('-- End running queries for %s:' % (self.workload_name))
  
         cnx.close()
