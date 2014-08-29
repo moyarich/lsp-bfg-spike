@@ -101,27 +101,6 @@ class Workload(object):
         '''Load data for workload'''
         pass
 
-    def vacuum_analyze(self):
-        '''VACUUM/ANALYZE against data for workload'''
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            self.error('Connect to Database %s is fail!' %(self.database_name))
-            self.error( str(e) )
-            exit(2)
-        try:
-            sql = 'VACUUM ANALYZE;'
-            beg_time = datetime.now()
-            cnx.query(sql)
-            end_time = datetime.now()
-            duration = end_time - beg_time
-            self.output('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
-            self.report('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
-        except Exception, e:
-            self.error('VACUUM ANALYZE failure: %s' % (str(e)))
-            exit(2)
-        cnx.close()
-
     def run_queries(self):
         '''
         Run queries in lsp/workloads/$workload_name/queries/*.sql one by one in user-specified order
@@ -172,9 +151,6 @@ class Workload(object):
         if not self.run_workload_flag:
             self.output('Skip Query Running....')
             return
-
-        # vacuum_analyze
-        self.vacuum_analyze()
 
         niteration = 1
         while niteration <= self.num_iteration:
