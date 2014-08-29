@@ -13,31 +13,35 @@ try:
 except ImportError:
     sys.stderr.write('LSP needs workloads/Workload.py\n')
     sys.exit(2)
+print 'workloads in tpch **************success\n'
 
 try:
     from TpchLoader import TpchLoader
 except ImportError:
     sys.stderr.write('LSP needs TpchLoader in workloads/TPCH/TpchLoader.py\n')
     sys.exit(2)
+print 'loader in tpch **************success\n'
 
 try:
     from pygresql import pg
 except ImportError:
     sys.stderr.write('LSP needs pygresql\n')
     sys.exit(2)
+print 'pg in tpch **************success\n'
 
 try:
-    from lib.PSQL import psql
+    from lib.Shell import Shell
 except ImportError:
-    sys.stderr.write('LSP needs psql in lib/PSQL.py\n')
+    sys.stderr.write('LSP needs shell in lib/Shell.py\n')
     sys.exit(2)
+print 'shell in tpch**************success\n'
 
 try:
     from lib.Config import config
 except ImportError:
-    sys.stderr.write('LSP needs shell in lib/Shell.py\n')
+    sys.stderr.write('LSP needs config in lib/Config.py\n')
     sys.exit(2)
-
+print 'config in tpch**************success\n'
 
 
 class Tpch(Workload):
@@ -54,8 +58,6 @@ class Tpch(Workload):
         
         # Need to make it univerally applicable instead of hard-code number of segments
         self.nsegs =  config.getNPrimarySegments()
-        print self.nsegs
-        print '\n********************8'
 
         self.scale_factor = 1
         if self.data_volume_type == 'TOTAL':

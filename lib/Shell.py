@@ -138,5 +138,3 @@ class Shell:
 shell = Shell()
 
 
-if __name__ == "__main__":
-    shell = Shell()

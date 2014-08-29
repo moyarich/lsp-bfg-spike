@@ -42,15 +42,10 @@ import os
 import sys
 import time
 
-LSP_HOME = os.getenv('LSP_HOME')
-lib = os.path.join(LSP_HOME, 'lib')
-if lib not in sys.path:
-        sys.path.append(lib)
-
 try:
-    from Shell import Shell
+    from Shell import shell
 except ImportError:
-    sys.stderr.write('LSP needs shell n lib/Shell.py\n')
+    sys.stderr.write('LSP needs shell in lib/Shell.py when using PSQL\n')
     sys.exit(2)
 
 class PSQL:
@@ -68,8 +63,9 @@ class PSQL:
         print self.__class__.__name__
 
     def run(self, dbname = None, ifile = None, ofile = None, cmd = None, 
-        flag = '-e', timeout = 900, username = None, PGOPTIONS = None,
-        host = None, port = None, background = False):
+            flag = '-e', timeout=900, username = None, password = None,
+            PGOPTIONS = None, host = None, port = None,
+            background = False):
         '''
         Run a command or file against psql. Return True if OK.
         @param dbname: database name
@@ -89,6 +85,16 @@ class PSQL:
             
         if username == None:
             username = os.environ['PGUSER']
+
+        if password == None:
+            password = ""
+        else:
+            password = "--password %s" % password
+
+        if PGOPTIONS == None:
+            PGOPTIONS = ""
+        else:
+            PGOPTIONS = "PGOPTIONS='%s'" % PGOPTIONS
             
         if host is None:
             host = "-h %s" % ('localhost')
@@ -123,7 +129,7 @@ class PSQL:
         else:
             ofile = '> %s 2>&1' % ofile
 
-        return Shell().run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
+        return shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
                                 (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), 
                                  timeout=timeout)
 
@@ -139,8 +145,10 @@ class PSQL:
         @param port: port
 
         '''
-        return self.run(cmd = cmd, dbname = dbname, ofile = ofile, flag = pFlags, username = username, 
-                        PGOPTIONS = PGOPTIONS, host = host, port = port, background = background)
+        return self.run(cmd = cmd, dbname = dbname, ofile = ofile, flag = pFlags, 
+                        username = username, password = password, 
+                        PGOPTIONS = PGOPTIONS, host = host, port = port,
+                        background = background)
 
 
     def runfile(self, ifile, flag='', timeout = 900, dbname = None, outputPath = "", outputFile = "", 
@@ -181,6 +189,3 @@ class PSQL:
         return test_list
 
 psql = PSQL()
-
-if __name__ == "__main__":
-    psql = PSQL()
