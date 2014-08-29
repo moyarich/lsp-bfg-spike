@@ -25,7 +25,7 @@ workloads_content:
       num_iteration: 1
 
     - workload_name: tpch_ao_co
-      database_name: gpsqltest_tpch_ao_row
+      database_name: gpsqltest_tpch_ao_co
       user: gpadmin
       table_setting:
           data_volume_type: total

@@ -85,11 +85,8 @@ class Tpch(Workload):
             self.compression_level = int(ts['compression_level'])
         assert self.compression_type in ['GZIP', 'QUICKLZ', 'ZLIB']
         
-        if ts['partitions']:
+        if ts['partitions'] is not None:
             self.partitions = ts['partitions']
-        else:
-            self.partitions = False
-        assert self.partitions in [True, False]
 
         # prepare name with suffix for table and corresponding sql statement to create it
         tbl_suffix = ''
@@ -110,7 +107,7 @@ class Tpch(Workload):
 
         if self.compression_type is not None:
             if self.compression_level is not None:
-                tbl_suffix = tbl_suffix + '_' + self.compression_type + '_' + str(self.compression_level)
+                tbl_suffix = tbl_suffix + '_' + self.compression_type + '_' + 'level' + str(self.compression_level)
                 sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type 
                 sql_suffix = sql_suffix + ', ' + 'compresslevel = ' + str(self.compression_level)
             else:
@@ -119,7 +116,7 @@ class Tpch(Workload):
         else:
             tbl_suffix = tbl_suffix + '_nocomp'
 
-        if self.partitions:
+        if self.partitions > 0:
             tbl_suffix += '_part'
         else:
             tbl_suffix += '_nopart'
@@ -143,7 +140,8 @@ class Tpch(Workload):
                             compression_type = self.compression_type, compression_level = self.compression_level, \
                             partitions = self.partitions, tables = tables, tbl_suffix = self.tbl_suffix, sql_suffix = self.sql_suffix, \
                             tpch_load_log = os.path.join(self.report_directory, 'tpch_load.log'), \
-                            output_file = self.output_file, error_file = self.error_file, report_file = self.report_file)
+                            output_file = self.output_file, error_file = self.error_file, report_file = self.report_file, \
+                            workload_directory = self.workload_directory)
         loader.load()
 
     def vacuum_analyze(self):
