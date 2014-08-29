@@ -173,6 +173,7 @@ class Workload(object):
             self.output('Skip Query Running....')
             return
 
+        # vacuum_analyze
         self.vacuum_analyze()
 
         niteration = 1
@@ -228,9 +229,6 @@ class Workload(object):
 
         # load data
         self.load_data()
-
-        # vacuum_analyze
-        self.vacuum_analyze()
 
         # run workload concurrently and loop by iteration
         self.run_workload()
