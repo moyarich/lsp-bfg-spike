@@ -83,13 +83,11 @@ class Tpch(Workload):
         
         if ts['compression_type']:
             self.compression_type = ts['compression_type'].upper()
-        assert self.orientation in ['PARQUET'] and self.compression_type in ['SNAPPY', 'GZIP'] or \
-               self.orientation in ['ROW', 'COLUMN'] and self.compression_type in ['QUICKLZ', 'ZLIB']
-        
-        if ts['compression_level']:
-            self.compression_level = int(ts['compression_level'])
-        assert self.compression_type in ['GZIP', 'QUICKLZ', 'ZLIB']
-        
+            assert self.orientation in ['PARQUET'] and self.compression_type in ['SNAPPY', 'GZIP']
+            assert self.orientation in ['ROW', 'COLUMN'] and self.compression_type in ['QUICKLZ', 'ZLIB']       
+            if ts['compression_level']:
+                self.compression_level = int(ts['compression_level'])
+
         if ts['partitions'] is not None:
             self.partitions = ts['partitions']
 
