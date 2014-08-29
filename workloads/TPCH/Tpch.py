@@ -27,10 +27,17 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from PSQL import psql
+    from lib.PSQL import psql
 except ImportError:
     sys.stderr.write('LSP needs psql in lib/PSQL.py\n')
     sys.exit(2)
+
+try:
+    from lib.Config import config
+except ImportError:
+    sys.stderr.write('LSP needs shell in lib/Shell.py\n')
+    sys.exit(2)
+
 
 
 class Tpch(Workload):
@@ -46,8 +53,9 @@ class Tpch(Workload):
         self.data_volume_size = ts['data_volume_size']
         
         # Need to make it univerally applicable instead of hard-code number of segments
-        # config.getNPrimarySegments()
-        self.nsegs = 2
+        self.nsegs =  config.getNPrimarySegments()
+        print self.nsegs
+        print '\n********************8'
 
         self.scale_factor = 1
         if self.data_volume_type == 'TOTAL':
@@ -133,7 +141,7 @@ class Tpch(Workload):
             return True
 
         # load all 8 tables 
-        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem']
+        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         loader = TpchLoader(database_name = self.database_name, user = self.user, \
                             scale_factor = self.scale_factor, nsegs = self.nsegs, append_only = self.append_only, orientation = self.orientation, \
                             page_size = self.page_size, row_group_size = self.row_group_size, \

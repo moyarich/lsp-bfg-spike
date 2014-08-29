@@ -134,11 +134,8 @@ class TpchLoader(object):
         if not os.path.exists(data_directory):
             self.error('Loading data is error, there is no directory: ' + data_directory)
             return
-        
-        data_files = [file for file in os.listdir(data_directory) if file.endswith('.sql')]
-        for table_name in data_files:
-            qf_path = QueryFile(os.path.join(data_directory, table_name))
-            table_name = table_name.replace('.sql', '')
+
+        for table_name in self.tables:
             if table_name == 'revenue':
                 self.output('-- Start creating revenue view:')
                 self.report('-- Start creating revenue view:')
@@ -146,8 +143,8 @@ class TpchLoader(object):
                 self.output('-- Start loading data for %s:' % (table_name))
                 self.report('-- Start loading data for %s:' % (table_name))
 
+            qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
             beg_time = datetime.now()
-
             # run all sql in each sql file
             for cmd in qf_path:
                 # run current query
