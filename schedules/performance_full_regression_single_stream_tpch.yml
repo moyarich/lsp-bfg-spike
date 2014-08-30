@@ -1,0 +1,337 @@
+workloads_list: tpch_parquet_10gpn_nocomp_nopart, tpch_parquet_10gpn_nocomp_part, tpch_parquet_10gpn_snappy_nopart, tpch_parquet_10gpn_snappy_part, tpch_row_10gpn_nocomp_nopart, tpch_row_10gpn_nocomp_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_10gpn_quicklz1_part, tpch_column_10gpn_nocomp_nopart, tpch_column_10gpn_quicklz1_nopart
+
+# workloads_list: tpch_parquet_10gpn_nocomp_nopart, tpch_parquet_10gpn_nocomp_part, tpch_parquet_10gpn_snappy_nopart, tpch_parquet_10gpn_snappy_part
+# workloads_list: tpch_parquet_200gpn_nocomp_nopart, tpch_parquet_200gpn_nocomp_part, tpch_parquet_200gpn_snappy_nopart, tpch_parquet_200gpn_snappy_part
+# workloads_list: tpch_row_10gpn_nocomp_nopart, tpch_row_10gpn_nocomp_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_10gpn_quicklz1_part
+# workloads_list: tpch_row_200gpn_nocomp_nopart, tpch_row_200gpn_nocomp_part, tpch_row_200gpn_quicklz1_nopart, tpch_row_200gpn_quicklz1_part
+# workloads_list: tpch_column_10gpn_nocomp_nopart, tpch_column_10gpn_quicklz1_nopart
+# workloads_list: tpch_column_200gpn_nocomp_nopart, tpch_column_200gpn_quicklz1_nopart
+
+workloads_mode: sequential
+workloads_mode: sequential
+
+workloads_content:
+
+    # TPC-H with parquet storage and 10G per node data
+    - workload_name: tpch_parquet_10gpn_nocomp_nopart
+      database_name: tpch_parquet_10gpn_nocomp_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_10gpn_nocomp_part
+      database_name: tpch_parquet_10gpn_nocomp_part
+      user: gpadmin
+      table_setting: data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_10gpn_snappy_nopart
+      database_name: tpch_parquet_10gpn_snappy_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+          compression_type: SNAPPY
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_10gpn_snappy_part
+      database_name: tpch_parquet_10gpn_snappy_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+          compression_type: SNAPPY
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    # TPC-H with parquet storage and 200G per node data
+    - workload_name: tpch_parquet_200gpn_nocomp_nopart
+      database_name: tpch_parquet_200gpn_nocomp_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_200gpn_nocomp_part
+      database_name: tpch_parquet_200gpn_nocomp_part
+      user: gpadmin
+      table_setting: data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_200gpn_snappy_nopart
+      database_name: tpch_parquet_200gpn_snappy_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+          compression_type: SNAPPY
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_200gpn_snappy_part
+      database_name: tpch_parquet_200gpn_snappy_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 1048576
+          page_size: 8388608
+          compression_type: SNAPPY
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+
+    # TPC-H with row storage and 10G per node data
+    - workload_name: tpch_row_10gpn_nocomp_nopart
+      database_name: tpch_row_10gpn_nocomp_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_row_10gpn_nocomp_part
+      database_name: tpch_row_10gpn_nocomp_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_row_10gpn_quicklz1_nopart
+      database_name: tpch_row_10gpn_quicklz1_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_row_10gpn_quicklz1_part
+      database_name: tpch_row_10gpn_quicklz1_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    # TPC-H with row storage and 200G per node data
+    - workload_name: tpch_row_200gpn_nocomp_nopart
+      database_name: tpch_row_200gpn_nocomp_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_nocomp_part
+      database_name: tpch_row_200gpn_nocomp_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_nopart
+      database_name: tpch_row_200gpn_quicklz1_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_part
+      database_name: tpch_row_200gpn_quicklz1_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+
+    # TPC-H with column storage and 10G per node data
+    - workload_name: tpch_column_10gpn_nocomp_nopart
+      database_name: tpch_column_10gpn_nocomp_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: COLUMN
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_column_10gpn_quicklz1_nopart
+      database_name: tpch_column_10gpn_quicklz1_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: COLUMN
+          compression_type: QUICKLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+
+    # TPC-H with column storage and 200G per node data
+    - workload_name: tpch_column_200gpn_nocomp_nopart
+      database_name: tpch_column_200gpn_nocomp_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: COLUMN
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_column_200gpn_quicklz1_nopart
+      database_name: tpch_column_200gpn_quicklz1_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: COLUMN
+          compression_type: QUICKLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
