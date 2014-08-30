@@ -307,6 +307,7 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
+      num_iteration: 1
 
     # TPC-H with column storage and 200G per node data
     - workload_name: tpch_column_200gpn_nocomp_nopart
@@ -337,3 +338,4 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
+      num_iteration: 1

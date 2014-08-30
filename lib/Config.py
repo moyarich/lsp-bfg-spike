@@ -83,7 +83,7 @@ class Config:
 
     def getSegHostNames(self):
         
-        (ok, out) = psql.run(flag='-q -t', cmd='select distinct hostname from gp_segment_configuration where content <> -1', ofile='-', isODBC=False, dbname='template1') 
+        (ok, out) = psql.run(flag='-q -t', cmd='select distinct hostname from gp_segment_configuration where content <> -1', ofile='-', dbname='template1') 
 
         if not ok:
             log('Error %s' % out)
@@ -93,7 +93,7 @@ class Config:
    
     def getMastermirrorHostname(self):
         '''Returns hostname of the standby master '''
-        (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where content = -1 and role = 'm'", ofile='-', isODBC=False, dbname='template1')
+        (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where content = -1 and role = 'm'", ofile='-', dbname='template1')
 
         if not ok:
             log('Error %s' % out)

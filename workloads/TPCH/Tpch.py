@@ -67,35 +67,43 @@ class Tpch(Workload):
             exit(-1)
 
         # Parse table setting
-        if ts['append_only']:
+        ts_keys = ts.keys()
+
+        self.append_only = None
+        if 'append_only' in ts_keys:
             self.append_only = ts['append_only']
-        assert self.append_only in [True, False]
-       
-        if ts['orientation']:
+            assert self.append_only in [True, False]
+
+        self.orientation = 'ROW'
+        if 'orientation' in ts_keys:
             self.orientation = ts['orientation'].upper()
-        assert self.orientation in ['PARQUET', 'ROW', 'COLUMN']
-        
-        if ts['row_group_size']:
+            assert self.orientation in ['PARQUET', 'ROW', 'COLUMN']
+
+        self.row_group_size = None
+        if 'row_group_size' in ts_keys:
             self.row_group_size = int(ts['row_group_size'])
             
-        if ts['page_size']:
+        self.page_size = None
+        if 'page_size' in ts_keys:
             self.page_size = int(ts['page_size'])
-        
-        if ts['compression_type']:
+       
+        self.compression_type = None
+        if 'compression_type' in ts_keys:
             self.compression_type = ts['compression_type'].upper()
-            assert self.orientation in ['PARQUET'] and self.compression_type in ['SNAPPY', 'GZIP']
-            assert self.orientation in ['ROW', 'COLUMN'] and self.compression_type in ['QUICKLZ', 'ZLIB']       
-            if ts['compression_level']:
+        
+        self.compression_level = None
+        if 'compression_level' in ts_keys:
                 self.compression_level = int(ts['compression_level'])
 
-        if ts['partitions'] is not None:
-            self.partitions = ts['partitions']
+        self.partitions = 0
+        if 'partitions' in ts_keys:
+            self.partitions = int(ts['partitions'])
 
         # prepare name with suffix for table and corresponding sql statement to create it
         tbl_suffix = ''
         sql_suffix = ''
 
-        if self.append_only:
+        if self.append_only in [None, True]:
             tbl_suffix = tbl_suffix + 'ao'
             sql_suffix = sql_suffix + 'appendonly = true'
         else:
