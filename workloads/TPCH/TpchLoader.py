@@ -69,37 +69,29 @@ class TpchLoader(object):
 
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
-        end_date = date(1999, 01, 01)
-        duration_days = (end_date - beg_date).days / num_partitions
+        end_date = date(1998, 12, 31)
+        duration_days = int(round(float((end_date - beg_date).days) / float(num_partitions)))
 
         part = ''
 
         if table_name == 'lineitem':
-            part = '''
-                PARTITION BY RANGE(l_shipdate)
-                (
-                '''
+            part = '''PARTITION BY RANGE(l_shipdate)\n    (\n'''
         elif table_name == 'orders':
-            part = '''
-                PARTITION BY RANGE(o_orderdate)
-                (
-                '''
+            part = '''PARTITION BY RANGE(o_orderdate)\n    (\n'''
                 
         for i in range(1, num_partitions+1):
             beg_cur = beg_date + timedelta(days = (i-1)*duration_days)
             end_cur = beg_date + timedelta(days = i*duration_days)
+
+            part += '''        PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )''' % (i, beg_cur, end_cur, duration_days, table_name + '_' + self.tbl_suffix, i, self.sql_suffix)
+            
             if i != num_partitions:
-                part += '''
-                     PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s ),
-                        '''%(i, beg_cur, end_cur, duration_days, table_name + self.tbl_suffix, i, self.sql_suffix)
+                part += ''',\n'''
             else:
-                part += '''
-                     PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )
-                        '''%(i, beg_cur, end_cur, duration_days, table_name + self.tbl_suffix, i, self.sql_suffix)
+                part += '''\n'''
+
+        part += '''    )'''
                 
-        part += '''
-                     )
-                '''
         return part
         
     def run_sql(self, sql):
