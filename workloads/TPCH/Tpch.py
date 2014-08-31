@@ -118,7 +118,7 @@ class Tpch(Workload):
 
         if self.compression_type is not None:
             if self.compression_level is not None:
-                tbl_suffix = tbl_suffix + '_' + self.compression_type + '_' + 'level' + str(self.compression_level)
+                tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
                 sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type 
                 sql_suffix = sql_suffix + ', ' + 'compresslevel = ' + str(self.compression_level)
             else:

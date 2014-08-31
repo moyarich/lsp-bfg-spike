@@ -72,6 +72,8 @@ class TpchLoader(object):
         end_date = date(1999, 01, 01)
         duration_days = (end_date - beg_date).days / num_partitions
 
+        part = ''
+
         if table_name == 'lineitem':
             part = '''
                 PARTITION BY RANGE(l_shipdate)
@@ -114,7 +116,7 @@ class TpchLoader(object):
         if self.partitions == 0:
             sql = sql.replace('PARTITIONS', '')
         else:
-            part_suffix = get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
+            part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
             sql = sql.replace('PARTITIONS', part_suffix)
         return sql
 
@@ -139,8 +141,8 @@ class TpchLoader(object):
                 # run current query
                 try:
                     cmd = self.replace_sql(sql = cmd, table_name = table_name)
-                    result = self.run_sql(cmd)
                     self.output(cmd)
+                    result = self.run_sql(cmd)
                     self.output(result)
                 except Exception, e:
                     self.error('Failed to load data for table %s: %s' % (table_name, str(e)))                  
