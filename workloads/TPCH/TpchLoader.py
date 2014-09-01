@@ -94,12 +94,6 @@ class TpchLoader(object):
                 
         return part
         
-    def run_sql(self, sql):
-        out = self.cnx.query(sql)
-        if out == None:
-            return ''
-        return out
-
     def replace_sql(self, sql, table_name):
         sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
@@ -119,38 +113,26 @@ class TpchLoader(object):
             return
 
         for table_name in self.tables:
-            if table_name == 'revenue':
-                self.output('-- Start creating view revenue:')
-                self.report('-- Start creating view revenue:')
-            else:
-                self.output('-- Start loading data for table %s:' % (table_name))
-                self.report('-- Start loading data for table %s:' % (table_name))
-
             qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
             beg_time = datetime.now()
-            # run all sql in each sql file
+            # run all sql in each loading data file
             for cmd in qf_path:
                 # run current query
                 try:
                     cmd = self.replace_sql(sql = cmd, table_name = table_name)
                     self.output(cmd)
-                    result = self.run_sql(cmd)
-                    self.output(result)
+                    result = self.cnx.query(cmd)
+                    self.output(str(result))
                 except Exception, e:
-                    self.error('Failed to load data for table %s: %s' % (table_name, str(e)))                  
+                    self.error('Failed to load data for table %s: %s' % (table_name, str(e)))
+                    self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0))
+                    self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0))                
 
             end_time = datetime.now()
             duration = end_time - beg_time
-            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-            if table_name == 'revenue':
-                self.output('Creating view for %s: %s ms' % (table_name, duration))
-                self.report('Creating view for %s: %s ms' % (table_name, duration))
-            else:
-                self.output('Data loading for %s: %s ms' % (table_name, duration))
-                self.report('Data loading for %s: %s ms' % (table_name, duration))
-        
-        self.output('-- End loading data for %s' % (table_name))
-        self.report('-- End loading data for %s' % (table_name))
+            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds       
+            self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+            self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
             
     def load(self):
         try: 

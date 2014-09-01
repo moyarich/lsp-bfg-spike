@@ -113,7 +113,7 @@ class Tpch(Workload):
         tbl_suffix = tbl_suffix + '_' + self.orientation
         sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
 
-        if self.orientation == 'parquet':
+        if self.orientation == 'PARQUET':
             sql_suffix = sql_suffix + ', ' + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
 
         if self.compression_type is not None:
@@ -139,13 +139,14 @@ class Tpch(Workload):
         pass
            
     def load_data(self):
+        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         if not self.load_data_flag:
-            self.output( 'Skip loading data for %s' % (self.workload_name))
-            self.report( 'Skip loading data for %s' % (self.workload_name))
+            for table_name in tables:
+                self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
+                self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
             return True
 
         # load all 8 tables and 1 view
-        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         loader = TpchLoader(database_name = self.database_name, user = self.user, \
                             scale_factor = self.scale_factor, nsegs = self.nsegs, append_only = self.append_only, orientation = self.orientation, \
                             page_size = self.page_size, row_group_size = self.row_group_size, \
@@ -172,10 +173,14 @@ class Tpch(Workload):
             cnx.query(sql)
             end_time = datetime.datetime.now()
             duration = end_time - beg_time
-            self.output('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
-            self.report('VACUUM ANALYZE: %s ms' % (duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds))
+            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
+            self.output('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
+            self.report('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
+ 
         except Exception, e:
             self.error('VACUUM ANALYZE failure: %s' % (str(e)))
+            self.output('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', duration))
+            self.report('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', duration))
             exit(2)
         cnx.close()
 

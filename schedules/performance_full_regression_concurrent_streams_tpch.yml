@@ -13,8 +13,8 @@ workloads_content:
           data_volume_size: 200
           append_only: true
           orientation: PARQUET
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           compression_type: SNAPPY
           partitions: 128
       load_data_flag: false

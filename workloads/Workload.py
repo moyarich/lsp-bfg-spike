@@ -101,7 +101,7 @@ class Workload(object):
         '''Load data for workload'''
         pass
 
-    def run_queries(self):
+    def run_queries(self, iteration, stream):
         '''
         Run queries in lsp/workloads/$workload_name/queries/*.sql one by one in user-specified order
         1) The queries would be run in one or more times as specified by niteration
@@ -113,6 +113,14 @@ class Workload(object):
             return
 
         query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
+
+        # skip all queries
+        if not self.run_workload_flag:
+            for qf_name in query_files:
+                self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
+                self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
+            return
+
         if self.run_workload_mode == 'SEQUENTIAL':
             query_files = sorted(query_files)
         else:
@@ -125,8 +133,6 @@ class Workload(object):
             exit(2)
 
         # run all sql files in queries directory
-        self.output('-- Start running queries for %s:' % (self.workload_name))
-        self.report('-- Start running queries for %s:' % (self.workload_name))
         for qf_name in query_files:
             beg_time = datetime.datetime.now()
             qf_path = QueryFile(os.path.join(queries_directory, qf_name))
@@ -137,33 +143,25 @@ class Workload(object):
                     q = q.replace('TABLESUFFIX', self.tbl_suffix)
                     cnx.query(q)
                 except Exception, e:
-                    self.error('Failed to run query %s: %s' % (qf_name, str(e)))
+                    self.error('Failed to run query %s: %s' % (qf_name.replace('.sql', ''), str(e)))
+		    self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', 0))
             end_time = datetime.datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-            self.output('Query=%s: %d ms' % (qf_name, duration))
-            self.report('Query=%s: %d ms' % (qf_name, duration))
-        self.output('-- Complete running queries for %s:' % (self.workload_name))
-        self.report('-- Complete running queries for %s:' % (self.workload_name))
+            self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
+            self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
  
         cnx.close()
 
     def run_workload(self):
-        if not self.run_workload_flag:
-            self.output('Skip running queries for workload')
-            self.report('Skip running queries for workload')
-            return
-
         niteration = 1
         while niteration <= self.num_iteration:
             self.output('Start iteration %d' % (niteration))
-            self.report('Start iteration %d' % (niteration))
             AllWorkers = []
             nconcurrency = 1
             while nconcurrency <= self.num_concurrency:
                 self.output('Start stream %s' % (nconcurrency))
-                self.report('Start stream %s' % (nconcurrency))
-                p = Process(target = self.run_queries)
+                p = Process(target = self.run_queries, args = (niteration, nconcurrency))
                 AllWorkers.append(p)
                 nconcurrency += 1
                 p.start()
@@ -185,7 +183,6 @@ class Workload(object):
                     time.sleep(2)
 
             self.output('Complete iteration %d' % (niteration))
-            self.report('Complete iteration %d' % (niteration))
             niteration += 1
 
     def cleanup(self):

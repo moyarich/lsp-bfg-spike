@@ -1,11 +1,11 @@
 # workloads_list: tpch_ao_row, tpch_ao_co
-workloads_list: tpch_ao_parquet_nocomp_nopart_1,tpch_ao_parquet_nocomp_nopart_2,tpch_ao_parquet_nocomp_nopart_3,tpch_ao_parquet_nocomp_nopart_4,tpch_ao_parquet_nocomp_nopart_5
+workloads_list: tpch_ao_parquet_nocomp_nopart_load_run,tpch_ao_parquet_nocomp_nopart_run,tpch_ao_parquet_nocomp_nopart_load,tpch_ao_parquet_nocomp_nopart_no,tpch_ao_parquet_nocomp_nopart_run3
 
 workloads_mode: sequential
 
 workloads_content:
 
-    - workload_name: tpch_ao_parquet_nocomp_nopart_1
+    - workload_name: tpch_ao_parquet_nocomp_nopart_load_run
       database_name: gpsqltest_tpch_parquet_nocomp_nopart
       user: gpadmin
       table_setting:
@@ -13,8 +13,8 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: PARQUET
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           partitions: 0
       load_data_flag: true
       run_workload_flag: true
@@ -22,7 +22,7 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_ao_parquet_nocomp_nopart_2
+    - workload_name: tpch_ao_parquet_nocomp_nopart_run
       database_name: gpsqltest_tpch_parquet_nocomp_nopart
       user: gpadmin
       table_setting:
@@ -30,8 +30,8 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: PARQUET
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           partitions: 0
       load_data_flag: false
       run_workload_flag: true
@@ -39,7 +39,7 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_ao_parquet_nocomp_nopart_3
+    - workload_name: tpch_ao_parquet_nocomp_nopart_load
       database_name: gpsqltest_tpch_parquet_nocomp_nopart
       user: gpadmin
       table_setting:
@@ -47,8 +47,8 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: PARQUET
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           partitions: 0
       load_data_flag: true
       run_workload_flag: false
@@ -56,7 +56,7 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_ao_parquet_nocomp_nopart_4
+    - workload_name: tpch_ao_parquet_nocomp_nopart_no
       database_name: gpsqltest_tpch_parquet_nocomp_nopart
       user: gpadmin
       table_setting:
@@ -64,8 +64,8 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: PARQUET
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           partitions: 0
       load_data_flag: false
       run_workload_flag: false
@@ -73,7 +73,7 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_ao_parquet_nocomp_nopart_5
+    - workload_name: tpch_ao_parquet_nocomp_nopart_run3
       database_name: gpsqltest_tpch_parquet_nocomp_nopart
       user: gpadmin
       table_setting:
@@ -81,8 +81,8 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: PARQUET
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           partitions: 0
       load_data_flag: false
       run_workload_flag: true

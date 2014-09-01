@@ -13,8 +13,8 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: ROW
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           compression_type: QuickLZ
           compression_level: 1
           partitions: 128
@@ -32,8 +32,8 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: COLUMN
-          row_group_size: 1048576
-          page_size: 8388608
+          row_group_size: 8388608
+          page_size: 1048576
           compression_type: None
           compression_level: 1
           partitions: 0
