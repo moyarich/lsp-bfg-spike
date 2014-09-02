@@ -1,5 +1,6 @@
 # workloads_list: tpch_ao_row, tpch_ao_co
-workloads_list: tpch_ao_parquet_nocomp_nopart_load_run,tpch_ao_parquet_nocomp_nopart_run,tpch_ao_parquet_nocomp_nopart_load,tpch_ao_parquet_nocomp_nopart_no,tpch_ao_parquet_nocomp_nopart_run3
+#workloads_list: tpch_ao_parquet_nocomp_nopart_load_run,tpch_ao_parquet_nocomp_nopart_run,tpch_ao_parquet_nocomp_nopart_load,tpch_ao_parquet_nocomp_nopart_no,tpch_ao_parquet_nocomp_nopart_run3
+workloads_list: tpch_ao_parquet_nocomp_nopart_run3
 
 workloads_mode: sequential
 
@@ -84,8 +85,8 @@ workloads_content:
           row_group_size: 8388608
           page_size: 1048576
           partitions: 0
-      load_data_flag: false
+      load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 3
-      num_iteration: 1
+      num_iteration: 2

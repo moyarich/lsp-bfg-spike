@@ -30,9 +30,6 @@ class SequentialExecutor(Executor):
     def execute(self):
         # instantiate and prepare workloads, prepare report directory
         self.setup()
-
-        print self.workloads_instance
-        
         # execute workloads sequentially
         for wi in self.workloads_instance:
             p = Process(target=wi.execute)
