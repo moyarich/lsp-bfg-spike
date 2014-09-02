@@ -58,9 +58,10 @@ if __name__ == '__main__':
 
     schedule_list = schedules.split(',')
 
-    # prepare report directory
+    # prepare report directory and the report.sql path
     report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
     os.system('mkdir -p %s' % (report_directory))
+    report_sql_path = os.path.join(report_directory, 'report.sql')
     
     # parse schedule file
     for schedule_name in schedule_list:
@@ -83,7 +84,7 @@ if __name__ == '__main__':
         try:
             workloads_mode = schedule_parser['workloads_mode'].upper()
             if workloads_mode == 'SEQUENTIAL':
-                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name)
+                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_path)
             elif workloads_mode == 'CONCURRENT':
                 workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name)
             elif workloads_mode == 'DYNAMIC':

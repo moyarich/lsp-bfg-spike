@@ -40,9 +40,9 @@ except ImportError:
 
 
 class Tpch(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_path): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_path)
 
         # init tpch specific configuration such as tpch table_settings
         ts = workload_specification['table_setting']
@@ -63,7 +63,7 @@ class Tpch(Workload):
         elif self.data_volume_type == 'PER_SEGMENT':
             self.scale_factor = self.data_volume_size * self.nsegs
         else:
-            self.error('Error in calculating data volumn for workloads %s: data_volume_type=%s, data_volume_size=%s' % (self.workload_name, self.data_volume_type, self.data_volume_size))
+            self.output('Error in calculating data volumn for workloads %s: data_volume_type=%s, data_volume_size=%s' % (self.workload_name, self.data_volume_type, self.data_volume_size))
             exit(-1)
 
         # Parse table setting
@@ -144,6 +144,7 @@ class Tpch(Workload):
             for table_name in tables:
                 self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
                 self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
+                self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SKIP', 0);" % (table_name))
             return True
 
         # load all 8 tables and 1 view
@@ -153,8 +154,8 @@ class Tpch(Workload):
                             compression_type = self.compression_type, compression_level = self.compression_level, \
                             partitions = self.partitions, tables = tables, tbl_suffix = self.tbl_suffix, sql_suffix = self.sql_suffix, \
                             tpch_load_log = os.path.join(self.report_directory, 'tpch_load.log'), \
-                            output_file = self.output_file, error_file = self.error_file, report_file = self.report_file, \
-                            workload_directory = self.workload_directory)
+                            output_file = self.output_file, report_file = self.report_file, \
+                            workload_directory = self.workload_directory, report_sql_path = self.report_sql_path)
         loader.load()
 
         # vacuum_analyze
@@ -165,7 +166,7 @@ class Tpch(Workload):
         try: 
             cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
-            self.error('Failed to connect to database %s: %s' % (self.database_name), str(e))
+            self.output('Failed to connect to database %s: %s' % (self.database_name), str(e))
             exit(2)
         try:
             sql = 'VACUUM ANALYZE;'
@@ -176,11 +177,13 @@ class Tpch(Workload):
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
             self.output('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
+            self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'SUCCESS', %d);" % (duration))
+
  
         except Exception, e:
-            self.error('VACUUM ANALYZE failure: %s' % (str(e)))
-            self.output('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', duration))
-            self.report('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', duration))
+            self.output('VACUUM ANALYZE failure: %s' % (str(e)))
+            self.report('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', 0))
+            self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'ERROR', 0);")
             exit(2)
         cnx.close()
 

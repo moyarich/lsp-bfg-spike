@@ -35,8 +35,8 @@ class TpchLoader(object):
         row_group_size = 8388608, compression_type = None, compression_level = None, partitions = 0, \
         tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
         tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log', \
-        output_file = '/tmp/tpch_output', error_file = '/tmp/tpch_error', report_file = '/tmp/tpch_report', \
-        workload_directory = ''):
+        output_file = '/tmp/tpch_output', report_file = '/tmp/tpch_report', \
+        workload_directory = '', report_sql_path = ''):
 
         self.database_name = None if database_name is None else database_name.lower()
         self.user = user.lower()
@@ -54,15 +54,15 @@ class TpchLoader(object):
         self.sql_suffix = sql_suffix
         self.tpch_load_log = tpch_load_log
         self.output_file = output_file
-        self.error_file = error_file
         self.report_file = report_file
         self.workload_directory = workload_directory
+        self.report_sql_path = report_sql_path
 
     def output(self, msg):
         Log(self.output_file, msg)
 
-    def error(self, msg):
-        Log(self.error_file, msg)
+    def report_sql(self, msg):
+        Log(self.report_sql_path, msg)
 
     def report(self, msg):
         Report(self.report_file, msg)
@@ -116,22 +116,24 @@ class TpchLoader(object):
             qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
             beg_time = datetime.now()
             # run all sql in each loading data file
-            for cmd in qf_path:
-                # run current query
-                try:
+            try:
+                for cmd in qf_path:
+                    # run current query
                     cmd = self.replace_sql(sql = cmd, table_name = table_name)
                     self.output(cmd)
                     result = self.cnx.query(cmd)
                     self.output(str(result))
-                except Exception, e:
+            except Exception, e:
                     self.output('ERROR: Failed to load data for table %s: %s' % (table_name, str(e)))
-                    self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0))                
-
+                    self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
+                    self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'ERROR', 0);" % (table_name))
+                    continue
             end_time = datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds       
             self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
             self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+            self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SUCCESS', %d);" % (table_name, duration))
             
     def load(self):
         try: 

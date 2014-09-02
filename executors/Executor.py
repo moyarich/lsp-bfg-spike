@@ -11,10 +11,11 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
-    def __init__(self, workloads_list, workloads_specification, report_directory, schedule_name):
+    def __init__(self, workloads_list, workloads_specification, report_directory, schedule_name, report_sql_path):
         self.workloads_list = workloads_list
         self.workloads_specification = workloads_specification
         self.report_directory = report_directory
+        self.report_sql_path = report_sql_path
         self.schedule_name = schedule_name
         self.workloads_instance = []
         self.should_stop = False
@@ -42,7 +43,7 @@ class Executor(object):
             workload_directory = LSP_HOME + os.sep + 'workloads' + os.sep + workload_category
 
             if workload_category == 'TPCH':
-                self.workloads_instance.append(Tpch(wl_specs, workload_directory, self.report_directory))
+                self.workloads_instance.append(Tpch(wl_specs, workload_directory, self.report_directory, self.report_sql_path))
             else:
                 print 'No appropreciate workload type found for workload %s' % (wl)
 

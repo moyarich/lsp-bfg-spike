@@ -34,7 +34,7 @@ LSP_HOME = os.getenv('LSP_HOME')
 
 
 class Workload(object):
-    def __init__(self, workload_specification, workload_directory, report_directory):
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_path):
         # initialize common propertities for workload
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
@@ -46,7 +46,7 @@ class Workload(object):
         self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
         self.num_iteration = int(str(workload_specification['num_iteration']).strip())
         self.tbl_suffix = ''
-     
+        self.report_sql_path = report_sql_path
         # prepare report directory for workload
         if report_directory != '':
             self.report_directory = os.path.join(report_directory, self.workload_name)
@@ -56,7 +56,6 @@ class Workload(object):
         os.system('mkdir -p %s' % (self.report_directory))
         # set output log, error log, and report
         self.output_file = os.path.join(self.report_directory, 'output.csv')
-        self.error_file  = os.path.join(self.report_directory, 'error.csv')
         self.report_file = os.path.join(self.report_directory, 'report.csv')
         # set workload source directory
         self.workload_directory = workload_directory
@@ -98,8 +97,8 @@ class Workload(object):
     def output(self, msg):
         Log(self.output_file, msg)
 
-    def error(self, msg):
-        Log(self.error_file, msg)
+    def report_sql(self, msg):
+        Report(self.report_sql_path, msg)
 
     def report(self, msg):
         Report(self.report_file, msg)
@@ -127,6 +126,7 @@ class Workload(object):
             for qf_name in query_files:
                 self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
                 self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
+                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SKIP', 0);" % (qf_name.replace('.sql', ''), iteration, stream))
             return
 
         if self.run_workload_mode == 'SEQUENTIAL':
@@ -159,6 +159,7 @@ class Workload(object):
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
             self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
             self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
+            self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
  
         cnx.close()
 
