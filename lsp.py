@@ -1,5 +1,6 @@
 import os
 import sys
+from datetime import datetime
 
 try:
     import yaml
@@ -50,43 +51,48 @@ if __name__ == '__main__':
     parser = OptionParser()
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
     (options, args) = parser.parse_args()
-    schedule = options.schedule
-    if schedule is None:
-        print 'Usage: python -u lsp.py -s schedule_file\nPlease use python -u lsp.py -h for more info'
+    schedules = options.schedule
+    if schedules is None:
+        print 'Usage: python -u lsp.py -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info'
         sys.exit(0)
 
+    schedule_list = schedules.split(',')
+
+    # prepare report directory
+    report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
+    os.system('mkdir -p %s' % (report_directory))
     # parse schedule file
-    schedule_file = LSP_HOME + os.sep + 'schedules' + os.sep + schedule + '.yml'
-    with open(schedule_file, 'r') as fschedule:
-        schedule_parser = yaml.load(fschedule)
 
-    # parse list of the workloads for execution
-    workloads_list = schedule_parser['workloads_list']
-    workloads_list = [wl.strip(' ') for wl in workloads_list.split(',')]
-    if len(workloads_list) == 0:
-        print 'No workload is specified in schedule file'
-        sys.exit(-1)
+    for schedule_name in schedule_list:
+        schedule_file = LSP_HOME + os.sep + 'schedules' + os.sep + schedule_name + '.yml'
+        with open(schedule_file, 'r') as fschedule:
+            schedule_parser = yaml.load(fschedule)
 
-    # parse detailed definition of the workloads
-    workloads_content = schedule_parser['workloads_content']
-
-    # select appropriate executor to run workloads
-    workloads_executor = None 
-    try:
-        workloads_mode = schedule_parser['workloads_mode'].upper()
-
-        if workloads_mode == 'SEQUENTIAL':
-            workloads_executor = SequentialExecutor(workloads_list, workloads_content)
-        elif workloads_mode == 'CONCURRENT':
-            workloads_executor = ConcurrentExecutor(workloads_list, workloads_content)
-        elif workloads_mode == 'DYNAMIC':
-            workloads_executor = DynamicExecutor(workloads_list, workloads_content)
-        else:
-            print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
+        # parse list of the workloads for execution
+        workloads_list = schedule_parser['workloads_list']
+        workloads_list = [wl.strip(' ') for wl in workloads_list.split(',')]
+        if len(workloads_list) == 0:
+            print 'No workload is specified in schedule file'
             sys.exit(-1)
-    except Exception as e:
-        print 'Error while selecting appropreciate executor for workloads: ' + str(e)
-        exit(-1)
 
-    # execute workloads
-    workloads_executor.execute()
+        # parse detailed definition of the workloads
+        workloads_content = schedule_parser['workloads_content']
+
+        # select appropriate executor to run workloads
+        workloads_executor = None 
+        try:
+            workloads_mode = schedule_parser['workloads_mode'].upper()
+
+            if workloads_mode == 'SEQUENTIAL':
+                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name)
+            elif workloads_mode == 'CONCURRENT':
+                workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name)
+            elif workloads_mode == 'DYNAMIC':
+                workloads_executor = DynamicExecutor(workloads_list, workloads_content)
+            else:
+                print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
+                sys.exit(-1)
+        except Exception as e:
+            print 'Error while selecting appropreciate executor for workloads: ' + str(e)
+            exit(-1)
+        workloads_executor.execute()

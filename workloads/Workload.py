@@ -53,7 +53,13 @@ class Workload(object):
         else:
             print 'Test report directory is not available before preparing report directory for workload %s' % (self.workload_name)
             exit(-1)
-        os.system('mkdir %s' % (self.report_directory))
+        os.system('mkdir -p %s' % (self.report_directory))
+        # set output log, error log, and report
+        self.output_file = os.path.join(self.report_directory, 'output.csv')
+        self.error_file  = os.path.join(self.report_directory, 'error.csv')
+        self.report_file = os.path.join(self.report_directory, 'report.csv')
+        # set workload source directory
+        self.workload_directory = workload_directory
 
         # check flag for data loading
         if self.load_data_flag == 'TRUE':
@@ -61,7 +67,7 @@ class Workload(object):
         elif self.load_data_flag == 'FALSE':
             self.load_data_flag = False
         else:
-            self.error('Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.load_data_flag))
+            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.load_data_flag))
             exit(-1)
 
         # check flag for workload execution
@@ -70,7 +76,7 @@ class Workload(object):
         elif self.run_workload_flag == 'FALSE':
             self.run_workload_flag = False
         else:
-            self.error('Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.run_workload_flag))
+            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.run_workload_flag))
             exit(-1)
 
         # check mode for workload execution
@@ -79,16 +85,8 @@ class Workload(object):
         elif self.run_workload_mode == 'RANDOM':
             pass
         else:
-            self.error('Invalid value for mode of workload execution in workload %s: %s. Mast be SEQUENTIAL/RANDOM.' % (self.workload_name, self.run_workload_mode))
+            self.output('ERROR: Invalid value for mode of workload execution in workload %s: %s. Mast be SEQUENTIAL/RANDOM.' % (self.workload_name, self.run_workload_mode))
             exit(-1)
-
-        # set workload source directory
-        self.workload_directory = workload_directory
-
-        # set output log, error log, and report
-        self.output_file = os.path.join(self.report_directory, 'output.csv')
-        self.error_file  = os.path.join(self.report_directory, 'error.csv')
-        self.report_file = os.path.join(self.report_directory, 'report.csv')
 
         # should always run the workload by default
         self.should_stop = False
@@ -96,6 +94,16 @@ class Workload(object):
     def setup(self):
         '''Setup prerequisites for workload'''
         pass
+
+    def output(self, msg):
+        Log(self.output_file, msg)
+
+    def error(self, msg):
+        Log(self.error_file, msg)
+
+    def report(self, msg):
+        Report(self.report_file, msg)
+
 
     def load_data(self):
         '''Load data for workload'''
@@ -141,10 +149,11 @@ class Workload(object):
                 # run current query
                 try:
                     q = q.replace('TABLESUFFIX', self.tbl_suffix)
-                    cnx.query(q)
+                    self.output(q)
+                    result = cnx.query(q)
+                    self.output(str(result))
                 except Exception, e:
-                    self.error('Failed to run query %s: %s' % (qf_name.replace('.sql', ''), str(e)))
-		    self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', 0))
+                    self.output('ERROR: Failed to run query %s: %s' % (qf_name.replace('.sql', ''), str(e)))
             end_time = datetime.datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
@@ -156,11 +165,11 @@ class Workload(object):
     def run_workload(self):
         niteration = 1
         while niteration <= self.num_iteration:
-            self.output('Start iteration %d' % (niteration))
+            self.output('-- Start iteration %d' % (niteration))
             AllWorkers = []
             nconcurrency = 1
             while nconcurrency <= self.num_concurrency:
-                self.output('Start stream %s' % (nconcurrency))
+                self.output('-- Start stream %s' % (nconcurrency))
                 p = Process(target = self.run_queries, args = (niteration, nconcurrency))
                 AllWorkers.append(p)
                 nconcurrency += 1
@@ -182,20 +191,11 @@ class Workload(object):
                 if len(AllWorkers) != 0:
                     time.sleep(2)
 
-            self.output('Complete iteration %d' % (niteration))
+            self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
 
     def cleanup(self):
         pass
-
-    def output(self, msg):
-        Log(self.output_file, msg)
-
-    def error(self, msg):
-        Log(self.error_file, msg)
-
-    def report(self, msg):
-        Report(self.report_file, msg)
 
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
@@ -215,3 +215,4 @@ class Workload(object):
         
         self.output('-- Complete running workload %s' % (self.workload_name))
         self.report('-- Complete running workload %s' % (self.workload_name))
+

@@ -11,15 +11,17 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
-    def __init__(self, workloads_list, workloads_specification):
+    def __init__(self, workloads_list, workloads_specification, report_directory, schedule_name):
         self.workloads_list = workloads_list
         self.workloads_specification = workloads_specification
+        self.report_directory = report_directory
+        self.schedule_name = schedule_name
         self.workloads_instance = []
         self.should_stop = False
 
     def setup(self):
         # create report directory for test
-        self.report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.datetime.now().strftime('%Y%m%d-%H%M%S')
+        self.report_directory = self.report_directory + os.sep + self.schedule_name
         os.system('mkdir -p %s' % (self.report_directory))
 
         # instantiate and prepare workloads based on workloads sepecification
@@ -38,7 +40,6 @@ class Executor(object):
             # Find appropreciate workload type for current workload
             workload_category = wl.split('_')[0].upper()
             workload_directory = LSP_HOME + os.sep + 'workloads' + os.sep + workload_category
-            os.system('mkdir -p %s' % (workload_directory))
 
             if workload_category == 'TPCH':
                 self.workloads_instance.append(Tpch(wl_specs, workload_directory, self.report_directory))

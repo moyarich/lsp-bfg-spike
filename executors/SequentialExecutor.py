@@ -11,8 +11,8 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class SequentialExecutor(Executor):
-    def __init__(self, workloads_list, workloads_specification):
-        Executor.__init__(self, workloads_list, workloads_specification)
+    def __init__(self, workloads_list, workloads_specification, report_directory, schedule_name):
+        Executor.__init__(self, workloads_list, workloads_specification, report_directory, schedule_name)
         self.AllProcess = []
 
     def handle_finished_workload(self, pid):
@@ -31,6 +31,8 @@ class SequentialExecutor(Executor):
         # instantiate and prepare workloads, prepare report directory
         self.setup()
 
+        print self.workloads_instance
+        
         # execute workloads sequentially
         for wi in self.workloads_instance:
             p = Process(target=wi.execute)
@@ -40,6 +42,5 @@ class SequentialExecutor(Executor):
                     self.handle_ongoing_workload(p)
                 else:
                     break
-
         # clean up environment after all workload are finished
         self.cleanup()

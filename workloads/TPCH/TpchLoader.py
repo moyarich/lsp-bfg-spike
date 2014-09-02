@@ -109,7 +109,7 @@ class TpchLoader(object):
     def load_data(self):
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
-            self.error('Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
+            self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
             return
 
         for table_name in self.tables:
@@ -124,8 +124,7 @@ class TpchLoader(object):
                     result = self.cnx.query(cmd)
                     self.output(str(result))
                 except Exception, e:
-                    self.error('Failed to load data for table %s: %s' % (table_name, str(e)))
-                    self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0))
+                    self.output('ERROR: Failed to load data for table %s: %s' % (table_name, str(e)))
                     self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0))                
 
             end_time = datetime.now()
@@ -142,7 +141,6 @@ class TpchLoader(object):
             cnx.query('CREATE DATABASE %s;' % (self.database_name))
             cnx.close()
         finally:
-            self.cnx = pg.connect(dbname = self.database_name)
-            
+            self.cnx = pg.connect(dbname = self.database_name)    
         self.load_data()
         self.cnx.close()
