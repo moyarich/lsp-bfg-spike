@@ -34,15 +34,14 @@ class TpchLoader(object):
         scale_factor = 1, nsegs = 1, append_only = True, orientation= 'ROW', page_size = 1048576, \
         row_group_size = 8388608, compression_type = None, compression_level = None, partitions = 0, \
         tables = ['nation', 'lineitem', 'orders','region','part','supplier','partsupp', 'customer'], \
-        tbl_suffix = '', sql_suffix = '', tpch_load_log = '/tmp/tpch_load.log', \
-        output_file = '/tmp/tpch_output', report_file = '/tmp/tpch_report', \
-        workload_directory = '', report_sql_path = ''):
+        tbl_suffix = '', sql_suffix = '', output_file = '/tmp/tpch_output', report_file = '/tmp/tpch_report', \
+        report_sql_file = '', workload_directory = ''):
 
         self.database_name = None if database_name is None else database_name.lower()
         self.user = user.lower()
         self.scale_factor = scale_factor
         self.nsegs = nsegs
-        self.append_only = True if append_only is None else append_only
+        self.append_only = append_only
         self.orientation = 'row' if orientation is None else orientation.lower()
         self.page_size = page_size
         self.row_group_size = row_group_size
@@ -52,17 +51,16 @@ class TpchLoader(object):
         self.tables = tables
         self.tbl_suffix = tbl_suffix
         self.sql_suffix = sql_suffix
-        self.tpch_load_log = tpch_load_log
         self.output_file = output_file
         self.report_file = report_file
-        self.workload_directory = workload_directory
-        self.report_sql_path = report_sql_path
+        self.report_sql_file = report_sql_file
+        self.workload_directory = workload_directory  
 
     def output(self, msg):
         Log(self.output_file, msg)
 
     def report_sql(self, msg):
-        Log(self.report_sql_path, msg)
+        Report(self.report_sql_file, msg)
 
     def report(self, msg):
         Report(self.report_file, msg)

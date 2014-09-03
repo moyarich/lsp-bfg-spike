@@ -58,10 +58,10 @@ if __name__ == '__main__':
 
     schedule_list = schedules.split(',')
 
-    # prepare report directory and the report.sql path
+    # prepare report directory with times and the report.sql file
     report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
     os.system('mkdir -p %s' % (report_directory))
-    report_sql_path = os.path.join(report_directory, 'report.sql')
+    report_sql_file = os.path.join(report_directory, 'report.sql')
     
     # parse schedule file
     for schedule_name in schedule_list:
@@ -73,8 +73,8 @@ if __name__ == '__main__':
         workloads_list = schedule_parser['workloads_list']
         workloads_list = [wl.strip(' ') for wl in workloads_list.split(',')]
         if len(workloads_list) == 0:
-            print 'No workload is specified in schedule file'
-            sys.exit(-1)
+            print 'No workload is specified in schedule file : %s' %(schedule_name + '.yml')
+            exit(-1)
 
         # parse detailed definition of the workloads
         workloads_content = schedule_parser['workloads_content']
@@ -84,14 +84,14 @@ if __name__ == '__main__':
         try:
             workloads_mode = schedule_parser['workloads_mode'].upper()
             if workloads_mode == 'SEQUENTIAL':
-                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_path)
+                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file)
             elif workloads_mode == 'CONCURRENT':
                 workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name)
             elif workloads_mode == 'DYNAMIC':
                 workloads_executor = DynamicExecutor(workloads_list, workloads_content)
             else:
                 print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
-                sys.exit(-1)
+                exit(-1)
         except Exception as e:
             print 'Error while selecting appropreciate executor for workloads: ' + str(e)
             exit(-1)

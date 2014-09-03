@@ -11,8 +11,8 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class SequentialExecutor(Executor):
-    def __init__(self, workloads_list, workloads_specification, report_directory, schedule_name, report_sql_path):
-        Executor.__init__(self, workloads_list, workloads_specification, report_directory, schedule_name, report_sql_path)
+    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file):
+        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file)
         self.AllProcess = []
 
     def handle_finished_workload(self, pid):
@@ -30,7 +30,7 @@ class SequentialExecutor(Executor):
     def execute(self):
         # instantiate and prepare workloads, prepare report directory
         self.setup()
-        # execute workloads sequentially
+        # execute workloads sequentially,such as Tpch,Xmarq
         for wi in self.workloads_instance:
             p = Process(target=wi.execute)
             p.start()

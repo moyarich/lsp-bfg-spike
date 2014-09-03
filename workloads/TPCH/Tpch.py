@@ -40,9 +40,9 @@ except ImportError:
 
 
 class Tpch(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_path): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_path)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file)
 
         # init tpch specific configuration such as tpch table_settings
         ts = workload_specification['table_setting']
@@ -145,7 +145,7 @@ class Tpch(Workload):
                 self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
                 self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
                 self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SKIP', 0);" % (table_name))
-            return True
+            return
 
         # load all 8 tables and 1 view
         loader = TpchLoader(database_name = self.database_name, user = self.user, \
@@ -153,21 +153,20 @@ class Tpch(Workload):
                             page_size = self.page_size, row_group_size = self.row_group_size, \
                             compression_type = self.compression_type, compression_level = self.compression_level, \
                             partitions = self.partitions, tables = tables, tbl_suffix = self.tbl_suffix, sql_suffix = self.sql_suffix, \
-                            tpch_load_log = os.path.join(self.report_directory, 'tpch_load.log'), \
-                            output_file = self.output_file, report_file = self.report_file, \
-                            workload_directory = self.workload_directory, report_sql_path = self.report_sql_path)
+                            output_file = self.output_file, report_file = self.report_file, report_sql_file = self.report_sql_file, \
+                            workload_directory = self.workload_directory)
         loader.load()
 
         # vacuum_analyze
         self.vacuum_analyze()
 
     def vacuum_analyze(self):
-        '''VACUUM/ANALYZE data for workload'''
         try: 
             cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
             self.output('Failed to connect to database %s: %s' % (self.database_name), str(e))
             exit(2)
+        
         try:
             sql = 'VACUUM ANALYZE;'
             beg_time = datetime.datetime.now()
@@ -178,8 +177,6 @@ class Tpch(Workload):
             self.output('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'SUCCESS', %d);" % (duration))
-
- 
         except Exception, e:
             self.output('VACUUM ANALYZE failure: %s' % (str(e)))
             self.report('    VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', 0))

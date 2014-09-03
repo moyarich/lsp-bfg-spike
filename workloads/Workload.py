@@ -34,7 +34,7 @@ LSP_HOME = os.getenv('LSP_HOME')
 
 
 class Workload(object):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_path):
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file):
         # initialize common propertities for workload
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
@@ -45,8 +45,10 @@ class Workload(object):
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
         self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
         self.num_iteration = int(str(workload_specification['num_iteration']).strip())
-        self.tbl_suffix = ''
-        self.report_sql_path = report_sql_path
+
+        # set workload source directory
+        self.workload_directory = workload_directory
+        
         # prepare report directory for workload
         if report_directory != '':
             self.report_directory = os.path.join(report_directory, self.workload_name)
@@ -54,11 +56,15 @@ class Workload(object):
             print 'Test report directory is not available before preparing report directory for workload %s' % (self.workload_name)
             exit(-1)
         os.system('mkdir -p %s' % (self.report_directory))
-        # set output log, error log, and report
+        # set output log and report
         self.output_file = os.path.join(self.report_directory, 'output.csv')
         self.report_file = os.path.join(self.report_directory, 'report.csv')
-        # set workload source directory
-        self.workload_directory = workload_directory
+
+        # set report.sql file
+        self.report_sql_file = report_sql_file
+        
+        # set table_suffix when use in function run_queries
+        self.tbl_suffix = ''
 
         # check flag for data loading
         if self.load_data_flag == 'TRUE':
@@ -98,7 +104,7 @@ class Workload(object):
         Log(self.output_file, msg)
 
     def report_sql(self, msg):
-        Report(self.report_sql_path, msg)
+        Report(self.report_sql_file, msg)
 
     def report(self, msg):
         Report(self.report_file, msg)
@@ -118,7 +124,6 @@ class Workload(object):
         queries_directory = self.workload_directory + os.sep + 'queries'
         if not os.path.exists(queries_directory):
             return
-
         query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
 
         # skip all queries
@@ -137,7 +142,7 @@ class Workload(object):
         try: 
             cnx = pg.connect(dbname = self.database_name)
         except Exception, e:
-            self.error('Failed to connect to database %s: %s' %(self.database_name, str(e)))
+            self.output('ERROR: Failed to connect to database %s: %s' %(self.database_name, str(e)))
             exit(2)
 
         # run all sql files in queries directory
