@@ -133,7 +133,7 @@ class PSQL:
                                 (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), 
                                  timeout=timeout)
 
-    def runcmd(self, cmd, dbname = None, ofile = '-', pFlags = '-t -q', username = None,
+    def runcmd(self, cmd, dbname = None, ofile = '-', flag = '-t -q', username = None, password = None,
         PGOPTIONS = None, host = None, port = None, background = False):
         '''
         Run command, psql -c cmd
@@ -145,11 +145,10 @@ class PSQL:
         @param port: port
 
         '''
-        return self.run(cmd = cmd, dbname = dbname, ofile = ofile, flag = pFlags, 
+        return self.run(cmd = cmd, dbname = dbname, ofile = ofile, flag = flag, 
                         username = username, password = password, 
                         PGOPTIONS = PGOPTIONS, host = host, port = port,
                         background = background)
-
 
     def runfile(self, ifile, flag='', timeout = 900, dbname = None, outputPath = "", outputFile = "", 
         username = None, password = None, PGOPTIONS = None, host = None, port = None,

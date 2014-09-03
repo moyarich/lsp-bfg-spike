@@ -5,7 +5,13 @@ import datetime
 try:
     from workloads.TPCH.Tpch import Tpch
 except ImportError:
-    sys.stderr.write('LSP needs TpchWorkload in workloads/TPCH/Tpch.py\n')
+    sys.stderr.write('LSP needs Tpch Workload in workloads/TPCH/Tpch.py\n')
+    sys.exit(2)
+
+try:
+    from workloads.XMARQ.Xmarq import Xmarq
+except ImportError:
+    sys.stderr.write('LSP needs Xmarq Workload in workloads/XMARQ/Xmarq.py\n')
     sys.exit(2)
 
 LSP_HOME = os.getenv('LSP_HOME')
@@ -44,6 +50,8 @@ class Executor(object):
 
             if workload_category == 'TPCH':
                 self.workloads_instance.append(Tpch(workload_specification, workload_directory, self.report_directory, self.report_sql_file))
+            elif workload_category == 'XMARQ':
+                self.workloads_instance.append(Xmarq(workload_specification, workload_directory, self.report_directory, self.report_sql_file))
             else:
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
 

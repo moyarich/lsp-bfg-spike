@@ -6,9 +6,9 @@ import random
 from multiprocessing import Process, Queue, Value , Array
 
 try:
-    from pygresql import pg
+    from lib.PSQL import psql
 except ImportError:
-    sys.stderr.write('LSP needs pygresql\n')
+    sys.stderr.write('LSP needs psql in lib/PSQL.py in Workload.py\n')
     sys.exit(2)
 
 try:
@@ -39,9 +39,10 @@ class Workload(object):
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
         self.user = workload_specification['user'].strip()
-        self.table_setting = workload_specification['table_setting']
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
+        
+        self.table_setting = workload_specification['table_setting']
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
         self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
         self.num_iteration = int(str(workload_specification['num_iteration']).strip())
@@ -109,7 +110,6 @@ class Workload(object):
     def report(self, msg):
         Report(self.report_file, msg)
 
-
     def load_data(self):
         '''Load data for workload'''
         pass
@@ -129,8 +129,8 @@ class Workload(object):
         # skip all queries
         if not self.run_workload_flag:
             for qf_name in query_files:
-                self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
-                self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
+                self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
+                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SKIP', 0);" % (qf_name.replace('.sql', ''), iteration, stream))
             return
 
@@ -139,35 +139,32 @@ class Workload(object):
         else:
             query_files = random.shuffle(query_files)
 
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            self.output('ERROR: Failed to connect to database %s: %s' %(self.database_name, str(e)))
-            exit(2)
-
         # run all sql files in queries directory
         for qf_name in query_files:
-            beg_time = datetime.datetime.now()
+            run_success_flag = True
             qf_path = QueryFile(os.path.join(queries_directory, qf_name))
+            beg_time = datetime.datetime.now()
             # run all queries in each sql file
             for q in qf_path:
-                # run current query
-                try:
-                    q = q.replace('TABLESUFFIX', self.tbl_suffix)
-                    self.output(q)
-                    result = cnx.query(q)
-                    self.output(str(result))
-                except Exception, e:
-                    self.output('ERROR: Failed to run query %s: %s' % (qf_name.replace('.sql', ''), str(e)))
-            end_time = datetime.datetime.now()
-            duration = end_time - beg_time
-            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-            self.output('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
-            self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
-            self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
- 
-        cnx.close()
+                q = q.replace('TABLESUFFIX', self.tbl_suffix)
+                self.output('--' + q)
+                (ok, result) = psql.runcmd(cmd = q, dbname = self.database_name, flag = '-a')
+                self.output(str(result))
+                if not ok:
+                    run_success_flag = False
 
+            if run_success_flag:
+                end_time = datetime.datetime.now()
+                duration = end_time - beg_time
+                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
+                self.output('--- Success to run query %s %d ms' % (qf_name.replace('.sql', ''), duration))
+                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
+                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
+            else:
+                self.output('ERROR--- Failed to run query %s' % (qf_name.replace('.sql', '')))
+                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', duration))
+                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'ERROR', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
+                
     def run_workload(self):
         niteration = 1
         while niteration <= self.num_iteration:
@@ -200,7 +197,7 @@ class Workload(object):
             self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
 
-    def cleanup(self):
+    def clean_up(self):
         pass
 
     def execute(self):
