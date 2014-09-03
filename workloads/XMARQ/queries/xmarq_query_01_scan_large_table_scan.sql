@@ -1,13 +1,3 @@
--- START_IGNORE
-EXPLAIN
-SELECT
- *
-FROM
- lineitem_TABLESUFFIX
-WHERE
- l_linenumber<0;
--- END_IGNORE
-
 SELECT
  *
 FROM
