@@ -48,7 +48,7 @@ class Workload(object):
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
         
-        # get table setting
+        # get table setting and set table and sql suffix
         self.get_table_setting(workload_specification)
 
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
@@ -71,9 +71,6 @@ class Workload(object):
 
         # set report.sql file
         self.report_sql_file = report_sql_file
-        
-        # set table_suffix when use in function run_queries
-        self.tbl_suffix = ''
 
         # check flag for data loading
         if self.load_data_flag == 'TRUE':
@@ -196,6 +193,7 @@ class Workload(object):
 
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
+        print self.tbl_suffix + '******' self.sql_suffix
 
     def setup(self):
         '''Setup prerequisites for workload'''
