@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 from datetime import datetime
 
 LSP_HOME = os.getenv('LSP_HOME')
@@ -43,7 +42,7 @@ class Tpch(Workload):
 
         if not self.load_data_flag:
             for table_name in tables:
-                self.output('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
+                self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
                 self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
                 self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SKIP', 0);" % (table_name))
         else:
@@ -64,9 +63,9 @@ class Tpch(Workload):
     def vacuum_analyze(self):
         self.output('-- Start Vacuum Analyze')     
         sql = 'VACUUM ANALYZE;'
-        beg_time = datetime.datetime.now()
+        beg_time = datetime.now()
         (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name)
-        end_time = datetime.datetime.now()
+        end_time = datetime.now()
         self.output('RESULT: ' + str(result))
         duration = end_time - beg_time
         duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds

@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-import datetime
+from datetime import datetime
 import random
 from multiprocessing import Process, Queue, Value , Array
 
@@ -240,7 +240,7 @@ class Workload(object):
         for qf_name in query_files:
             run_success_flag = True
             qf_path = QueryFile(os.path.join(queries_directory, qf_name))
-            beg_time = datetime.datetime.now()
+            beg_time = datetime.now()
             # run all queries in each sql file
             for q in qf_path:
                 q = q.replace('TABLESUFFIX', self.tbl_suffix)
@@ -251,7 +251,7 @@ class Workload(object):
                     run_success_flag = False
 
             if run_success_flag:
-                end_time = datetime.datetime.now()
+                end_time = datetime.now()
                 duration = end_time - beg_time
                 duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
                 self.output('Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
