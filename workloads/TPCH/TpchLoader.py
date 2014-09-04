@@ -147,7 +147,7 @@ class TpchLoader(object):
                 self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SUCCESS', %d);" % (table_name, duration))
             else:
                 self.output('ERROR: Failed to load data for table %s' % (table_name))
-                self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
+                self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
                 self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'ERROR', 0);" % (table_name))
 
     def load(self):

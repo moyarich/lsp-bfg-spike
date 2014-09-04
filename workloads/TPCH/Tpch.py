@@ -39,7 +39,6 @@ class Tpch(Workload):
         self.output('-- Start loading data')
 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
-
         if not self.load_data_flag:
             for table_name in tables:
                 self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
@@ -57,20 +56,23 @@ class Tpch(Workload):
             loader.load()
 
         self.output('-- Complete loading data')
+       
         # vacuum_analyze
         self.vacuum_analyze()
 
     def vacuum_analyze(self):
-        self.output('-- Start Vacuum Analyze')     
+        self.output('-- Start vacuum analyze')     
+        
         sql = 'VACUUM ANALYZE;'
+        self.output(sql)
         beg_time = datetime.now()
         (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name)
         end_time = datetime.now()
         self.output('RESULT: ' + str(result))
-        duration = end_time - beg_time
-        duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
-
+    
         if ok:
+            duration = end_time - beg_time
+            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
             self.output('VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'SUCCESS', %d);" % (duration))
@@ -78,7 +80,8 @@ class Tpch(Workload):
             self.output('ERROR: VACUUM ANALYZE failure')
             self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', 0))
             self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'ERROR', 0);")
-        self.output('-- Complete Vacuum Analyze')
+        
+        self.output('-- Complete vacuum analyze')
 
     def clean_up(self):
         pass

@@ -195,7 +195,6 @@ class Workload(object):
         self.sql_suffix = sql_suffix
 
     def get_workload_info(self):
-        '''get the  '''
         cmd = ''
         (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
         pass
@@ -265,7 +264,7 @@ class Workload(object):
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
             else:
                 self.output('ERROR: Failed to run query %s' % (qf_name.replace('.sql', '')))
-                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', duration))
+                self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', duration))
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'ERROR', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
                 
     def run_workload(self):

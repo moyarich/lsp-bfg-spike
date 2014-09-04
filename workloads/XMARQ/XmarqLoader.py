@@ -66,6 +66,7 @@ class XmarqLoader(object):
         except Exception, e:
             cnx = pg.connect(dbname = 'postgres')
             cnx.query('CREATE DATABASE %s;' % (self.database_name))
+        finally:
             cnx.close()
 
     def output(self, msg):
@@ -109,7 +110,7 @@ class XmarqLoader(object):
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
-        if self.partitions == 0:
+        if self.partitions is None or self.partitions == 0:
             sql = sql.replace('PARTITIONS', '')
         else:
             part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
@@ -128,23 +129,22 @@ class XmarqLoader(object):
             qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
             beg_time = datetime.now()
             for cmd in qf_path:
-                # run current query
                 cmd = self.replace_sql(sql = cmd, table_name = table_name)
-                self.output('---' + cmd)
-                (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name, flag = '-a')
-                self.output(str(result))
+                self.output(cmd)
+                (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
+                self.output('RESULT: ' + str(result))
                 if not ok:
                     load_success_flag = False
+            end_time = datetime.now()
 
-            if load_success_flag:
-                end_time = datetime.now()
+            if load_success_flag:     
                 duration = end_time - beg_time
-                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds       
-                self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-                self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000      
+                self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
                 self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SUCCESS', %d);" % (table_name, duration))
             else:        
-                self.output('ERROR--- Failed to load data for table %s: %s' % (table_name))
+                self.output('ERROR--- Failed to load data for table %s' % (table_name))
                 self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
                 self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'ERROR', 0);" % (table_name))
 
