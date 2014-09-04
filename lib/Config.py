@@ -14,7 +14,6 @@ except ImportError:
     sys.stderr.write('LSP needs psql in lib/PSQL.py\n')
     sys.exit(2)
 
-
 # ============================================================================
 class Config:
     class Record:
@@ -51,7 +50,6 @@ class Config:
         (ok, out) = psql.run(flag='-q -t', cmd='select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration, pg_filespace_entry, pg_catalog.pg_filespace fs where fsefsoid = fs.oid and fsname=\'pg_system\' and gp_segment_configuration.dbid=pg_filespace_entry.fsedbid ORDER BY content, preferred_role', ofile='-',dbname='template1') 
 
         if not ok:
-            log('Error %s' % out)
             sys.exit('Unable to select gp_segment_configuration')
         for line in out:
             if line.find("NOTICE") < 0:
@@ -86,7 +84,6 @@ class Config:
         (ok, out) = psql.run(flag='-q -t', cmd='select distinct hostname from gp_segment_configuration where content <> -1', ofile='-', dbname='template1') 
 
         if not ok:
-            log('Error %s' % out)
             sys.exit('Unable to select gp_segment_configuration')
         hostlist = psql.list_out(out)
         return hostlist
@@ -96,7 +93,6 @@ class Config:
         (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where content = -1 and role = 'm'", ofile='-', dbname='template1')
 
         if not ok:
-            log('Error %s' % out)
             sys.exit('Unable to select gp_segment_configuration')
         hostname = psql.list_out(out)[0]
         return hostname

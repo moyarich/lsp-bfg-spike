@@ -45,10 +45,9 @@ workloads_content:
           data_volume_size: 1
           append_only: true
           orientation: PARQUET
-          compression_type: SNAPPY
           row_group_size: 8388608
           page_size: 1048576
-          partitions: 128
+          partitions: 0
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL

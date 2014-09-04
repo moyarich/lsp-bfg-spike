@@ -198,7 +198,6 @@ class Workload(object):
         '''get the  '''
         cmd = ''
         (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
-        if 
         pass
 
     def setup(self):
