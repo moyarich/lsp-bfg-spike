@@ -1,4 +1,4 @@
-workloads_list: tpch_ao_row
+workloads_list: tpch_ao_row,tpch_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_co
 
 workloads_mode: sequential
@@ -31,6 +31,24 @@ workloads_content:
           append_only: true
           orientation: COLUMN
           partitions: 0
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_ao_parquet
+      database_name: gpsqltest_tpch_ao_parquet
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          compression_type: SNAPPY
+          row_group_size: 8388608
+          page_size: 1048576
+          partitions: 128
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL

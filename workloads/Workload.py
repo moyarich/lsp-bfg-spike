@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from datetime import datetime
 import random
 from multiprocessing import Process, Queue, Value , Array
@@ -195,7 +196,9 @@ class Workload(object):
 
     def get_workload_info(self):
         '''get the  '''
-        ()
+        cmd = ''
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
+        if 
         pass
 
     def setup(self):
