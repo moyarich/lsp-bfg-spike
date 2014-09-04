@@ -68,7 +68,7 @@ class Tpch(Workload):
         end_time = datetime.now()
         self.output('RESULT: ' + str(result))
         duration = end_time - beg_time
-        duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
+        duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
 
         if ok:
             self.output('VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))

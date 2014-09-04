@@ -141,7 +141,7 @@ class TpchLoader(object):
             if load_success_flag:
                 end_time = datetime.now()
                 duration = end_time - beg_time
-                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds       
+                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000      
                 self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
                 self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
                 self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SUCCESS', %d);" % (table_name, duration))

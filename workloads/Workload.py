@@ -1,6 +1,5 @@
 import os
 import sys
-import time
 from datetime import datetime
 import random
 from multiprocessing import Process, Queue, Value , Array
@@ -194,6 +193,11 @@ class Workload(object):
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
 
+    def get_workload_info(self):
+        '''get the  '''
+        ()
+        pass
+
     def setup(self):
         '''Setup prerequisites for workload'''
         pass
@@ -253,7 +257,7 @@ class Workload(object):
             if run_success_flag:
                 end_time = datetime.now()
                 duration = end_time - beg_time
-                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
+                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
                 self.output('Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
                 self.report('  Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
