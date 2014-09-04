@@ -10,6 +10,12 @@ except ImportError:
     sys.exit(2)
 
 try:
+    from lib.PSQL import psql
+except ImportError:
+    sys.stderr.write('LSP needs psql in lib/PSQL.py when use in TpchLoader.py\n')
+    sys.exit(2)
+
+try:
     from QueryFile import QueryFile
 except ImportError:
     sys.stderr.write('LSP needs QueryFile in lib/QueryFile.py\n')
@@ -54,7 +60,16 @@ class TpchLoader(object):
         self.output_file = output_file
         self.report_file = report_file
         self.report_sql_file = report_sql_file
-        self.workload_directory = workload_directory  
+        self.workload_directory = workload_directory
+
+        # check if the database exist
+        try: 
+            cnx = pg.connect(dbname = self.database_name)
+        except Exception, e:
+            cnx = pg.connect(dbname = 'postgres')
+            cnx.query('CREATE DATABASE %s;' % (self.database_name))
+        finally:
+            cnx.close()
 
     def output(self, msg):
         Log(self.output_file, msg)
@@ -90,8 +105,8 @@ class TpchLoader(object):
 
         part += '''    )'''
                 
-        return part
-        
+        return part 
+
     def replace_sql(self, sql, table_name):
         sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
@@ -111,36 +126,30 @@ class TpchLoader(object):
             return
 
         for table_name in self.tables:
+            load_success_flag = True
             qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
             beg_time = datetime.now()
             # run all sql in each loading data file
-            try:
-                for cmd in qf_path:
-                    # run current query
-                    cmd = self.replace_sql(sql = cmd, table_name = table_name)
-                    self.output(cmd)
-                    result = self.cnx.query(cmd)
-                    self.output(str(result))
-            except Exception, e:
-                    self.output('ERROR: Failed to load data for table %s: %s' % (table_name, str(e)))
-                    self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
-                    self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'ERROR', 0);" % (table_name))
-                    continue
-            end_time = datetime.now()
-            duration = end_time - beg_time
-            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds       
-            self.output('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-            self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-            self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SUCCESS', %d);" % (table_name, duration))
-            
+            for cmd in qf_path:
+                cmd = self.replace_sql(sql = cmd, table_name = table_name)
+                self.output(cmd)
+                (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
+                self.output('RESULT: ' + str(result))
+                if not ok:
+                    load_success_flag = False
+
+            if load_success_flag:
+                end_time = datetime.now()
+                duration = end_time - beg_time
+                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds       
+                self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SUCCESS', %d);" % (table_name, duration))
+            else:
+                self.output('ERROR: Failed to load data for table %s: %s' % (table_name, str(e)))
+                self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
+                self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'ERROR', 0);" % (table_name))
+
     def load(self):
-        try: 
-            self.cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-            cnx.close()
-        finally:
-            self.cnx = pg.connect(dbname = self.database_name)    
         self.load_data()
-        self.cnx.close()
+

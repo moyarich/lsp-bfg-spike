@@ -229,8 +229,8 @@ class Workload(object):
         # skip all queries
         if not self.run_workload_flag:
             for qf_name in query_files:
-                self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
-                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
+                self.output('Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
+                self.report('  Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SKIP', 0);" % (qf_name.replace('.sql', ''), iteration, stream))
             return
 
@@ -247,9 +247,9 @@ class Workload(object):
             # run all queries in each sql file
             for q in qf_path:
                 q = q.replace('TABLESUFFIX', self.tbl_suffix)
-                self.output('--' + q)
-                (ok, result) = psql.runcmd(cmd = q, dbname = self.database_name, flag = '-a')
-                self.output(str(result))
+                self.output(q)
+                (ok, result) = psql.runcmd(cmd = q, dbname = self.database_name)
+                self.output('RESULT: ' + str(result))
                 if not ok:
                     run_success_flag = False
 
@@ -257,11 +257,11 @@ class Workload(object):
                 end_time = datetime.datetime.now()
                 duration = end_time - beg_time
                 duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
-                self.output('--- Success to run query %s %d ms' % (qf_name.replace('.sql', ''), duration))
-                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
+                self.output('Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
+                self.report('  Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
             else:
-                self.output('ERROR--- Failed to run query %s' % (qf_name.replace('.sql', '')))
+                self.output('ERROR: Failed to run query %s' % (qf_name.replace('.sql', '')))
                 self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', duration))
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'ERROR', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
                 

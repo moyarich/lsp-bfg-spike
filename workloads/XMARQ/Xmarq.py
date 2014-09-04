@@ -154,11 +154,11 @@ class Xmarq(Workload):
     def vacuum_analyze(self):
         cmd = 'VACUUM ANALYZE;'
         self.output('--' + cmd)
-        beg_time = datetime.now()
+        beg_time = datetime.datetime.now()
         print beg_time
         (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name, flag = '-a')
         print '*****\n'
-        end_time = datetime.now()
+        end_time = datetime.datetime.now()
         print end_time
         duration = end_time - beg_time
         duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds
