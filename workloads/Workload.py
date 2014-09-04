@@ -193,7 +193,6 @@ class Workload(object):
 
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
-        print self.tbl_suffix + '******' self.sql_suffix
 
     def setup(self):
         '''Setup prerequisites for workload'''
