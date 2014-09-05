@@ -44,25 +44,30 @@ except ImportError:
     sys.exit(2)
 
 
+def checkcluster(cluster_name):
+    pass
 ###########################################################################
 #  Try to run if user launches this script directly
 if __name__ == '__main__':
     # parse user options
     parser = OptionParser()
+    parser.add_option('-c', '--cluster', dest='cluster', action='store', help='Cluster for test execution')
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
     (options, args) = parser.parse_args()
+    cluster_name = options.cluster
     schedules = options.schedule
-    if schedules is None:
-        print 'Usage: python -u lsp.py -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info'
-        sys.exit(0)
-
-    schedule_list = schedules.split(',')
+    if cluster_name is None or schedules is None:
+        print 'Usage: python -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info'
+        sys.exit(2)
+    # check if cluster exist    
+    checkcluster(cluster_name = cluster_name)
 
     # prepare report directory with times and the report.sql file
     report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
     os.system('mkdir -p %s' % (report_directory))
     report_sql_file = os.path.join(report_directory, 'report.sql')
     
+    schedule_list = schedules.split(',')
     # parse schedule file
     for schedule_name in schedule_list:
         schedule_file = LSP_HOME + os.sep + 'schedules' + os.sep + schedule_name + '.yml'
