@@ -1,4 +1,5 @@
-workloads_list: tpch_ao_row,xmarq_ao_parquet
+# workloads_list: tpch_ao_row,xmarq_ao_parquet
+workloads_list: xmarq_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_co
 
 workloads_mode: sequential

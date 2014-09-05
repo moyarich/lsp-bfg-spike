@@ -10,4 +10,4 @@ WHERE
    orders_TABLESUFFIX o
   WHERE
    c2.c_custkey = o.o_custkey
-  ) a;
+  );

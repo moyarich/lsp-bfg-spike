@@ -1,5 +1,5 @@
 SELECT
- SUBSTRING(o_comment,from 1 for 15) AS substring_comment,
+ SUBSTRING(o_comment, 1, 15) AS substring_comment,
  COUNT(*) AS num
 FROM
  orders_TABLESUFFIX

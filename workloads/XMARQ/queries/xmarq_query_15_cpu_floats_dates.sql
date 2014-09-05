@@ -13,6 +13,6 @@ WHERE
   OR l_quantity = 8.1e4
   OR l_quantity = 9.1e4
   OR l_quantity = 50)
- AND (date - l_shipdate) > 0
- AND (l_commitdate + 5) < (l_receipdate + 5)
+ AND (current_date - l_shipdate) > 0
+ AND (l_commitdate + 5) < (l_receiptdate + 5)
  AND (l_shipdate + 20) < (l_commitdate + 20);
