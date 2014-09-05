@@ -35,9 +35,7 @@ except ImportError:
     sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
     sys.exit(2)
 
-
 LSP_HOME = os.getenv('LSP_HOME')
-
 
 class Workload(object):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file):
@@ -194,7 +192,7 @@ class Workload(object):
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
 
-    def get_workload_info(self):
+    def check_workload_setting(self):
         cmd = ''
         (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
         pass
@@ -228,6 +226,11 @@ class Workload(object):
             return
         query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
 
+        if self.run_workload_mode == 'SEQUENTIAL':
+            query_files = sorted(query_files)
+        else:
+            random.shuffle(query_files)
+
         # skip all queries
         if not self.run_workload_flag:
             for qf_name in query_files:
@@ -235,11 +238,6 @@ class Workload(object):
                 self.report('  Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SKIP', 0);" % (qf_name.replace('.sql', ''), iteration, stream))
             return
-
-        if self.run_workload_mode == 'SEQUENTIAL':
-            query_files = sorted(query_files)
-        else:
-            query_files = random.shuffle(query_files)
 
         # run all sql files in queries directory
         for qf_name in query_files:
