@@ -247,6 +247,7 @@ class Workload(object):
             # run all queries in each sql file
             for q in qf_path:
                 q = q.replace('TABLESUFFIX', self.tbl_suffix)
+                q = q.replace('SQLSUFFIX', self.sql_suffix)
                 self.output(q)
                 (ok, result) = psql.runcmd(cmd = q, dbname = self.database_name)
                 self.output('RESULT: ' + str(result))
