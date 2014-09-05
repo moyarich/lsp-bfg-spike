@@ -47,13 +47,18 @@ class Executor(object):
             # Find appropreciate workload type for current workload
             workload_category = workload_name.split('_')[0].upper()
             workload_directory = LSP_HOME + os.sep + 'workloads' + os.sep + workload_category
+            if not os.path.exists(workload_directory):
+                print 'Not find workload_directory about %s' % (workload_category)
+                continue
 
-            if workload_category == 'TPCH':
-                self.workloads_instance.append(Tpch(workload_specification, workload_directory, self.report_directory, self.report_sql_file))
-            elif workload_category == 'XMARQ':
-                self.workloads_instance.append(Xmarq(workload_specification, workload_directory, self.report_directory, self.report_sql_file))
-            else:
+            # add one workload into the workloads_instance list
+            if workload_category not in ('TPCH', 'XMARQ'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
+            else:
+                wl_instance = workload_category.lower().capitalize() + \
+                '(workload_specification, workload_directory, self.report_directory, self.report_sql_file)'
+                self.workloads_instance.append(eval(wl_instance))
+                
 
     def cleanup(self):
         pass

@@ -1,6 +1,9 @@
 import os
+import sys
 from datetime import datetime
 from multiprocessing import Process, Queue, Value , Array
+
+LSP_HOME = os.getenv('LSP_HOME')
 
 try:
     from Executor import Executor
@@ -8,7 +11,12 @@ except ImportError:
     sys.stderr.write('LSP needs Executor in executors/Executor.py\n')
     sys.exit(2)
 
-LSP_HOME = os.getenv('LSP_HOME')
+try:
+    from workloads.Workload import Workload
+except ImportError:
+    sys.stderr.write('LSP needs workloads/Workload.py\n')
+    sys.exit(2)
+
 
 class SequentialExecutor(Executor):
     def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file):
