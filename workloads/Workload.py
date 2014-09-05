@@ -223,6 +223,7 @@ class Workload(object):
         '''
         queries_directory = self.workload_directory + os.sep + 'queries'
         if not os.path.exists(queries_directory):
+            print 'Not find the queries_directory for %s' % (self.workload_name)
             return
         query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
 
