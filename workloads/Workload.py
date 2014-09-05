@@ -252,7 +252,7 @@ class Workload(object):
                 self.output('RESULT: ' + str(result))
                 if not ok:
                     run_success_flag = False
-
+            
             if run_success_flag:
                 end_time = datetime.now()
                 duration = end_time - beg_time
@@ -262,8 +262,8 @@ class Workload(object):
                 self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
             else:
                 self.output('ERROR: Failed to run query %s' % (qf_name.replace('.sql', '')))
-                self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', duration))
-                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'ERROR', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
+                self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', 0))
+                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'ERROR', %d);" % (qf_name.replace('.sql', ''), iteration, stream, 0))
                 
     def run_workload(self):
         niteration = 1
