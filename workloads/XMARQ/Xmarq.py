@@ -40,7 +40,7 @@ class Xmarq(Workload):
     def load_data(self):
         self.output('-- Start loading data')
         
-        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'partx1', 'partx2']
+        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem']
         if self.load_data_flag:
             # load all 8 tables and 1 view
             loader = XmarqLoader(database_name = self.database_name, user = self.user, \
