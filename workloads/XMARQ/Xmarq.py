@@ -63,26 +63,26 @@ class Xmarq(Workload):
         self.vacuum_analyze()
         
     def vacuum_analyze(self):
-        self.output('-- Start vacuum analyze')
+        self.output('-- Start vacuum analyze')     
         
-        cmd = 'VACUUM ANALYZE;'
-        self.output(cmd)
+        sql = 'VACUUM ANALYZE;'
+        self.output(sql)
         beg_time = datetime.now()
-        (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name, flag = '-a')
+        (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name)
         end_time = datetime.now()
         self.output('RESULT: ' + str(result))
-        
+    
         if ok:
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
-            self.output('VACUUM ANALYZE success')
-            self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', 0))
+            self.output('VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
+            self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'SUCCESS', %d);" % (duration))
         else:
-            self.output('VACUUM ANALYZE failure')
+            self.output('ERROR: VACUUM ANALYZE failure')
             self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', 0))
             self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'ERROR', 0);")
-
+        
         self.output('-- Complete vacuum analyze')
  
 
