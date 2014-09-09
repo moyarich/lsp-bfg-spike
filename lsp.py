@@ -62,7 +62,7 @@ def checkcluster(cluster_name):
             sys.stderr.write('cluster_name is wrong!\n')
             sys.exit(2)
     else:
-        sys.stderr.write('psql is wrong!\n')
+        sys.stderr.write('Failed to connect to db %s, the host is %s\n', % (dbname, host))
         sys.exit(2)
     
 ###########################################################################
