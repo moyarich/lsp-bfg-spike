@@ -43,9 +43,28 @@ except ImportError:
     sys.stderr.write('LSP needs DynamicExecutor in executors/DynamicExecutor.py.\n')
     sys.exit(2)
 
+try:
+    from lib.PSQL import psql
+except ImportError:
+    sys.stderr.write('LSP needs psql in lib/PSQL.py in lsp.py\n')
+    sys.exit(2)
+
 
 def checkcluster(cluster_name):
-    pass
+    cmd = "select cs_id from hst.cluster_settings where cs_name = '%s';" % (cluster_name)
+    (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
+         host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
+    cs_id = str(result[0]).strip().replace('\n', '')
+    if ok:
+        if cs_id.isdigit():
+            return int(cs_id)
+        else:
+            sys.stderr.write('cluster_name is wrong!\n')
+            sys.exit(2)
+    else:
+        sys.stderr.write('psql is wrong!\n')
+        sys.exit(2)
+    
 ###########################################################################
 #  Try to run if user launches this script directly
 if __name__ == '__main__':
@@ -60,7 +79,7 @@ if __name__ == '__main__':
         print 'Usage: python -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info'
         sys.exit(2)
     # check if cluster exist    
-    checkcluster(cluster_name = cluster_name)
+    cs_id = checkcluster(cluster_name = cluster_name)
 
     # prepare report directory with times and the report.sql file
     report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
