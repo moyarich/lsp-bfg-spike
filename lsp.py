@@ -44,26 +44,11 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from lib.PSQL import psql
+    from lib.utils.Check import check
 except ImportError:
-    sys.stderr.write('LSP needs psql in lib/PSQL.py in lsp.py\n')
+    sys.stderr.write('LSP needs check in lib/utils/Check.py in lsp.py\n')
     sys.exit(2)
 
-
-def checkcluster(cluster_name):
-    cmd = "select cs_id from hst.cluster_settings where cs_name = '%s';" % (cluster_name)
-    (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
-         host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
-    cs_id = str(result[0]).strip().replace('\n', '')
-    if ok:
-        if cs_id.isdigit():
-            return int(cs_id)
-        else:
-            sys.stderr.write('cluster_name is wrong!\n')
-            sys.exit(2)
-    else:
-        sys.stderr.write('Failed to connect to db %s, the host is %s\n', % (dbname, host))
-        sys.exit(2)
     
 ###########################################################################
 #  Try to run if user launches this script directly
@@ -78,8 +63,12 @@ if __name__ == '__main__':
     if cluster_name is None or schedules is None:
         print 'Usage: python -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info'
         sys.exit(2)
+    
     # check if cluster exist    
-    cs_id = checkcluster(cluster_name = cluster_name)
+    cs_id = check.check_id(result_id = 'cs_id', table_name = 'hst.cluster_settings', search_condition = "cs_name = '%s'" % (cluster_name))
+    if cs_id is None:
+        sys.stderr.write('The cluster_name is wrong!\n')
+        sys.exit(2)
 
     # prepare report directory with times and the report.sql file
     report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')

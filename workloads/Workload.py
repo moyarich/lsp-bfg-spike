@@ -12,6 +12,12 @@ except ImportError:
     sys.exit(2)
 
 try:
+    from lib.utils.Check import check
+except ImportError:
+    sys.stderr.write('LSP needs check in lib/utils/Check.py in Workload.py\n')
+    sys.exit(2)
+
+try:
     from lib.Config import config
 except ImportError:
     sys.stderr.write('LSP needs config in lib/Config.py\n')
@@ -42,8 +48,13 @@ class Workload(object):
         # initialize common propertities for workload
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
+        
         self.user = workload_specification['user'].strip()
-        check_user_id()
+        u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
+        if u_id is None:
+            sys.stderr.write('The user_name is wrong!\n')
+            sys.exit(2)
+        
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
         
@@ -192,14 +203,6 @@ class Workload(object):
 
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
-
-    def check_user_id(self):
-        pass
-
-    def check_workload_id(self):
-        cmd = ''
-        (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
-        pass
 
     def setup(self):
         '''Setup prerequisites for workload'''
