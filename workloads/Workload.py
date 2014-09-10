@@ -50,6 +50,7 @@ class Workload(object):
         self.database_name = workload_specification['database_name'].strip()
         
         self.user = workload_specification['user'].strip()
+        # check u_id if exist
         u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
         if u_id is None:
             sys.stderr.write('The user_name is wrong!\n')
@@ -58,12 +59,14 @@ class Workload(object):
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
         
-        # get table setting and set table and sql suffix
+        # get table setting and set table and sql suffix and check_condition
         self.get_table_setting(workload_specification)
 
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
         self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
         self.num_iteration = int(str(workload_specification['num_iteration']).strip())
+
+        self.check_condition += ' and wl_iteration = %d and wl_concurrency = %d' % (self.num_iteration, self.num_concurrency)
 
         # set workload source directory
         self.workload_directory = workload_directory
@@ -108,17 +111,27 @@ class Workload(object):
         else:
             self.output('ERROR: Invalid value for mode of workload execution in workload %s: %s. Mast be SEQUENTIAL/RANDOM.' % (self.workload_name, self.run_workload_mode))
             exit(-1)
+        self.check_condition += " and wl_query_order = '%s'" % (self.run_workload_mode)
+
+        # check wl_id if exist
+        wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
+        if wl_id is None:
+            pass
 
         # should always run the workload by default
         self.should_stop = False
 
     def get_table_setting(self, workload_specification):
         # init tpch specific configuration such as tpch table_settings
+        self.check_condition = "wl_catetory = '%s'" % (self.workload_name.split('_')[0].upper())
         ts = workload_specification['table_setting']
 
         # Calculate scale factor for TPC-H workload
         self.data_volume_type = ts['data_volume_type'].upper()
+        self.check_condition += " and wl_data_volume_type = '%s'" % (self.data_volume_type)
+        
         self.data_volume_size = ts['data_volume_size']
+        self.check_condition += " and wl_data_volume_size = %d" % (self.data_volume_size)
         
         # Need to make it univerally applicable instead of hard-code number of segments
         self.nsegs =  config.getNPrimarySegments()
@@ -142,31 +155,39 @@ class Workload(object):
         if 'append_only' in ts_keys:
             self.append_only = ts['append_only']
             assert self.append_only in [True, False]
+            self.check_condition += " and wl_appendonly = %s" % (str(self.append_only).upper())
+
 
         self.orientation = 'ROW'
         if 'orientation' in ts_keys:
             self.orientation = ts['orientation'].upper()
             assert self.orientation in ['PARQUET', 'ROW', 'COLUMN']
+        self.check_condition += " and wl_orientation = '%s'" % (self.orientation)
 
         self.row_group_size = None
         if 'row_group_size' in ts_keys:
             self.row_group_size = int(ts['row_group_size'])
-            
+            self.check_condition += ' and wl_row_group_size = %d' % (self.row_group_size) 
+
         self.page_size = None
         if 'page_size' in ts_keys:
             self.page_size = int(ts['page_size'])
-       
+            self.check_condition += ' and wl_page_size = %d' % (self.page_size)
+
         self.compression_type = None
         if 'compression_type' in ts_keys:
             self.compression_type = ts['compression_type'].upper()
+            self.check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
         
         self.compression_level = None
         if 'compression_level' in ts_keys:
-                self.compression_level = int(ts['compression_level'])
+            self.compression_level = int(ts['compression_level'])
+            self.check_condition += ' and wl_compression_level = %d' % (self.compression_level)
 
-        self.partitions = 0
+        self.partitions = None
         if 'partitions' in ts_keys:
             self.partitions = int(ts['partitions'])
+            self.check_condition += ' and wl_partitions = %d' % (self.partitions)
 
         # prepare name with suffix for table and corresponding sql statement to create it
         tbl_suffix = ''
