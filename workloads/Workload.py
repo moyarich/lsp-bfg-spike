@@ -43,6 +43,7 @@ class Workload(object):
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
         self.user = workload_specification['user'].strip()
+        check_user_id()
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
         
@@ -192,7 +193,10 @@ class Workload(object):
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
 
-    def check_workload_setting(self):
+    def check_user_id(self):
+        pass
+
+    def check_workload_id(self):
         cmd = ''
         (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
         pass
