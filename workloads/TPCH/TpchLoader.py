@@ -114,7 +114,7 @@ class TpchLoader(object):
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
-        if self.partitions == 0:
+        if self.partitions == 0 or self.partitions is None:
             sql = sql.replace('PARTITIONS', '')
         else:
             part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
