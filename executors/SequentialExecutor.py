@@ -19,8 +19,8 @@ except ImportError:
 
 
 class SequentialExecutor(Executor):
-    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file):
-        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file)
+    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id):
+        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
         self.AllProcess = []
 
     def handle_finished_workload(self, pid):

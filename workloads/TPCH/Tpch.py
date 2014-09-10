@@ -28,9 +28,9 @@ except ImportError:
 
 class Tpch(Workload):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
 
     def setup(self):
         pass
@@ -43,7 +43,7 @@ class Tpch(Workload):
             for table_name in tables:
                 self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
                 self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
-                self.report_sql("INSERT INTO table_name VALUES ('Loading', '%s', 1, 1, 'SKIP', 0);" % (table_name))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SKIP', 0, '', '', '');" % (self.run_id, self.s_id, table_name))
         else:
             # load all 8 tables and 1 view
             loader = TpchLoader(database_name = self.database_name, user = self.user, \
@@ -52,7 +52,7 @@ class Tpch(Workload):
                                 compression_type = self.compression_type, compression_level = self.compression_level, \
                                 partitions = self.partitions, tables = tables, tbl_suffix = self.tbl_suffix, sql_suffix = self.sql_suffix, \
                                 output_file = self.output_file, report_file = self.report_file, report_sql_file = self.report_sql_file, \
-                                workload_directory = self.workload_directory)
+                                workload_directory = self.workload_directory, run_id = self.run_id, s_id = self.s_id)
             loader.load()
 
         self.output('-- Complete loading data')
@@ -75,11 +75,11 @@ class Tpch(Workload):
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
             self.output('VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
-            self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'SUCCESS', %d);" % (duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'SUCCESS', %d, '', '', '');" % (self.run_id, self.s_id, duration))
         else:
             self.output('ERROR: VACUUM ANALYZE failure')
             self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', 0))
-            self.report_sql("INSERT INTO table_name VALUES ('Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'ERROR', 0);")
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum Analyze', 'Vacuum Analyze', 1, 1, 'ERROR', 0, '', '', '');" % (self.run_id, self.s_id))
         
         self.output('-- Complete vacuum analyze')
 

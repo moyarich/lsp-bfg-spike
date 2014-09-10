@@ -21,7 +21,7 @@ class Check:
             else:
                 return None
         else:
-            sys.stderr.write('Failed to connect to db %s, the host is %s\n' % (dbname, host))
+            sys.stderr.write('Failed to connect to db %s, the host is %s\n' % ('hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
             sys.exit(2)
 
 check = Check()

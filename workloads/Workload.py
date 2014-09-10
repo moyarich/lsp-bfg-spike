@@ -44,15 +44,16 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Workload(object):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file):
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
         # initialize common propertities for workload
+        self.cs_id = cs_id
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
         
         self.user = workload_specification['user'].strip()
         # check u_id if exist
-        u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
-        if u_id is None:
+        self.u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
+        if self.u_id is None:
             sys.stderr.write('The user_name is wrong!\n')
             sys.exit(2)
         
@@ -114,10 +115,18 @@ class Workload(object):
         self.check_condition += " and wl_query_order = '%s'" % (self.run_workload_mode)
 
         # check wl_id if exist
-        wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
-        if wl_id is None:
-            pass
+        self.wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
+        if self.wl_id is None:
+            print 'no wl_id'
+            sys.exit(2)
 
+        self.s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
+            search_condition = 'cs_id = %d and wl_id = %d and u_id = %d' % (self.cs_id, self.wl_id, self.u_id))
+        if self.s_id is None:
+            print 'no s_id'
+            sys.exit(2)
+
+        self.run_id = 1
         # should always run the workload by default
         self.should_stop = False
 
@@ -265,7 +274,7 @@ class Workload(object):
             for qf_name in query_files:
                 self.output('Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
                 self.report('  Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
-                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SKIP', 0);" % (qf_name.replace('.sql', ''), iteration, stream))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'SKIP', 0, '', '', '');" % (self.run_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream))
             return
 
         # run all sql files in queries directory
@@ -289,11 +298,11 @@ class Workload(object):
                 duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
                 self.output('Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
                 self.report('  Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
-                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'SUCCESS', %d);" % (qf_name.replace('.sql', ''), iteration, stream, duration))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'SUCCESS', %d, '', '', '');" % (self.run_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, duration))
             else:
                 self.output('ERROR: Failed to run query %s' % (qf_name.replace('.sql', '')))
                 self.report('    Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', 0))
-                self.report_sql("INSERT INTO table_name VALUES ('Execution', '%s', %d, %d, 'ERROR', %d);" % (qf_name.replace('.sql', ''), iteration, stream, 0))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'ERROR', %d, '', '', '');" % (self.run_id, self_s_id, qf_name.replace('.sql', ''), iteration, stream, 0))
                 
     def run_workload(self):
         niteration = 1

@@ -97,7 +97,7 @@ if __name__ == '__main__':
         try:
             workloads_mode = schedule_parser['workloads_mode'].upper()
             if workloads_mode == 'SEQUENTIAL':
-                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file)
+                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
             elif workloads_mode == 'CONCURRENT':
                 workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name)
             elif workloads_mode == 'DYNAMIC':
