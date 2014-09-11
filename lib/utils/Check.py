@@ -12,8 +12,7 @@ class Check:
 
     def check_id(self, result_id, table_name, search_condition):
         cmd = 'select %s from %s where %s;' % (result_id, table_name, search_condition)
-        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
-             host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov',host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
         if ok:
             cs_id = str(result[0]).strip()
             if cs_id.isdigit():
@@ -26,8 +25,7 @@ class Check:
 
     def max_id(self, result_id, table_name):
         cmd = 'select max(%s) from %s ;' % (result_id, table_name)
-        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
-             host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
         if ok:
             cs_id = str(result[0]).strip()
             if cs_id.isdigit():
@@ -40,8 +38,7 @@ class Check:
 
     def insert_new_record(self, table_name, col_list = '', values = ''):
         cmd = "Insert into %s %s values (%s);" % (table_name, col_list, values)
-        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
-             host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
         if not ok:
             print cmd
             print result
@@ -51,8 +48,7 @@ class Check:
 
     def update_record(self, table_name, set_content = '', search_condition = ''):
         cmd = "update %s set %s where %s;" % (table_name, set_content, search_condition)
-        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
-             host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov',host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
         if not ok:
             print cmd
             print result

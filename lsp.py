@@ -55,7 +55,12 @@ except ImportError:
     sys.stderr.write('LSP needs check in lib/utils/Check.py in lsp.py\n')
     sys.exit(2)
 
-    
+try:
+    from lib.QueryFile import QueryFile
+except ImportError:
+    sys.stderr.write('LSP needs QueryFile in lib/QueryFile.py\n')
+    sys.exit(2)
+
 ###########################################################################
 #  Try to run if user launches this script directly
 if __name__ == '__main__':
@@ -124,6 +129,10 @@ if __name__ == '__main__':
     duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
     check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration),
         search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
-    
- #   psql.runfile(ifile = report_sql_file, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
-  #           host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
+
+    allcmd = QueryFile(report_sql_file)
+    for cmd in allcmd:
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
+        if not ok:
+            print result
+            sys.exit(2)
