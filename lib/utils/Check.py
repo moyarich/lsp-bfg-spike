@@ -38,13 +38,25 @@ class Check:
             sys.stderr.write("Failed to select max_id in the table '%s', the db is %s, the host is %s\n" % (table_name, 'hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
             sys.exit(2)
 
-    def insert_new_record(self, table_name, col_list = '', values):
-        cmd = "Insert into %s %s values (%s)" % (table_name, col_list, values)
-        print cmd
+    def insert_new_record(self, table_name, col_list = '', values = ''):
+        cmd = "Insert into %s %s values (%s);" % (table_name, col_list, values)
         (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
              host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
         if not ok:
+            print cmd
+            print result
             sys.stderr.write("Failed to insert new record into table '%s', the db is %s, the host is %s\n" % (table_name, 'hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
+            sys.exit(2)
+        return True
+
+    def update_record(self, table_name, set_content = '', search_condition = ''):
+        cmd = "update %s set %s where %s;" % (table_name, set_content, search_condition)
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
+             host = 'gpdb63.qa.dh.greenplum.com', port = 5430, background = False)
+        if not ok:
+            print cmd
+            print result
+            sys.stderr.write("Failed to update record in table '%s', the db is %s, the host is %s\n" % (table_name, 'hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
             sys.exit(2)
         return True
 

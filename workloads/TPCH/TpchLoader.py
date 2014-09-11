@@ -140,17 +140,22 @@ class TpchLoader(object):
                 if not ok:
                     load_success_flag = False
 
-            if load_success_flag:
-                end_time = datetime.now()
-                duration = end_time - beg_time
-                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000      
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
+            beg_time = str(beg_time).split('.')[0]
+            end_time = str(end_time).split('.')[0]
+
+            if load_success_flag:    
                 self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
                 self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SUCCESS', %d, '', '', '');" % (self.run_id, self.s_id, table_name, duration))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
+                    % (self.run_id, self.s_id, table_name, beg_time, end_time, duration))
             else:
                 self.output('ERROR: Failed to load data for table %s' % (table_name))
                 self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', 0, '', '', '');" % (self.run_id, self.s_id, table_name))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
+                    % (self.run_id, self.s_id, table_name, beg_time, end_time, duration))
 
     def load(self):
         self.load_data()

@@ -44,6 +44,12 @@ except ImportError:
     sys.exit(2)
 
 try:
+    from lib.PSQL import psql
+except ImportError:
+    sys.stderr.write('LSP needs psql in lib/PSQL.py in Workload.py\n')
+    sys.exit(2)
+
+try:
     from lib.utils.Check import check
 except ImportError:
     sys.stderr.write('LSP needs check in lib/utils/Check.py in lsp.py\n')
@@ -76,6 +82,9 @@ if __name__ == '__main__':
     report_sql_file = os.path.join(report_directory, 'report.sql')
     
     schedule_list = schedules.split(',')
+    beg_time = datetime.now()
+    check.insert_new_record(table_name = 'hst.test_run', col_list = '(start_time)', values = "'%s'" % (str(beg_time).split('.')[0]))
+
     # parse schedule file
     for schedule_name in schedule_list:
         schedule_file = LSP_HOME + os.sep + 'schedules' + os.sep + schedule_name + '.yml'
@@ -109,3 +118,12 @@ if __name__ == '__main__':
             print 'Error while selecting appropreciate executor for workloads: ' + str(e)
             exit(-1)
         workloads_executor.execute()
+    
+    end_time = datetime.now()
+    duration = end_time - beg_time
+    duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
+    check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration),
+        search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
+    
+ #   psql.runfile(ifile = report_sql_file, dbname = 'hawq_cov', username = 'hawq_cov', password = None,
+  #           host = 'gpdb63.qa.dh.greenplum.com', port = 5430)

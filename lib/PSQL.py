@@ -163,18 +163,11 @@ class PSQL:
         @param host: host
         @param port: port
         '''
-        if not psql.SKIP:
-            if len(outputFile) == 0:
-                (ok, out) = self.run(ifile = ifile, ofile = outFile(ifile, outputPath), flag = flag, 
-                                     timeout = timeout, dbname = dbname, username = username, password = password, 
-                                     PGOPTIONS = PGOPTIONS, host = host, port = port,
-                                     background = background)
-            else:
-                (ok, out) = self.run(ifile = ifile, ofile = outFile(outputFile, outputPath), flag = flag, 
-                                     timeout = timeout, dbname = dbname, username = username, password = password, 
-                                     PGOPTIONS = PGOPTIONS, host = host, port = port,
-                                     background = background)
-            return (ok, out)
+        (ok, out) = self.run(ifile = ifile, ofile = '', flag = flag, 
+                             timeout = timeout, dbname = dbname, username = username, password = password, 
+                             PGOPTIONS = PGOPTIONS, host = host, port = port,
+                             background = background)
+        print (ok, out)
         return True
     
     def list_out(self,test_out):
