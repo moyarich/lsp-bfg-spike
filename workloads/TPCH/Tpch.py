@@ -102,8 +102,8 @@ class Tpch(Workload):
         if not self.load_data_flag:
             beg_time = str(datetime.now()).split('.')[0]
             for table_name in tables:
-                self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
-                self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
+                self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
+                self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
                 self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
                     % (self.tr_id, self.s_id, table_name, beg_time, beg_time))
         else:
@@ -131,46 +131,35 @@ class Tpch(Workload):
                 duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
       
                 if load_success_flag:    
-                    self.output('Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-                    self.report('  Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                    self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                    self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
                     self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
                         % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
                 else:
                     self.output('ERROR: Failed to load data for table %s' % (table_name))
-                    self.report('    Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
+                    self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
                     self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
                         % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
         self.output('-- Complete loading data')
        
+    def execute(self):
+        self.output('-- Start running workload %s' % (self.workload_name))
+        self.report('-- Start running workload %s' % (self.workload_name))
+
+        # setup
+        self.setup()
+
+        # load data
+        self.load_data()
+
         # vacuum_analyze
         self.vacuum_analyze()
 
-    def vacuum_analyze(self):
-        self.output('-- Start vacuum analyze')     
-        
-        sql = 'VACUUM ANALYZE;'
-        self.output(sql)
-        beg_time = datetime.now()
-        (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name)
-        end_time = datetime.now()
-        self.output('RESULT: ' + str(result))
-        duration = end_time - beg_time
-        duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
-        beg_time = str(beg_time).split('.')[0]
-        end_time = str(end_time).split('.')[0]
-    
-        if ok:   
-            self.output('VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
-            self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, beg_time, end_time, duration))
-        else:
-            self.output('ERROR: VACUUM ANALYZE failure')
-            self.report('  VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', 0))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, beg_time, end_time, duration))
-        
-        self.output('-- Complete vacuum analyze')
+        # run workload concurrently and loop by iteration
+        self.run_workload()
 
-    def clean_up(self):
-        pass
+        # clean up 
+        self.clean_up()
+        
+        self.output('-- Complete running workload %s' % (self.workload_name))
+        self.report('-- Complete running workload %s' % (self.workload_name))

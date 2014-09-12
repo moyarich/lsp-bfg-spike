@@ -28,7 +28,7 @@ class Executor(object):
         self.should_stop = False
 
     def setup(self):
-        # create report directory for test
+        # create report directory for schedule
         self.report_directory = self.report_directory + os.sep + self.schedule_name
         os.system('mkdir -p %s' % (self.report_directory))
 

@@ -82,7 +82,7 @@ if __name__ == '__main__':
     # check if cluster exist    
     cs_id = check.check_id(result_id = 'cs_id', table_name = 'hst.cluster_settings', search_condition = "cs_name = '%s'" % (cluster_name))
     if cs_id is None:
-        sys.stderr.write('The cluster_name is wrong!\n')
+        sys.stderr.write('The cluster name is wrong!\n')
         sys.exit(2)
 
     # prepare report directory with times and the report.sql file

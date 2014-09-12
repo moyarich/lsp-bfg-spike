@@ -23,7 +23,7 @@ class Check:
             sys.stderr.write('Failed to connect to db %s, the host is %s\n' % ('hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
             sys.exit(2)
 
-    def max_id(self, result_id, table_name):
+    def get_max_id(self, result_id, table_name):
         cmd = 'select max(%s) from %s ;' % (result_id, table_name)
         (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
         if ok:
@@ -33,7 +33,7 @@ class Check:
             else:
                 return 0
         else:
-            sys.stderr.write("Failed to select max_id in the table '%s', the db is %s, the host is %s\n" % (table_name, 'hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
+            sys.stderr.write("Failed to get max_id in the table '%s', the db is %s, the host is %s\n" % (table_name, 'hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
             sys.exit(2)
 
     def insert_new_record(self, table_name, col_list = '', values = ''):
