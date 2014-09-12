@@ -85,7 +85,6 @@ class Workload(object):
 
         # set report.sql file
         self.report_sql_file = report_sql_file
-        print self.report_sql_file
 
         # check flag for data loading
         if self.load_data_flag == 'TRUE':
