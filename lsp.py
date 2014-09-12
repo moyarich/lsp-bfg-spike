@@ -25,6 +25,10 @@ WORKLOAD_DIR = LSP_HOME + os.sep + 'workloads'
 if WORKLOAD_DIR not in sys.path:
     sys.path.append(WORKLOAD_DIR)
 
+LIB_DIR = LSP_HOME + os.sep + 'lib'
+if LIB_DIR not in sys.path:
+    sys.path.append(LIB_DIR)
+
 try:
     from executors.SequentialExecutor import SequentialExecutor
 except ImportError:
@@ -50,15 +54,15 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from lib.utils.Check import check
-except ImportError:
-    sys.stderr.write('LSP needs check in lib/utils/Check.py in lsp.py\n')
-    sys.exit(2)
-
-try:
     from lib.QueryFile import QueryFile
 except ImportError:
     sys.stderr.write('LSP needs QueryFile in lib/QueryFile.py\n')
+    sys.exit(2)
+
+try:
+    from lib.utils.Check import check
+except ImportError:
+    sys.stderr.write('LSP needs check in lib/utils/Check.py\n')
     sys.exit(2)
 
 ###########################################################################
@@ -72,7 +76,7 @@ if __name__ == '__main__':
     cluster_name = options.cluster
     schedules = options.schedule
     if cluster_name is None or schedules is None:
-        print 'Usage: python -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info'
+        sys.stderr.write('Usage: python -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
         sys.exit(2)
     
     # check if cluster exist    

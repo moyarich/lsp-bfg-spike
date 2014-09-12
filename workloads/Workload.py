@@ -8,40 +8,39 @@ from multiprocessing import Process, Queue, Value , Array
 try:
     from lib.PSQL import psql
 except ImportError:
-    sys.stderr.write('LSP needs psql in lib/PSQL.py in Workload.py\n')
+    sys.stderr.write('Workload needs psql in lib/PSQL.py\n')
     sys.exit(2)
 
 try:
     from lib.utils.Check import check
 except ImportError:
-    sys.stderr.write('LSP needs check in lib/utils/Check.py in Workload.py\n')
+    sys.stderr.write('Workload needs check in lib/utils/Check.py\n')
     sys.exit(2)
 
 try:
     from lib.Config import config
 except ImportError:
-    sys.stderr.write('LSP needs config in lib/Config.py\n')
+    sys.stderr.write('Workload needs config in lib/Config.py\n')
     sys.exit(2)
 
 try:
     from QueryFile import QueryFile
 except ImportError:
-    sys.stderr.write('LSP needs QueryFile in lib/QueryFile.py\n')
+    sys.stderr.write('Workload needs QueryFile in lib/QueryFile.py\n')
     sys.exit(2)
 
 try:
     from utils.Log import Log
 except ImportError:
-    sys.stderr.write('LSP needs Log in lib/utils/Log.py\n')
+    sys.stderr.write('Workload needs Log in lib/utils/Log.py\n')
     sys.exit(2)
 
 try:
     from utils.Report import Report
 except ImportError:
-    sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
+    sys.stderr.write('Workload needs Report in lib/utils/Report.py\n')
     sys.exit(2)
 
-LSP_HOME = os.getenv('LSP_HOME')
 
 class Workload(object):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
@@ -54,7 +53,7 @@ class Workload(object):
         # check u_id if exist
         self.u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
         if self.u_id is None:
-            sys.stderr.write('The user_name is wrong!\n')
+            sys.stderr.write('The db user name is wrong!\n')
             sys.exit(2)
         
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
@@ -86,6 +85,7 @@ class Workload(object):
 
         # set report.sql file
         self.report_sql_file = report_sql_file
+        print self.report_sql_file
 
         # check flag for data loading
         if self.load_data_flag == 'TRUE':
@@ -216,13 +216,11 @@ class Workload(object):
         else:
             self.wl_values += ', NULL'
 
-        self.partitions = None
+        self.partitions = 0
         if 'partitions' in ts_keys:
             self.partitions = int(ts['partitions'])
-            self.check_condition += ' and wl_partitions = %d' % (self.partitions)
-            self.wl_values += ', %d' % (self.partitions)
-        else:
-            self.wl_values += ', NULL'
+        self.check_condition += ' and wl_partitions = %d' % (self.partitions)
+        self.wl_values += ', %d' % (self.partitions)
 
         # prepare name with suffix for table and corresponding sql statement to create it
         tbl_suffix = ''
@@ -297,11 +295,12 @@ class Workload(object):
 
         # skip all queries
         if not self.run_workload_flag:
+            beg_time = str(datetime.now()).split('.')[0]
             for qf_name in query_files:
                 self.output('Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
                 self.report('  Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'SKIP', NULL, NULL, 0, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
+                    % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, beg_time, beg_time))
             return
 
         # run all sql files in queries directory
