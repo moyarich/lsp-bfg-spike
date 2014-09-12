@@ -65,6 +65,12 @@ except ImportError:
     sys.stderr.write('LSP needs check in lib/utils/Check.py\n')
     sys.exit(2)
 
+try:
+    from lib.utils.Report import Report
+except ImportError:
+    sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
+    sys.exit(2)
+
 ###########################################################################
 #  Try to run if user launches this script directly
 if __name__ == '__main__':
@@ -140,3 +146,16 @@ if __name__ == '__main__':
         if not ok:
             print result
             sys.exit(2)
+     
+#    result_file = os.path.join(report_directory, 'result.txt')
+#    col_list = 's_id, action_type, action_target, basetime, runtime, deviration, testresult'
+#    search_condition = "where action_type = 'Loading'"
+#    result = check.get_result(col_list = col_list, table_list = 'hst.test_result_perscenario_perquery', search_condition = search_condition)
+#    for one_tuple in result:
+#        if str(one_tuple).replace('\n','').strip():
+#            all_col = str(one_tuple).split('|')
+#            msg = 'Test Suite Name|' + all_col[0].strip() + \
+#            '|Test Case Name|' + all_col[1].strip() + ':' + all_col[2].strip() + \
+#            '|Test Detail|' + all_col[3].strip() + ':' + all_col[4].strip() + ':' + all_col[5].strip() + \
+#            '|Test Status|' + all_col[6].strip()
+#            Report(result_file , msg)

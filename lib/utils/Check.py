@@ -56,4 +56,15 @@ class Check:
             sys.exit(2)
         return True
 
+    def get_result(self, col_list = '',table_list = '', search_condition = ''):
+        cmd = "select %s from %s %s;" % (col_list, table_list, search_condition)
+        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov',host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
+        if not ok:
+            print cmd
+            print result
+            sys.stderr.write("Failed to update record in table '%s', the db is %s, the host is %s\n" % (table_name, 'hawq_cov', 'gpdb63.qa.dh.greenplum.com'))
+            sys.exit(2)
+        else:
+            return result;
+
 check = Check()
