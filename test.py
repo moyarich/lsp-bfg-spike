@@ -54,6 +54,12 @@ except ImportError:
     sys.exit(2)
 
 try:
+    from lib.Shell import shell
+except ImportError:
+    sys.stderr.write('LSP needs shell in lib/PSQL.py in Workload.py\n')
+    sys.exit(2)
+
+try:
     from lib.QueryFile import QueryFile
 except ImportError:
     sys.stderr.write('LSP needs QueryFile in lib/QueryFile.py\n')
@@ -71,9 +77,8 @@ except ImportError:
     sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
     sys.exit(2)
 
-###########################################################################
-#  Try to run if user launches this script directly
-if __name__ == '__main__':
+def result():
+    result_file = 'result.txt'
     col_list = 's_id, action_type, action_target, basetime, runtime, deviration, testresult'
     search_condition = "where action_type = 'Loading'"
     result = check.get_result(col_list = col_list, table_list = 'hst.test_result_perscenario_perquery', search_condition = search_condition)
@@ -84,4 +89,10 @@ if __name__ == '__main__':
             '|Test Case Name|' + all_col[1].strip() + ':' + all_col[2].strip() + \
             '|Test Detail|' + all_col[3].strip() + ':' + all_col[4].strip() + ':' + all_col[5].strip() + \
             '|Test Status|' + all_col[6].strip()
-            Report('result_out', msg)
+            Report(result_file , msg)
+###########################################################################
+#  Try to run if user launches this script directly
+if __name__ == '__main__':
+   
+   os.system('/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp/scp.sh > ./scp_out 2>&1')
+   os.system('/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp/ssh.sh > ./ssh_out 2>&1')
