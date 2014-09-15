@@ -5,6 +5,16 @@ from datetime import datetime
 import random
 from multiprocessing import Process, Queue, Value , Array
 
+# pkgs = [('lib.PSQL', 'psql', 'lib/PSQL.py'), ('lib.utils.Check', 'check', 'lib/utils/Check.py'), \
+#         ('lib.Config', 'config', 'lib/Config.py'), ('QueryFile', 'QueryFile', 'lib/QueryFile.py'), \
+#         ('utils.Log', 'Log', 'lib/utils/Log.py'), ('utils.Report', 'Report', 'lib/utils/Report.py')]
+
+for pkg in pkgs:
+    try:
+        exec('from %s import %s ' % (pkg[0], pkg[1]))
+    except Import Error:
+        sys.stderr.write('Workload need %s in %s' % ([pkg[1], pkg[2]))
+
 try:
     from lib.PSQL import psql
 except ImportError:
