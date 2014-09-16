@@ -80,8 +80,8 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
-      load_data_flag: true
-      run_workload_flag: true
+      load_data_flag: false
+      run_workload_flag: false
       run_workload_mode: RANDOM
-      num_concurrency: 2
-      num_iteration: 2
+      num_concurrency: 1
+      num_iteration: 1

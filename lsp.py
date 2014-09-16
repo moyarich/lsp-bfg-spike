@@ -71,12 +71,18 @@ except ImportError:
     sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
     sys.exit(2)
 
+try:
+    from lib.RemoteCommand import remotecmd
+except ImportError:
+    sys.stderr.write('LSP needs remotecmd in lib/RemoteCommand.py \n')
+    sys.exit(2)
+
 ###########################################################################
 #  Try to run if user launches this script directly
 if __name__ == '__main__':
     # parse user options
     parser = OptionParser()
-    parser.add_option('-a', '--standalone', dest='mode', action='store_true', default=True, help='Standalone mode')
+    parser.add_option('-a', '--standalone', dest='mode', action='store_true', default=False, help='Standalone mode')
     parser.add_option('-c', '--cluster', dest='cluster', action='store', help='Cluster for test execution')
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
     (options, args) = parser.parse_args()
@@ -151,23 +157,26 @@ if __name__ == '__main__':
         check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration), search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
 
         # add detailed execution information of test cases into backend database
-        allcmd = QueryFile(report_sql_file)
-        for cmd in allcmd:
-            (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
-            if not ok:
-                print result
-                sys.exit(2)
+        remotecmd.scp_command(from_user = '', from_host = '', from_file = report_sql_file,
+            to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':/tmp/', password = 'changeme')
+        cmd = 'source psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
+        result = remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
 
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')
-        col_list = 's_id, action_type, action_target, basetime, runtime, deviration, testresult'
-        search_condition = "where action_type = 'Loading'"
-        result = check.get_result(col_list = col_list, table_list = 'hst.test_result_perscenario_perquery', search_condition = search_condition)
+        col_list = 'c.wl_catetory, action_type, action_target, basetime, runtime, deviration, testresult'
+        search_condition = "where a.s_id = b.s_id and b.wl_id = c.wl_id;"
+        result = check.get_result(col_list = col_list, 
+            table_list = 'hst.test_result_perscenario_perquery a, hst.scenario b, hst.workload c', 
+            search_condition = search_condition)
+        
+        result = str(result).strip().split('\r\n')
         for one_tuple in result:
-            if str(one_tuple).replace('\n','').strip():
-                all_col = str(one_tuple).split('|')
-                msg = 'Test Suite Name|' + all_col[0].strip() + \
-                      '|Test Case Name|' + all_col[1].strip() + ':' + all_col[2].strip() + \
-                      '|Test Detail|' + all_col[3].strip() + ':' + all_col[4].strip() + ':' + all_col[5].strip() + \
-                      '|Test Status|' + all_col[6].strip()
-                Report(result_file , msg)
+            all_col = str(one_tuple).split('|')
+            msg = 'Test Suite Name|' + all_col[0].strip() + \
+                  '|Test Case Name|' + all_col[1].strip() + ':' + all_col[2].strip() + \
+                  '|Baseline Execution Time|' + all_col[3].strip() + \
+                  '|Actual Execution Time|' + all_col[4].strip() + \
+                  '|Comparison|' + all_col[5].strip() + \
+                  '|Test Status|' + all_col[6].strip()
+            Report(result_file , msg)
