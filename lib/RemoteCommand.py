@@ -31,12 +31,14 @@ class RemoteCommand:
 	            print child.before, child.after
 	            return None
 	    child.sendline(password)
-	    return child
+	    child.expect(pexpect.EOF)
+	    return child.before
 
 	def scp_command(self, from_user, from_host, password, to_user, to_host, from_file, to_file):
 	    child = pexpect.spawn('scp -r %s%s%s %s%s%s' %(from_user, from_host, from_file, to_user, to_host, to_file))
 	    child.expect('password:')
 	    child.sendline(password)
-	    return child
+	    child.expect(pexpect.EOF)
+	    return child.before
 
 remotecmd = RemoteCommand()
