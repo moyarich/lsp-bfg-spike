@@ -60,10 +60,11 @@ class Workload(object):
         
         self.user = workload_specification['user'].strip()
         # check u_id if exist
-        self.u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
-        if self.u_id is None:
-            sys.stderr.write('The db user name is wrong!\n')
-            sys.exit(2)
+        if self.cs_id is not None:
+            self.u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
+            if self.u_id is None:
+                sys.stderr.write('The db user name is wrong!\n')
+                sys.exit(2)
         
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
@@ -125,21 +126,22 @@ class Workload(object):
         self.wl_values += ", '%s'" % (self.run_workload_mode)
 
         # check wl_id if exist
-        self.wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
-        if self.wl_id is None:
-            check.insert_new_record(table_name = 'hst.workload', 
-                col_list = '(wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order)', 
-                values = self.wl_values)
-            self.wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
+        if self.cs_id is not None:
+            self.wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
+            if self.wl_id is None:
+                check.insert_new_record(table_name = 'hst.workload',
+                                        col_list = '(wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order)',
+                                        values = self.wl_values)
+                self.wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
 
-        self.s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
-            search_condition = 'cs_id = %d and wl_id = %d and u_id = %d' % (self.cs_id, self.wl_id, self.u_id))
-        if self.s_id is None:
-            check.insert_new_record(table_name = 'hst.scenario', col_list = '(cs_id, wl_id, u_id)', 
-                values = '%d, %d, %d' % (self.cs_id, self.wl_id, self.u_id))
-            self.s_id = check.get_max_id(result_id = 's_id', table_name = 'hst.scenario')
+            self.s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
+                                       search_condition = 'cs_id = %d and wl_id = %d and u_id = %d' % (self.cs_id, self.wl_id, self.u_id))
+            if self.s_id is None:
+                check.insert_new_record(table_name = 'hst.scenario', col_list = '(cs_id, wl_id, u_id)', 
+                                        values = '%d, %d, %d' % (self.cs_id, self.wl_id, self.u_id))
+                self.s_id = check.get_max_id(result_id = 's_id', table_name = 'hst.scenario')
+                self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
 
-        self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
         # should always run the workload by default
         self.should_stop = False
 

@@ -76,20 +76,25 @@ except ImportError:
 if __name__ == '__main__':
     # parse user options
     parser = OptionParser()
+    parser.add_option('-a', '--standalone', dest='mode', action='store_false', default=False, help='Standalone mode')
     parser.add_option('-c', '--cluster', dest='cluster', action='store', help='Cluster for test execution')
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
     (options, args) = parser.parse_args()
+    standalone_mode = options.mode
     cluster_name = options.cluster
     schedules = options.schedule
-    if cluster_name is None or schedules is None:
-        sys.stderr.write('Usage: python -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
-        sys.exit(2)
-    
-    # check if cluster exist    
-    cs_id = check.check_id(result_id = 'cs_id', table_name = 'hst.cluster_settings', search_condition = "cs_name = '%s'" % (cluster_name))
-    if cs_id is None:
-        sys.stderr.write('The cluster name is wrong!\n')
-        sys.exit(2)
+
+    # check cluster information if lsp not run in standalone mode
+    if standalone_mode is False:
+        if cluster_name is None or schedules is None:
+            sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
+            sys.exit(2)
+
+        # check if specified cluster exists 
+        cs_id = check.check_id(result_id = 'cs_id', table_name = 'hst.cluster_settings', search_condition = "cs_name = '%s'" % (cluster_name))
+        if cs_id is None:
+            sys.stderr.write('Invalid cluster name %s!\n' % (cluster_name))
+            sys.exit(2)
 
     # prepare report directory with times and the report.sql file
     report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -98,7 +103,9 @@ if __name__ == '__main__':
     
     schedule_list = schedules.split(',')
     beg_time = datetime.now()
-    check.insert_new_record(table_name = 'hst.test_run', col_list = '(start_time)', values = "'%s'" % (str(beg_time).split('.')[0]))
+    # add test run information in backend database if lsp not run in standalone mode
+    if standalone_mode is False:
+        check.insert_new_record(table_name = 'hst.test_run', col_list = '(start_time)', values = "'%s'" % (str(beg_time).split('.')[0]))
 
     # parse schedule file
     for schedule_name in schedule_list:
@@ -136,26 +143,30 @@ if __name__ == '__main__':
     
     end_time = datetime.now()
     duration = end_time - beg_time
-    duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
-    check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration),
-        search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
+    duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
 
-    allcmd = QueryFile(report_sql_file)
-    for cmd in allcmd:
-        (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
-        if not ok:
-            print result
-            sys.exit(2)
-     
-#    result_file = os.path.join(report_directory, 'result.txt')
-#    col_list = 's_id, action_type, action_target, basetime, runtime, deviration, testresult'
-#    search_condition = "where action_type = 'Loading'"
-#    result = check.get_result(col_list = col_list, table_list = 'hst.test_result_perscenario_perquery', search_condition = search_condition)
-#    for one_tuple in result:
-#        if str(one_tuple).replace('\n','').strip():
-#            all_col = str(one_tuple).split('|')
-#            msg = 'Test Suite Name|' + all_col[0].strip() + \
-#            '|Test Case Name|' + all_col[1].strip() + ':' + all_col[2].strip() + \
-#            '|Test Detail|' + all_col[3].strip() + ':' + all_col[4].strip() + ':' + all_col[5].strip() + \
-#            '|Test Status|' + all_col[6].strip()
-#            Report(result_file , msg)
+    # update backend database to log execution time
+    if standalone_mode is False:
+        check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration), search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
+
+        # add detailed execution information of test cases into backend database
+        allcmd = QueryFile(report_sql_file)
+        for cmd in allcmd:
+            (ok, result) = psql.runcmd(cmd = cmd, dbname = 'hawq_cov', username = 'hawq_cov', host = 'gpdb63.qa.dh.greenplum.com', port = 5430)
+            if not ok:
+                print result
+                sys.exit(2)
+
+        # retrieve test report from backend database for pulse report purpose`
+        result_file = os.path.join(report_directory, 'result.txt')
+        col_list = 's_id, action_type, action_target, basetime, runtime, deviration, testresult'
+        search_condition = "where action_type = 'Loading'"
+        result = check.get_result(col_list = col_list, table_list = 'hst.test_result_perscenario_perquery', search_condition = search_condition)
+        for one_tuple in result:
+            if str(one_tuple).replace('\n','').strip():
+                all_col = str(one_tuple).split('|')
+                msg = 'Test Suite Name|' + all_col[0].strip() + \
+                      '|Test Case Name|' + all_col[1].strip() + ':' + all_col[2].strip() + \
+                      '|Test Detail|' + all_col[3].strip() + ':' + all_col[4].strip() + ':' + all_col[5].strip() + \
+                      '|Test Status|' + all_col[6].strip()
+                Report(result_file , msg)
