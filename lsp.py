@@ -76,7 +76,7 @@ except ImportError:
 if __name__ == '__main__':
     # parse user options
     parser = OptionParser()
-    parser.add_option('-a', '--standalone', dest='mode', action='store_false', default=False, help='Standalone mode')
+    parser.add_option('-a', '--standalone', dest='mode', action='store_true', default=True, help='Standalone mode')
     parser.add_option('-c', '--cluster', dest='cluster', action='store', help='Cluster for test execution')
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
     (options, args) = parser.parse_args()
@@ -84,6 +84,7 @@ if __name__ == '__main__':
     cluster_name = options.cluster
     schedules = options.schedule
 
+    cs_id = 0
     # check cluster information if lsp not run in standalone mode
     if standalone_mode is False:
         if cluster_name is None or schedules is None:

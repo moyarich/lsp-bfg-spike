@@ -9,11 +9,11 @@ from multiprocessing import Process, Queue, Value , Array
 #         ('lib.Config', 'config', 'lib/Config.py'), ('QueryFile', 'QueryFile', 'lib/QueryFile.py'), \
 #         ('utils.Log', 'Log', 'lib/utils/Log.py'), ('utils.Report', 'Report', 'lib/utils/Report.py')]
 
-for pkg in pkgs:
-    try:
-        exec('from %s import %s ' % (pkg[0], pkg[1]))
-    except Import Error:
-        sys.stderr.write('Workload need %s in %s' % ([pkg[1], pkg[2]))
+#for pkg in pkgs:
+#    try:
+#        exec('from %s import %s ' % (pkg[0], pkg[1]))
+#    except Import Error:
+#        sys.stderr.write('Workload need %s in %s' % ([pkg[1], pkg[2]))
 
 try:
     from lib.PSQL import psql
@@ -55,12 +55,15 @@ class Workload(object):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
         # initialize common propertities for workload
         self.cs_id = cs_id
+        self.u_id = 0
+        self.tr_id = 0
+        self.s_id = 0
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
         
         self.user = workload_specification['user'].strip()
         # check u_id if exist
-        if self.cs_id is not None:
+        if self.cs_id != 0:
             self.u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
             if self.u_id is None:
                 sys.stderr.write('The db user name is wrong!\n')
@@ -126,7 +129,7 @@ class Workload(object):
         self.wl_values += ", '%s'" % (self.run_workload_mode)
 
         # check wl_id if exist
-        if self.cs_id is not None:
+        if self.cs_id != 0:
             self.wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
             if self.wl_id is None:
                 check.insert_new_record(table_name = 'hst.workload',
