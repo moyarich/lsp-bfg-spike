@@ -12,7 +12,8 @@ class RemoteCommand:
 
 	def ssh_command(self, user, host, password, command):
 	    ssh_newkey = 'Are you sure you want to continue connecting'
-	    child = pexpect.spawn('ssh -l %s %s "%s"'%(user, host, command))
+	    cmd = 'ssh -l %s %s "%s"'%(user, host, command)
+	    child = pexpect.spawn(cmd)
 	    i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password: '])
 	    # Timeout
 	    if i == 0: 
