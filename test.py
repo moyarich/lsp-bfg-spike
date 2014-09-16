@@ -2,18 +2,6 @@ import os
 import sys
 from datetime import datetime
 
-try:
-    import yaml
-except ImportError:
-    sys.stderr.write('LSP needs pyyaml. You can get it from http://pyyaml.org.\n') 
-    sys.exit(2)
-
-try:
-    from optparse import OptionParser
-except ImportError:
-    sys.stderr.write('LSP needs optparse.\n') 
-    sys.exit(2)
-
 LSP_HOME = os.path.abspath(os.path.dirname(__file__))
 os.environ['LSP_HOME'] = LSP_HOME
 
@@ -30,40 +18,12 @@ if LIB_DIR not in sys.path:
     sys.path.append(LIB_DIR)
 
 try:
-    from executors.SequentialExecutor import SequentialExecutor
+    from lib.RemoteCommand import remotecmd
 except ImportError:
-    sys.stderr.write('LSP needs SequentialExecutor in executors/SequentialExecutor.py.\n')
+    sys.stderr.write('LSP needs rm in lib/PSQL.py in Workload.py\n')
     sys.exit(2)
 
-try:
-    from executors.ConcurrentExecutor import ConcurrentExecutor
-except ImportError:
-    sys.stderr.write('LSP needs ConcurrentExecutor in executors/ConcurrentExecutor.py.\n')
-    sys.exit(2)
-
-try:
-    from executors.DynamicExecutor import DynamicExecutor
-except ImportError:
-    sys.stderr.write('LSP needs DynamicExecutor in executors/DynamicExecutor.py.\n')
-    sys.exit(2)
-
-try:
-    from lib.PSQL import psql
-except ImportError:
-    sys.stderr.write('LSP needs psql in lib/PSQL.py in Workload.py\n')
-    sys.exit(2)
-
-try:
-    from lib.Shell import shell
-except ImportError:
-    sys.stderr.write('LSP needs shell in lib/PSQL.py in Workload.py\n')
-    sys.exit(2)
-
-try:
-    from lib.QueryFile import QueryFile
-except ImportError:
-    sys.stderr.write('LSP needs QueryFile in lib/QueryFile.py\n')
-    sys.exit(2)
+import pexpect
 
 try:
     from lib.utils.Check import check
@@ -90,9 +50,22 @@ def result():
             '|Test Detail|' + all_col[3].strip() + ':' + all_col[4].strip() + ':' + all_col[5].strip() + \
             '|Test Status|' + all_col[6].strip()
             Report(result_file , msg)
+   
 ###########################################################################
 #  Try to run if user launches this script directly
 if __name__ == '__main__':
+    child = remotecmd.scp_command (from_user = '', from_host = '', from_file = '/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp/expect', 
+        to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':~', password = 'changeme')
+    child.expect(pexpect.EOF)
+    print child.before
+    
+    child = remotecmd.scp_command (from_user = 'gpadmin@', from_host = 'gpdb63.qa.dh.greenplum.com', from_file = ':~/expect/expect_scp.sh', 
+        to_user = '', to_host = '', to_file = '/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp', password = 'changeme')
+    child.expect(pexpect.EOF)
+    print child.before
+
+    child = remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = "source psql.sh && psql -d hawq_cov -c 'select version();'")
+    child.expect(pexpect.EOF)
+    print child.before
+
    
-   os.system('/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp/scp.sh > ./scp_out 2>&1')
-   os.system('/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp/ssh.sh > ./ssh_out 2>&1')
