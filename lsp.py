@@ -112,7 +112,7 @@ if __name__ == '__main__':
     beg_time = datetime.now()
     # add test run information in backend database if lsp not run in standalone mode
     if standalone_mode is False:
-        check.insert_new_record(table_name = 'hst.test_run', col_list = '(start_time)', values = "'%s'" % (str(beg_time).split('.')[0]))
+        check.insert_new_record(table_name = 'hst.test_run', col_list = 'start_time', values = "'%s'" % (str(beg_time).split('.')[0]))
 
     # parse schedule file
     for schedule_name in schedule_list:
