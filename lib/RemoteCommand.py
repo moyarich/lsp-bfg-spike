@@ -14,7 +14,7 @@ class RemoteCommand:
 	    ssh_newkey = 'Are you sure you want to continue connecting'
 	    cmd = 'ssh -l %s %s "%s"'%(user, host, command)
 	    child = pexpect.spawn(cmd, timeout=600)
-	    i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password: '])
+	    i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password: ', ''])
 	    # Timeout
 	    if i == 0: 
 	        print 'ERROR!'
@@ -25,20 +25,23 @@ class RemoteCommand:
 	    if i == 1: 
 	        child.sendline ('yes')
 	        child.expect ('password: ')
-	        i = child.expect([pexpect.TIMEOUT, 'password: '])
+	        j = child.expect([pexpect.TIMEOUT, 'password: '])
+	        child.sendline(password)
 	        # Timeout
-	        if i == 0: 
+	        if j == 0: 
 	            print 'ERROR!'
 	            print 'SSH could not login. Here is what SSH said:'
 	            print child.before, child.after
 	            return None
-	    child.sendline(password)
+	    if i == 3:
+	    	child.sendline(password)
+	    
 	    child.expect(pexpect.EOF)
 	    return child.before
 
 	def scp_command(self, from_user, from_host, from_file, to_user, to_host, to_file, password):
 	    child = pexpect.spawn('scp -r %s%s%s %s%s%s' %(from_user, from_host, from_file, to_user, to_host, to_file), timeout=600)
-	    i = child.expect(['password:'])
+	    i = child.expect(['password:', ''])
 	    if i == 0:
 	    	child.sendline(password)
 	    child.expect(pexpect.EOF)
