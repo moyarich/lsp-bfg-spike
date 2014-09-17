@@ -55,17 +55,17 @@ class Workload(object):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
         # initialize common propertities for workload
         self.cs_id = cs_id
-        self.u_id = 0
+        self.us_id = 0
         self.tr_id = 0
         self.s_id = 0
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
         
         self.user = workload_specification['user'].strip()
-        # check u_id if exist
+        # check us_id if exist
         if self.cs_id != 0:
-            self.u_id = check.check_id(result_id = 'u_id', table_name = 'hst.users', search_condition = "u_name = '%s'" % (self.user))
-            if self.u_id is None:
+            self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
+            if self.us_id is None:
                 sys.stderr.write('The db user name is wrong!\n')
                 sys.exit(2)
         
@@ -139,10 +139,10 @@ class Workload(object):
                 self.wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
             # check s_id if exist
             self.s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
-                                       search_condition = 'cs_id = %d and wl_id = %d and u_id = %d' % (self.cs_id, self.wl_id, self.u_id))
+                                       search_condition = 'cs_id = %d and wl_id = %d and us_id = %d' % (self.cs_id, self.wl_id, self.us_id))
             if self.s_id is None:
-                check.insert_new_record(table_name = 'hst.scenario', col_list = 'cs_id, wl_id, u_id', 
-                                        values = '%d, %d, %d' % (self.cs_id, self.wl_id, self.u_id))
+                check.insert_new_record(table_name = 'hst.scenario', col_list = 'cs_id, wl_id, us_id', 
+                                        values = '%d, %d, %d' % (self.cs_id, self.wl_id, self.us_id))
                 self.s_id = check.get_max_id(result_id = 's_id', table_name = 'hst.scenario')
             #get tr_id
             self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')

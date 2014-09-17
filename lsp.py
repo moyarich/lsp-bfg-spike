@@ -116,7 +116,9 @@ if __name__ == '__main__':
     beg_time = datetime.now()
     # add test run information in backend database if lsp not run in standalone mode
     if standalone_mode is False:
-        check.insert_new_record(table_name = 'hst.test_run', col_list = 'start_time', values = "'%s'" % (str(beg_time).split('.')[0]))
+        check.insert_new_record(table_name = 'hst.test_run', 
+            col_list = 'pulse_build_id, pulse_build_url, hdfs_version, hawq_version, start_time', 
+            values = "'%s', '%s', '%s', '%s', '%s'" % ('build_id', 'build_url', 'PHD 2.2', 'HAWQ1.2.1.0', str(beg_time).split('.')[0]))
 
     # parse schedule file
     for schedule_name in schedule_list:
@@ -168,11 +170,8 @@ if __name__ == '__main__':
 
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')
-        col_list = 'c.wl_catetory, action_type, action_target, basetime, runtime, deviration, testresult'
-        search_condition = "where a.s_id = b.s_id and b.wl_id = c.wl_id;"
-        result = check.get_result(col_list = col_list, 
-            table_list = 'hst.test_result_perscenario_perquery a, hst.scenario b, hst.workload c', 
-            search_condition = search_condition)
+        col_list = 'wl_name, action_type, action_target, basetime, runtime, deviration, testresult'
+        result = check.get_result(col_list = col_list, table_list = 'hst.test_report_details')
         
         result = str(result).strip().split('\r\n')
         for one_tuple in result:
