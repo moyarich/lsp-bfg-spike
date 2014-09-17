@@ -72,7 +72,7 @@ class Workload(object):
         self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
         
-        # get table setting and set table and sql suffix and check_condition
+        # get table setting and set table suffix, sql suffix, check_condition, and wl_values
         self.get_table_setting(workload_specification)
 
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
@@ -134,7 +134,7 @@ class Workload(object):
             self.wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
             if self.wl_id is None:
                 check.insert_new_record(table_name = 'hst.workload',
-                                        col_list = 'wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order',
+                                        col_list = 'wl_name, wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order',
                                         values = self.wl_values)
                 self.wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
             # check s_id if exist
@@ -152,8 +152,9 @@ class Workload(object):
 
     def get_table_setting(self, workload_specification):
         # init tpch specific configuration such as tpch table_settings
-        self.check_condition = "wl_catetory = '%s'" % (self.workload_name.split('_')[0].upper())
-        self.wl_values = "'%s'" % (self.workload_name.split('_')[0].upper())
+        self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
+        
+        self.wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
         
         ts = workload_specification['table_setting']
 
