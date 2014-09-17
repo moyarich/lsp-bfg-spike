@@ -89,11 +89,15 @@ if __name__ == '__main__':
     standalone_mode = options.mode
     cluster_name = options.cluster
     schedules = options.schedule
-
     cs_id = 0
+
+    if schedules is None:
+        sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
+        sys.exit(2)
+    
     # check cluster information if lsp not run in standalone mode
     if standalone_mode is False:
-        if cluster_name is None or schedules is None:
+        if cluster_name is None:
             sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
             sys.exit(2)
 
@@ -160,7 +164,7 @@ if __name__ == '__main__':
         remotecmd.scp_command(from_user = '', from_host = '', from_file = report_sql_file,
             to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':/tmp/', password = 'changeme')
         cmd = 'source psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
-        result = remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
+        remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
 
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')

@@ -158,7 +158,7 @@ class Workload(object):
         
         ts = workload_specification['table_setting']
 
-        # Calculate scale factor for TPC-H workload
+        # Calculate scale factor for workload
         self.data_volume_type = ts['data_volume_type'].upper()
         self.check_condition += " and wl_data_volume_type = '%s'" % (self.data_volume_type)
         self.wl_values += ", '%s'" % (self.data_volume_type)

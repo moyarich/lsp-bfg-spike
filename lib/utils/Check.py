@@ -17,8 +17,8 @@ def remote_psql_file(sql, user, host, password, local_file = '/tmp/temp.sql', re
     remotecmd.scp_command(from_user = '', from_host = '', from_file = local_file,
         to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':' + remote_file, password = 'changeme')
     cmd = 'source psql.sh && psql -d hawq_cov -t -q -f %s' % (remote_file)
-    result = remotecmd.ssh_command(user = user, host = host, password = password, command = cmd)
-    return result
+    return remotecmd.ssh_command(user = user, host = host, password = password, command = cmd)
+
 
 class Check:
     def __init__(self):
@@ -49,15 +49,14 @@ class Check:
             sql = "Insert into %s values (%s);" % (table_name, values)
         else:
             sql = "Insert into %s (%s) values (%s);" % (table_name, col_list, values)
-        result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
+        remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
     def update_record(self, table_name, set_content = '', search_condition = ''):
         sql = "update %s set %s where %s;" % (table_name, set_content, search_condition)
-        result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
+        remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         
     def get_result(self, col_list = '',table_list = '', search_condition = ''):
         sql = "select %s from %s %s;" % (col_list, table_list, search_condition)
-        result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
-        return result
+        return remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
 check = Check()
