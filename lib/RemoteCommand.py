@@ -1,10 +1,10 @@
+import sys
 try:
     import pexpect
 except ImportError:
     sys.stderr.write('RemoteCommand needs pexpect\n')
     sys.exit(2)
 
-import sys
 
 class RemoteCommand:
 	def __init__(self):
@@ -38,8 +38,9 @@ class RemoteCommand:
 
 	def scp_command(self, from_user, from_host, from_file, to_user, to_host, to_file, password):
 	    child = pexpect.spawn('scp -r %s%s%s %s%s%s' %(from_user, from_host, from_file, to_user, to_host, to_file), timeout=600)
-	    child.expect('password:')
-	    child.sendline(password)
+	    i = child.expect(['password:'])
+	    if i == 0:
+	    	child.sendline(password)
 	    child.expect(pexpect.EOF)
 
 remotecmd = RemoteCommand()

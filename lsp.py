@@ -29,6 +29,10 @@ LIB_DIR = LSP_HOME + os.sep + 'lib'
 if LIB_DIR not in sys.path:
     sys.path.append(LIB_DIR)
 
+PEXPECT_DIR = LIB_DIR + os.sep + 'pexpect.tar.gz'
+os.system('cd %s && tar -zxvf %s' % (LIB_DIR, PEXPECT_DIR))
+os.system('cd %s/pexpect && python ./setup.py install' % (LIB_DIR))
+
 try:
     from executors.SequentialExecutor import SequentialExecutor
 except ImportError:
