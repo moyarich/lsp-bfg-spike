@@ -178,15 +178,15 @@ if __name__ == '__main__':
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')
         col_list = "'Test Suite Name|'|| wl_name || '|Test Case Name|' || action_type ||'.' || action_target \
-                   || '|Test Detail|' \
-                   || 'Actural Run time is: ' || CASE WHEN runtime is NOT NULL THEN runtime::int::text ELSE 'N.A.' END || ' ms, ' \
-                   || 'Baseline time is: ' || CASE WHEN basetime IS NOT NULL THEN basetime::int::text ELSE 'N.A.' END || ' ms, ' \
-                   || 'Comparision is: ' || CASE WHEN deviration is NOT NULL THEN deviration::decimal(5,2)::text ELSE 'N.A.' END \
-                   || '|Test Status|' || testresult"
+                    || '|Test Detail|' \
+                    || 'Actural Run time is: ' || CASE WHEN runtime is NOT NULL THEN runtime::int::text ELSE 'N.A.' END || ' ms, ' \
+                    || 'Baseline time is: ' || CASE WHEN basetime IS NOT NULL THEN basetime::int::text ELSE 'N.A.' END || ' ms, ' \
+                    || 'Comparision is: ' || CASE WHEN deviration is NOT NULL THEN deviration::decimal(5,2)::text ELSE 'N.A.' END \
+                    || ' ('|| CASE WHEN runtime is NOT NULL THEN runtime::int::text ELSE '0' END || ' ms)' \
+                    || '|Test Status|' || testresult"
         result = check.get_result(col_list = col_list, table_list = 'hst.test_report_details')
         
         result = str(result).strip().split('\r\n')
-        print result
         for one_tuple in result:
             msg = str(one_tuple).strip()
             Report(result_file , msg)
