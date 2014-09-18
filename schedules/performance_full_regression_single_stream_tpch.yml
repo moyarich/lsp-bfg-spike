@@ -8,11 +8,11 @@
 # workloads_list: tpch_column_10gpn_nocomp_nopart, tpch_column_10gpn_quicklz1_nopart
 # workloads_list: tpch_column_200gpn_nocomp_nopart, tpch_column_200gpn_quicklz1_nopart
 #
-# workloads_list: tpch_parquet_10gpn_nocomp_nopart, tpch_parquet_10gpn_nocomp_part, tpch_parquet_10gpn_snappy_nopart, tpch_parquet_10gpn_snappy_part, tpch_row_10gpn_nocomp_nopart, tpch_row_10gpn_nocomp_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_10gpn_quicklz1_part, tpch_column_10gpn_nocomp_nopart, tpch_column_10gpn_quicklz1_nopart, tpch_parquet_200gpn_nocomp_nopart, tpch_parquet_200gpn_nocomp_part, tpch_parquet_200gpn_snappy_nopart, tpch_parquet_200gpn_snappy_part, tpch_row_200gpn_nocomp_nopart, tpch_row_200gpn_nocomp_part, tpch_row_200gpn_quicklz1_nopart, tpch_row_200gpn_quicklz1_part, tpch_column_200gpn_nocomp_nopart, tpch_column_200gpn_quicklz1_nopart
+workloads_list: tpch_parquet_10gpn_nocomp_nopart, tpch_parquet_10gpn_nocomp_part, tpch_parquet_10gpn_snappy_nopart, tpch_parquet_10gpn_snappy_part, tpch_row_10gpn_nocomp_nopart, tpch_row_10gpn_nocomp_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_10gpn_quicklz1_part, tpch_column_10gpn_nocomp_nopart, tpch_column_10gpn_quicklz1_nopart, tpch_parquet_200gpn_nocomp_nopart, tpch_parquet_200gpn_nocomp_part, tpch_parquet_200gpn_snappy_nopart, tpch_parquet_200gpn_snappy_part, tpch_row_200gpn_nocomp_nopart, tpch_row_200gpn_nocomp_part, tpch_row_200gpn_quicklz1_nopart, tpch_row_200gpn_quicklz1_part, tpch_column_200gpn_nocomp_nopart, tpch_column_200gpn_quicklz1_nopart
 #
 # workloads_list: tpch_parquet_10gpn_nocomp_nopart, tpch_parquet_10gpn_nocomp_part, tpch_parquet_10gpn_snappy_nopart, tpch_parquet_10gpn_snappy_part, tpch_row_10gpn_nocomp_nopart, tpch_row_10gpn_nocomp_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_10gpn_quicklz1_part, tpch_column_10gpn_nocomp_nopart, tpch_column_10gpn_quicklz1_nopart
 #
-workloads_list: tpch_parquet_10gpn_nocomp_nopart
+# workloads_list: tpch_parquet_10gpn_nocomp_nopart
 #
 workloads_mode: sequential
 
@@ -24,7 +24,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -40,7 +40,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -57,7 +57,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -74,7 +74,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -163,7 +163,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: ROW
       load_data_flag: true
@@ -177,7 +177,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: ROW
           partitions: 128
@@ -192,7 +192,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: ROW
           compression_type: QUICKLZ
@@ -208,7 +208,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: ROW
           compression_type: QUICKLZ
@@ -290,7 +290,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: COLUMN
       load_data_flag: true
@@ -304,7 +304,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: COLUMN
           compression_type: QUICKLZ
