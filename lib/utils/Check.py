@@ -7,7 +7,7 @@ except ImportError:
     sys.exit(2)
 
 def file(filename, msg):
-    fp = open(filename, 'w')   
+    fp = open(filename, 'w')
     fp.write(msg)
     fp.flush()
     fp.close()
