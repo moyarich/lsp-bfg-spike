@@ -29,8 +29,8 @@ workloads_content:
           orientation: PARQUET
           row_group_size: 8388608
           page_size: 1048576
-      load_data_flag: false
-      run_workload_flag: false
+      load_data_flag: true
+      run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
