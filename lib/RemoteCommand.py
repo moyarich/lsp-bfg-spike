@@ -18,7 +18,7 @@ class RemoteCommand:
 	    	i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password:'])
 #	    	print 'in try ssh i = ' + str(i)
 	    except Exception,e:
-	    	pass
+	    	return child.before
 	    else:
 		    # Timeout
 #		    print 'ssh i = ' + str(i)
