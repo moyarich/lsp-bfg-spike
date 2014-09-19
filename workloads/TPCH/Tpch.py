@@ -141,7 +141,21 @@ class Tpch(Workload):
                     self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
                         % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
         self.output('-- Complete loading data')
-       
+    
+    def vacuum_analyze(self):
+        self.output('-- Start vacuum analyze')     
+        
+        sql = 'VACUUM ANALYZE;'
+        self.output(sql)
+        beg_time = datetime.now()
+        beg_time = str(beg_time).split('.')[0]
+        self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SKIP', duration))
+        self.report('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SKIP', duration))
+        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
+            % (self.tr_id, self.s_id, beg_time, beg_time))
+   
+        self.output('-- Complete vacuum analyze') 
+    
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
         self.report('-- Start running workload %s' % (self.workload_name))
