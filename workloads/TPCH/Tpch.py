@@ -156,8 +156,8 @@ class Tpch(Workload):
         self.output('-- Start vacuum analyze')     
         beg_time = datetime.now()
         beg_time = str(beg_time).split('.')[0]
-        self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SKIP', duration))
-        self.report('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SKIP', duration))
+        self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SKIP', 0))
+        self.report('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SKIP', 0))
         self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
             % (self.tr_id, self.s_id, beg_time, beg_time))
    
