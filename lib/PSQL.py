@@ -84,8 +84,11 @@ class PSQL:
             dbname = os.environ['PGDATABASE']
             
         if username == None:
-            username = os.environ['PGUSER']
-
+            try:
+                username = os.environ['PGUSER']
+            except Exception, e:
+                username = 'gpadmin'
+            
         if password == None:
             password = ""
         else:
