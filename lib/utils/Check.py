@@ -59,4 +59,7 @@ class Check:
         sql = "select %s from %s %s;" % (col_list, table_list, search_condition)
         return remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
+    def get_result_by_sql(self, sql = ''):
+        return remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
+
 check = Check()
