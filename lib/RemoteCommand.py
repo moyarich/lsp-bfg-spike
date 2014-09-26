@@ -1,10 +1,16 @@
+import os
 import sys
+
+gphome = os.getenv('GPHOME')
+pexpect_dir = gphome + os.sep + 'bin' + os.sep + 'lib'
+if pexpect_dir not in sys.path:
+    sys.path.append(pexpect_dir)
+
 try:
     import pexpect
 except ImportError:
     sys.stderr.write('RemoteCommand needs pexpect\n')
     sys.exit(2)
-
 
 class RemoteCommand:
 	def __init__(self):
