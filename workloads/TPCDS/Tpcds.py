@@ -1,5 +1,6 @@
 import os
 import sys
+import commands, socket
 from datetime import datetime, date, timedelta
 
 try:
@@ -21,12 +22,6 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from lib.QueryFile import QueryFile
-except ImportError:
-    sys.stderr.write('TPCH needs QueryFile in lib/QueryFile.py\n')
-    sys.exit(2)
-
-try:
     from utils.Log import Log
 except ImportError:
     sys.stderr.write('TPCH needs Log in lib/utils/Log.py\n')
@@ -42,6 +37,7 @@ class Tpcds(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
+        self.pwd = os.path.abspath(os.path.dirname(__file__))
 
     def setup(self):
         pass
@@ -114,9 +110,67 @@ class Tpcds(Workload):
         self.output('-- Complete loading data')      
     
     def load_setup(self):
-        # check hostfile, check data_gen, compile data_gen
-        pass
+        self._check_hostfile()
+        self._check_data_gen()
+        sys.exit(2)
 
+    def _check_hostfile(self):
+        # add hostfile_master
+        hostfile_master = self.pwd + os.sep + 'hostfile_master'
+        master_host_name = config.getMasterHostName()
+        with open(hostfile_master,'w') as f:
+            f.write(str(master_host_name) + '\n')
+
+        # add hostfile_seg
+        hostfile_seg = self.pwd + os.sep + 'hostfile_seg'
+        seg_hostname_list = config.getSegHostNames()
+        seg_names = ''
+        for seg_hostname in seg_hostname_list:
+            seg_names = seg_names + seg_hostname + '\n'
+        with open(hostfile_seg,'w') as f:
+            f.write(seg_names)
+        
+    def _check_data_gen(self):
+        # Check data_gen folder
+        self.data_gen_folder = os.path.join(self.pwd, 'data_gen')
+        if not os.path.exists(self.data_gen_folder):
+            print('data_gen folder does not exist. Exit. ')
+            sys.exit(2)
+        else:
+            print('data_gen folder exist.')
+        
+        # Check tpcds_idx file
+        self.tpcds_idx = os.path.join(self.pwd, 'tpcds.idx')
+        if not os.path.exists(self.tpcds_idx):
+            print('tpcds.idx does not exist. Exit. ')
+            sys.exit(2)
+        else:
+            print('tpcds.idx exist.')
+            
+        self._compile_data_gen()
+
+    def _compile_data_gen(self):
+        # temporarily 
+        if os.path.exists(os.path.join(self.pwd, 'dsdgen')):
+            print 'dsdgen already exist.'
+            return
+        
+        command = 'cd %s; make clean; make' % (self.data_gen_folder)
+        status, output = commands.getstatusoutput(command)    
+        if status != 0:
+            print('Error happens in compile data gen code.')
+            print('output: %s'%output)
+            sys.exit()
+        else:
+            print('Compile data gen code.')
+            command2 = 'cd %s; cp dsdgen %s'%(self.data_gen_folder,self.pwd)
+            s2, o2 = commands.getstatusoutput(command2)
+            if s2!=0:
+                print('Error happen in copy dsdgen.')
+                sys.exit()
+            else:
+                print('Copy dsdgen to pwd.')
+    
     def load_generate(self):
         # prepare temp folders, scp data_gen code(date_gen and tpcds.idx),  **data_gen_segment***
         pass

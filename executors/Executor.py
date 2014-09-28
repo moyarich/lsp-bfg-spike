@@ -14,6 +14,12 @@ except ImportError:
     sys.stderr.write('LSP needs Xmarq Workload in workloads/XMARQ/Xmarq.py\n')
     sys.exit(2)
 
+try:
+    from workloads.TPCDS.Tpcds import Tpcds
+except ImportError:
+    sys.stderr.write('LSP needs Tpcds Workload in workloads/TPCDS/Tpcds.py\n')
+    sys.exit(2)
+
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
@@ -53,7 +59,7 @@ class Executor(object):
                 continue
 
             # add one workload into the workloads_instance list
-            if workload_category not in ('TPCH', 'XMARQ'):
+            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 wl_instance = workload_category.lower().capitalize() + \
