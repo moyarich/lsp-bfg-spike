@@ -26,17 +26,6 @@ except ImportError:
     sys.stderr.write('TPCH needs QueryFile in lib/QueryFile.py\n')
     sys.exit(2)
 
-try:
-    from utils.Log import Log
-except ImportError:
-    sys.stderr.write('TPCH needs Log in lib/utils/Log.py\n')
-    sys.exit(2)
-
-try:
-    from utils.Report import Report
-except ImportError:
-    sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
-    sys.exit(2)
 
 class Xmarq(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
