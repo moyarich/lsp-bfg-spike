@@ -36,3 +36,5 @@ ca_location_type          char(20)
 )
 LOCATION
 FORMAT 'TEXT' (DELIMITER '|' NULL AS '');
+
+INSERT INTO customer_address_TABLESUFFIX SELECT * FROM e_customer_address_TABLESUFFIX;
