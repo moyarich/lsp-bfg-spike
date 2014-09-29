@@ -1,6 +1,6 @@
 import os
 import sys
-import commands, socket
+import commands, socket, shutil
 from datetime import datetime, date, timedelta
 
 try:
@@ -102,8 +102,9 @@ class Tpcds(Workload):
             self.load_setup()
             self.load_generate()
             self.load_loading()
-            sys.exit(2)
             self.load_clean_up()
+            print 'loading success'
+            sys.exit(2)
 
         self.output('-- Complete loading data')      
     
@@ -237,6 +238,7 @@ class Tpcds(Workload):
 import subprocess, os, time
 
 children = [%s, %s, %s, %s]
+print children
 parallel_setting = %s;
 scale = %s
 data_dir = '%s'
@@ -247,9 +249,10 @@ process_name = {}
 
 for child in children:
     cmd = './dsdgen -scale '+str(scale)+' -dir '+data_dir+' -parallel '+str(parallel_setting)+' -child '+str(child)
+    print 'in localhost cmd = ' + cmd
     process = subprocess.Popen(cmd.split(' '))
     process_pool.append(process)
-    process_name[process] = 'Process_'+str(child)+'_'+str(parallel_setting)
+    process_name[process] = 'Process_' + str(child) + '_' + str(parallel_setting)
     
 with open('status.txt','w') as f:
     f.write('generating')
@@ -288,14 +291,13 @@ with open('dat_files.txt','w') as f:
         """
         total_paralle = self.host_num * 4
         seg_hosts = []
-        i = 0
         for cur_host in self.seg_hostname_list:
             print ('generate script for %s' % (cur_host))
             # generate python command for each segment.
-            child_1 = ++i
-            child_2 = ++i
-            child_3 = ++i
-            child_4 = ++i
+            child_1 = 1
+            child_2 = 2
+            child_3 = 3
+            child_4 = 4
             python_script_base_name = cur_host+'.py'
             host_python_script = os.path.join(self.pwd, cur_host+'.py')
             with open(host_python_script, 'w') as f:
@@ -316,7 +318,7 @@ with open('dat_files.txt','w') as f:
                 print(o2)
                 sys.exit()
                 
-            cmd = 'cd %s; python %s &'%(self.tmp_tpcds_folder, python_script_base_name)        
+            cmd = 'cd %s; python %s > ./%s 2>&1' %(self.tmp_tpcds_folder, python_script_base_name, python_script_base_name + '.out')        
             command = "gpssh -h %s -e '%s'" % (cur_host, cmd)
             (status, output) = commands.getstatusoutput(command)
             if status != 0:
@@ -397,7 +399,7 @@ with open('dat_files.txt','w') as f:
         
         cmd = 'gpfdist -d %s -p %s -l %s/fdist.%s.log &' \
         % (self.tmp_tpcds_data_folder, self.gpfdist_port, self.tmp_tpcds_data_folder, self.gpfdist_port)        
-        command = "gpssh -f %s -e '%s'" %(self.hostfile, cmd)
+        command = "gpssh -f %s -e '%s'" %(self.hostfile_seg, cmd)
         print command
         (status, output) = commands.getstatusoutput(command)
         if status != 0:
@@ -477,7 +479,7 @@ with open('dat_files.txt','w') as f:
             print ('%s: %s dat files'%(key, len(gpfdist_map[key])))
         
         # modify the prep_external_table_script
-        external_script = os.path.join(self.schema_folder, 'prep_external_tables.sql')
+        external_script = os.path.join(self.schema_folder, 'prep_external_tables2.sql')
         shutil.copyfile(os.path.join(self.schema_folder, 'prep_external_tables.sql'), external_script)
         for key in gpfdist_map.keys():
             self.sed('LOCATION_%s_ext'%key,"LOCATION("+','.join(gpfdist_map[key])+")", external_script)
@@ -500,7 +502,7 @@ with open('dat_files.txt','w') as f:
         else:
             copy_script = os.path.join(self.schema_folder,'copy_no_partition.sql')
         
-        command = 'psql -d %s -a -f %s' % (self.db_name, copy_script)
+        command = 'psql -d %s -a -f %s' % (self.database_name, copy_script)
         print ('Execute: %s' % (command))
         (status, output) = commands.getstatusoutput(command)
         if status != 0:
@@ -530,11 +532,11 @@ with open('dat_files.txt','w') as f:
 
     def load_clean_up(self):
         self._stop_gpfdist()
-        self._delete_data()
+   #     self._delete_data()
         
     def _stop_gpfdist(self):
         cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
-        command = "gpssh -f %s -e \"%s\"" % (self.hostfile, cmd)
+        command = "gpssh -f %s -e \"%s\"" % (self.hostfile_seg, cmd)
         (status, output) = commands.getstatusoutput(command)
         #print (output)
         print ('kill gpfdist on segments succeed. ')
