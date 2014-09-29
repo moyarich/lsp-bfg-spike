@@ -41,7 +41,6 @@ process_name = {}
 
 for child in children:
     cmd = './dsdgen -scale '+str(scale)+' -dir '+data_dir+' -parallel '+str(parallel_setting)+' -child '+str(child)
-    print 'in localhost cmd = ' + cmd
     process = subprocess.Popen(cmd.split(' '))
     process_pool.append(process)
     process_name[process] = 'Process_' + str(child) + '_' + str(parallel_setting)
@@ -128,16 +127,18 @@ class Tpcds(Workload):
     
     
     def load_setup(self):
-        self._check_hostfile()
-        self._check_data_gen()
+        print('\n-- Start _check_hostfile')
+        self._prepare_hostfile()
+        print('\n-- Start _check_data_gen')
+        self._prepare_data_gen()
 
-    def _check_hostfile(self):
-        # add hostfile_master
+    def _prepare_hostfile(self):
+        # prep hostfile_master
         master_host_name = config.getMasterHostName()
         with open(self.hostfile_master, 'w') as f:
             f.write(str(master_host_name) + '\n')
 
-        # add hostfile_seg
+        # prep hostfile_seg
         self.seg_hostname_list = config.getSegHostNames()
         self.host_num = len(self.seg_hostname_list)
         seg_names = ''
@@ -146,63 +147,58 @@ class Tpcds(Workload):
         with open(self.hostfile_seg, 'w') as f:
             f.write(seg_names)
         
-    def _check_data_gen(self):
-        # Check data_gen folder
-        self.data_gen_folder = os.path.join(self.pwd, 'data_gen')
-        if not os.path.exists(self.data_gen_folder):
-            print('data_gen folder does not exist. Exit. ')
-            sys.exit(2)
+    def _prepare_data_gen(self):
+        # Check if dsdgen file exists, else make it
+        if os.path.exists(os.path.join(self.pwd, 'dsdgen')):
+            pass
         else:
-            print('data_gen folder exist.')
+            data_gen_folder = os.path.join(self.pwd, 'data_gen')
+            if not os.path.exists(data_gen_folder):
+                print('data_gen folder does not exist. Exit. ')
+                sys.exit(2)
+            
+            command = 'cd %s; make clean; make' % (data_gen_folder)
+            (status, output) = commands.getstatusoutput(command)    
+            if status != 0:
+                print('Error happens in compile data gen code.')
+                print('output: %s' % (output))
+                sys.exit(2)
+            else:
+                print('Compile data gen code.')
+                command2 = 'cd %s; cp dsdgen %s' % (data_gen_folder, self.pwd)
+                (s2, o2) = commands.getstatusoutput(command2)
+                if s2 != 0:
+                    print('Error happen in copy dsdgen.')
+                    sys.exit(2)
+                else:
+                    print('Copy dsdgen to pwd.')
         
-        # Check tpcds_idx file
+        # Check if tpcds_idx file exists
         self.tpcds_idx = os.path.join(self.pwd, 'tpcds.idx')
         if not os.path.exists(self.tpcds_idx):
             print('tpcds.idx does not exist. Exit. ')
             sys.exit(2)
-        else:
-            print('tpcds.idx exist.')
             
-        self._compile_data_gen()
 
-    def _compile_data_gen(self):
-        if os.path.exists(os.path.join(self.pwd, 'dsdgen')):
-            print 'dsdgen already exist.'
-            return
-        
-        command = 'cd %s; make clean; make' % (self.data_gen_folder)
-        (status, output) = commands.getstatusoutput(command)    
-        if status != 0:
-            print('Error happens in compile data gen code.')
-            print('output: %s' % (output))
-            sys.exit(2)
-        else:
-            print('Compile data gen code.')
-            command2 = 'cd %s; cp dsdgen %s' % (self.data_gen_folder,self.pwd)
-            (s2, o2) = commands.getstatusoutput(command2)
-            if s2 != 0:
-                print('Error happen in copy dsdgen.')
-                sys.exit(2)
-            else:
-                print('Copy dsdgen to pwd.')
-    
-    
 
     def load_generate(self):
         """
         copy dsdgen to each host and generate data in parallel 
         """
-        self._prepare_folder()
+        print '\n-- Start _prepare_folder'
+        self._prepare_tmp_folder()
+        print '\n-- Start _scp_data_gen_code'
         self._scp_data_gen_code()
+        print '\n-- Start _data_gen_segment'
         self._data_gen_segment()
     
-    def _prepare_folder(self):
+    def _prepare_tmp_folder(self):
         # mkdir in each segment
         cmd = "gpssh -f %s -e 'mkdir -p %s; mkdir -p %s'" % (self.hostfile_seg, self.tmp_tpcds_folder, self.tmp_tpcds_data_folder)
-        print ('Execute: ' + cmd)
         (status, output) = commands.getstatusoutput(cmd)
         if status != 0:
             print('gpssh to prepare folder failed. ')
+            print 'cmd wrong: ' + cmd
             print(output)
             sys.exit(2)
         else:
@@ -264,20 +260,20 @@ class Tpcds(Workload):
             
             cmd2 = "gpssh -h %s -e 'cd %s;chmod 755 %s'"%(cur_host,self.tmp_tpcds_folder, python_script_base_name)
             (s2, o2) = commands.getstatusoutput(cmd2)
-            if s2 !=0:
+            if s2 != 0:
                 print('Error happen in chmod seg python script.')
                 print(o2)
-                sys.exit()
+                sys.exit(2)
                 
             cmd = 'cd %s; python %s > ./%s 2>&1' %(self.tmp_tpcds_folder, python_script_base_name, python_script_base_name + '.out')        
             command = "gpssh -h %s -e '%s'" % (cur_host, cmd)
+            print 'execute: ' + command
             (status, output) = commands.getstatusoutput(command)
             if status != 0:
                 print ('execute generate script in segment failed ')
                 print (output)
-                sys.exit()
+                sys.exit(2)
             else:
-                print (output)
                 print ('execute generate script in segment succeed')
             seg_hosts.append(cur_host)
             
@@ -295,7 +291,7 @@ class Tpcds(Workload):
                 if s1 != 0:
                     print ('check status.txt failed.')
                     print(o1)
-                    sys.exit()
+                    sys.exit(2)
                 
                 if o1.find('done') != -1:
                     print('%s finished' % (cur_host))
@@ -324,9 +320,13 @@ class Tpcds(Workload):
         """
         loading tpcds
         """
+        print '-- Start _create_schema\n'
         self._create_schema()
+        print '-- Start _start_gpfdist\n'
         self._start_gpfdist()
+        print '-- Start _create_external_table\n'
         self._create_external_table()
+        print '-- Start _copy_data\n'
         self._copy_data()
 
     def _create_schema(self):
@@ -349,12 +349,11 @@ class Tpcds(Workload):
     def _start_gpfdist(self):       
         # find port 
         self.gpfdist_port = self._getOpenPort()
-        print ('GPFDIST PORT: %s' % (self.gpfdist_port))
+        print ('GPFDIST PORT: %s'%self.gpfdist_port)
         
         cmd = 'gpfdist -d %s -p %s -l %s/fdist.%s.log &' \
-        % (self.tmp_tpcds_data_folder, self.gpfdist_port, self.tmp_tpcds_data_folder, self.gpfdist_port)        
-        command = "gpssh -f %s -e '%s'" %(self.hostfile_seg, cmd)
-        print command
+        %(self.tmp_tpcds_data_folder, self.gpfdist_port, self.tmp_tpcds_data_folder, self.gpfdist_port)        
+        command = "gpssh -f %s -e '%s'"%(self.hostfile_seg, cmd)
         (status, output) = commands.getstatusoutput(command)
         if status != 0:
             print ('gpfdist on segments failed. ')
@@ -362,7 +361,7 @@ class Tpcds(Workload):
             sys.exit(2)
         else:
             print (output)
-            print ('gpfdist on segments succeed. ')   
+            print ('gpfdist on segments succeed. ')
     
     def _getOpenPort(self,port = 8050):
         defaultPort = port
@@ -373,7 +372,7 @@ class Tpcds(Workload):
         s.close()
         return defaultPort
 
-    def _create_external_table(self):
+    def _create_external_table(self):    
         # find data files in each segment host     
         data_files = [
               'call_center',  #0
@@ -405,67 +404,67 @@ class Tpcds(Workload):
         for item in data_files:
             gpfdist_map[item] = []
         
-        for cur_host in self.seg_hostname_list:
-            cmd = "gpssh -h %s -e 'cat %s'" % (cur_host, os.path.join(self.tmp_tpcds_folder, 'dat_files.txt'))
+        for num in range(1, self.host_num+1):
+            cur_host = 'sdw%s'%num
+            cmd = "gpssh -h %s -e 'cat %s'"%(cur_host, os.path.join(self.tmp_tpcds_folder, 'dat_files.txt'))
             
             dat_file_suffix = '.dat'
             
-            (status, output) = commands.getstatusoutput(cmd)
-            if status != 0:
-                print('Error happen in ls data dir in %s' % (cur_host))
+            status, output = commands.getstatusoutput(cmd)
+            if status!=0:
+                print('Error happen in ls data dir in %s'%cur_host)
                 print(output)
-                sys.exit(2)
+                sys.exit()
             else:
                 lines = output.split('\n')
                 for line in lines:
-                    if line.find(dat_file_suffix) != -1:
+                    if line.find(dat_file_suffix)!=-1:
                         file_name = line.split(' ')[-1].strip()
                         tmp_name = file_name[:file_name.rindex('_')]
                         table_name = tmp_name[:tmp_name.rindex('_')]
                         if table_name not in gpfdist_map.keys():
-                            if table_name.find('dbgen_version') == -1:
-                                print('Error: %s not find in gpfdist_map' % (table_name))
-                                sys.exit(2)
+                            if table_name.find('dbgen_version')==-1:
+                                print('Error: %s not find in gpfdist_map'%table_name)
+                                sys.exit()
                         else:
-                            gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'" % (cur_host, self.gpfdist_port, file_name))
+                            gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'"%(cur_host, self.gpfdist_port, file_name))
         
         for key in gpfdist_map.keys():
             print ('%s: %s dat files'%(key, len(gpfdist_map[key])))
         
         # modify the prep_external_table_script
-        external_script = os.path.join(self.schema_folder, 'prep_external_tables2.sql')
-        shutil.copyfile(os.path.join(self.schema_folder, 'prep_external_tables.sql'), external_script)
+        external_script = os.path.join(self.schema_folder,'prep_external_tables2.sql')
+        shutil.copyfile(os.path.join(self.schema_folder,'prep_external_tables.sql'), external_script)
         for key in gpfdist_map.keys():
             self.sed('LOCATION_%s_ext'%key,"LOCATION("+','.join(gpfdist_map[key])+")", external_script)
         
         load_external_command = 'psql -d %s -a -f %s'%(self.database_name, external_script)
-        print('Execute command: ' + load_external_command)
-        (s2, o2) = commands.getstatusoutput(load_external_command)
-        if s2 != 0:
+        print('Execute command: '+load_external_command)
+        s2, o2 = commands.getstatusoutput(load_external_command)
+        if s2!=0:
             print('Error in prep external tables.')
             print(o2)
-            sys.exit(2)
+            sys.exit()
         else:
             print('Successfully prep external tables.')
             print(o2)
     
     def _copy_data(self):
-        copy_script = ''
         if self.partitions > 0:
-            copy_script = os.path.join(self.schema_folder,'copy_partition.sql')
+            copy_script = os.path.join(self.schema_folder,'copy_partition_no_pk.sql')
         else:
-            copy_script = os.path.join(self.schema_folder,'copy_no_partition.sql')
+            copy_script = os.path.join(self.schema_folder,'copy_no_partition_no_pk.sql')
         
-        command = 'psql -d %s -a -f %s' % (self.database_name, copy_script)
-        print ('Execute: %s' % (command))
-        (status, output) = commands.getstatusoutput(command)
+        command = 'psql -d %s -a -f %s'%(self.database_name, copy_script)
+        print ('Execute: %s' %command)
+        status, output = commands.getstatusoutput(command)
         if status != 0:
             print ('Fail to copy data into table.')
             print (output)
             sys.exit(2)
         else:
             print (output)
-            print ('Successfully copy data into table.') 
+            print ('Successfully copy data into table.')
 
     def cmdstr(self, string):
         dir=''
@@ -488,20 +487,18 @@ class Tpcds(Workload):
 
 
     def load_clean_up(self):
+        print '-- Start _stop_gpfdist\n'
         self._stop_gpfdist()
-        self._delete_data()
+        print '-- Start _delete_data\n'
+  #      self._delete_data()
         
     def _stop_gpfdist(self):
         cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
         command = "gpssh -f %s -e \"%s\"" % (self.hostfile_seg, cmd)
         print command
         (status, output) = commands.getstatusoutput(command)
-        if status != 0:
-            print('kill gpfdist on segments error. ')
-            print(output)
-            sys.exit(2)
-        else:
-            print('kill gpfdist on segments succeed. ')
+        print(output)
+        print('kill gpfdist on segments succeed. ')
 
     def _delete_data(self):
         # mkdir in each segment
