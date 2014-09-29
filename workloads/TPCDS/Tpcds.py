@@ -122,7 +122,8 @@ class Tpcds(Workload):
             self.load_generate()
             self.load_loading()
             self.load_clean_up()
-
+            print 'loading success'
+            sys.exit(2)
         self.output('-- Complete loading data')      
     
     
@@ -315,19 +316,101 @@ class Tpcds(Workload):
 
     
 
-
     def load_loading(self):
-        """
-        loading tpcds
-        """
-        print '-- Start _create_schema\n'
-        self._create_schema()
-        print '-- Start _start_gpfdist\n'
-        self._start_gpfdist()
-        print '-- Start _create_external_table\n'
-        self._create_external_table()
-        print '-- Start _copy_data\n'
-        self._copy_data()
+        data_directory = self.workload_directory + os.sep + 'data'
+        if not os.path.exists(data_directory):
+            self.output('ERROR: Cannot find DDL to create tables for TPCDS: %s does not exists' % (data_directory))
+            return
+
+        tables = ['customer_address']
+        data_files = [
+              'call_center',  #0
+              'catalog_page',  #1
+              'catalog_returns', #2
+              'catalog_sales', #3
+              'customer', #4
+              'customer_address', #5
+              'customer_demographics', #6
+              'date_dim', #7
+              'household_demographics', #8
+              'income_band', #9
+              'inventory', #10
+              'item', #11
+              'promotion', #12
+              'reason', #13
+              'ship_mode', #14
+              'store',#15
+              'store_returns',#16
+              'store_sales',#17
+              'time_dim',#18
+              'warehouse',#19
+              'web_page',#20
+              'web_returns',#21
+              'web_sales',#22
+              'web_site',#23
+              ]
+
+        gpfdist_map = {}
+        for item in data_files:
+            gpfdist_map[item] = []
+        
+        for cur_host in self.seg_hostname_list:
+            cmd = "gpssh -h %s -e 'cat %s'" % (cur_host, os.path.join(self.tmp_tpcds_folder, 'dat_files.txt'))
+            dat_file_suffix = '.dat'
+            
+            (status, output) = commands.getstatusoutput(cmd)
+            if status != 0:
+                print('Error happen in ls data dir in %s' % (cur_host))
+                print(output)
+                sys.exit(2)
+            else:
+                lines = output.split('\n')
+                for line in lines:
+                    if line.find(dat_file_suffix) != -1:
+                        file_name = line.split(' ')[-1].strip()
+                        tmp_name = file_name[:file_name.rindex('_')]
+                        table_name = tmp_name[:tmp_name.rindex('_')]
+                        if table_name not in gpfdist_map.keys():
+                            if table_name.find('dbgen_version') == -1:
+                                print('Error: %s not find in gpfdist_map' % (table_name))
+                                sys.exit(2)
+                        else:
+                            gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'" % (cur_host, self.gpfdist_port, file_name))
+        
+        
+        for table_name in tables:
+            load_success_flag = True
+            qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
+            beg_time = datetime.now()
+            # run all sql in each loading data file
+            for cmd in qf_path:
+                cmd = self.replace_sql(sql = cmd, table_name = table_name)
+                location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
+                print location
+                print ','.join(gpfdist_map[table_name])
+           #     for key in gpfdist_map.keys():
+            #        self.sed('LOCATION_%s_ext'%key,"LOCATION("+','.join(gpfdist_map[key])+")", external_script)
+                cmd = cmd.replace('LOCATION', location)
+                self.output(cmd)
+                (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
+                self.output('RESULT: ' + str(result))
+                if not ok:
+                    load_success_flag = False
+
+            end_time = datetime.now()
+            duration = end_time - beg_time
+            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
+
+            if load_success_flag:    
+                self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
+                    % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
+            else:
+                self.output('ERROR: Failed to load data for table %s' % (table_name))
+                self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
+                    % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
 
     def _create_schema(self):
         if self.partitions > 0:
@@ -348,11 +431,11 @@ class Tpcds(Workload):
     def _start_gpfdist(self):       
         # find port 
         self.gpfdist_port = self._getOpenPort()
-        print ('GPFDIST PORT: %s'%self.gpfdist_port)
+        print ('GPFDIST PORT: %s' % self.gpfdist_port)
         
         cmd = 'gpfdist -d %s -p %s -l %s/fdist.%s.log &' \
         %(self.tmp_tpcds_data_folder, self.gpfdist_port, self.tmp_tpcds_data_folder, self.gpfdist_port)        
-        command = "gpssh -f %s -e '%s'"%(self.hostfile_seg, cmd)
+        command = "gpssh -f %s -e '%s'" % (self.hostfile_seg, cmd)
         (status, output) = commands.getstatusoutput(command)
         if status != 0:
             print ('gpfdist on segments failed. ')
@@ -448,22 +531,6 @@ class Tpcds(Workload):
             print('Successfully prep external tables.')
             print(o2)
     
-    def _copy_data(self):
-        if self.partitions > 0:
-            copy_script = os.path.join(self.schema_folder,'copy_partition_no_pk.sql')
-        else:
-            copy_script = os.path.join(self.schema_folder,'copy_no_partition_no_pk.sql')
-        
-        command = 'psql -d %s -a -f %s'%(self.database_name, copy_script)
-        print ('Execute: %s' %command)
-        status, output = commands.getstatusoutput(command)
-        if status != 0:
-            print ('Fail to copy data into table.')
-            print (output)
-            sys.exit(2)
-        else:
-            print (output)
-            print ('Successfully copy data into table.')
 
     def cmdstr(self, string):
         dir=''
