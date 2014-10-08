@@ -91,8 +91,8 @@ class Tpcds(Workload):
         self.hostfile_seg = os.path.join(self.pwd, 'hostfile_seg')
         self.seg_hostname_list = None
         self.seg_host_num = 1
-        self.tmp_tpcds_folder = '/data1/tmp/tpcds_loading/'
-        self.tmp_tpcds_data_folder = '/data1/tmp/tpcds_loading/data'
+        self.tmp_tpcds_folder = '/data/tmp/tpcds_loading/'
+        self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
 
     def setup(self):
         pass
@@ -332,13 +332,8 @@ class Tpcds(Workload):
             self.output('ERROR: Cannot find DDL to create tables for TPCDS: %s does not exists' % (data_directory))
             return
 
-        data_files = ['call_center', 'catalog_page', 'catalog_returns', 'catalog_sales', 'customer', 'customer_address',
-              'customer_demographics', 'date_dim', 'household_demographics', 'income_band', 'inventory', 'item', 
-              'promotion', 'reason', 'ship_mode', 'store', 'store_returns', 'store_sales', 'time_dim',
-              'warehouse', 'web_page', 'web_returns', 'web_sales', 'web_site']
-
         gpfdist_map = {}
-        for item in data_files:
+        for item in tables:
             gpfdist_map[item] = []
         
         for cur_host in self.seg_hostname_list:
@@ -451,6 +446,8 @@ class Tpcds(Workload):
             sys.exit(2)
         else:
             self.output('delete data folder succeed.')
+
+
 
     def replace_sql(self, sql, table_name):
         sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
