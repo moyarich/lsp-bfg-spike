@@ -323,6 +323,9 @@ class Tpcds(Workload):
     def load_loading(self, tables):
         self.output('--Start gpfdist')
         self._start_gpfdist()
+        cmd = "gpssh -f %s -e 'ps -ef | grep gpfdist'" % (self.hostfile_seg)   
+        (status, output) = commands.getstatusoutput(cmd)
+        self.output(output)
 
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
@@ -372,11 +375,11 @@ class Tpcds(Workload):
                 location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
                 cmd = cmd.replace('LOCATION', location)
                 self.output(cmd)
-                (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
+                (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name, flag = '')
                 self.output('RESULT: ' + str(result))
                 if not ok:
                     load_success_flag = False
-
+            
             end_time = datetime.now()
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
@@ -396,19 +399,24 @@ class Tpcds(Workload):
         # find port 
         self.gpfdist_port = self._getOpenPort()
         self.output('GPFDIST PORT: %s' % self.gpfdist_port)
-        
-        cmd = 'gpfdist -d %s -p %s -l %s/fdist.%s.log &' \
-        %(self.tmp_tpcds_data_folder, self.gpfdist_port, self.tmp_tpcds_data_folder, self.gpfdist_port)        
+
+        gphome = os.getenv('GPHOME')
+        source_path = gphome + os.sep + 'greenplum_path.sh'
+
+        cmd = 'source %s; gpfdist -d %s -p %s -l %s/fdist.%s.log &' \
+        % (source_path, self.tmp_tpcds_data_folder, self.gpfdist_port, self.tmp_tpcds_data_folder, self.gpfdist_port)        
         command = "gpssh -f %s -e '%s'" % (self.hostfile_seg, cmd)
+        self.output(command)
         (status, output) = commands.getstatusoutput(command)
         if status != 0:
             print ('gpfdist on segments failed. ')
             print (output)
             sys.exit(2)
         else:
+            self.output(output)
             self.output('gpfdist on segments succeed. ')
     
-    def _getOpenPort(self,port = 8050):
+    def _getOpenPort(self, port = 8050):
         defaultPort = port
         tryAgain = True
         s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
@@ -428,7 +436,9 @@ class Tpcds(Workload):
     def _stop_gpfdist(self):
         cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
         command = "gpssh -f %s -e \"%s\"" % (self.hostfile_seg, cmd)
+        self.output(command)
         (status, output) = commands.getstatusoutput(command)
+        self.output(output)
         self.output('kill gpfdist on segments succeed. ')
 
     def _delete_data(self):
