@@ -7,9 +7,9 @@
 -- start query 1 in stream 0 using template query32.tpl
 select  sum(cs_ext_discount_amt)  as "excess discount amount" 
 from 
-   catalog_sales 
-   ,item 
-   ,date_dim
+   catalog_sales_TABLESUFFIX 
+   ,item_TABLESUFFIX 
+   ,date_dim_TABLESUFFIX
 where
 i_manufact_id = 977
 and i_item_sk = cs_item_sk 

@@ -9,15 +9,15 @@ with ss as (
  select
           i_manufact_id,sum(ss_ext_sales_price) total_sales
  from
- 	store_sales,
- 	date_dim,
-         customer_address,
-         item
+ 	store_sales_TABLESUFFIX,
+ 	date_dim_TABLESUFFIX,
+         customer_address_TABLESUFFIX,
+         item_TABLESUFFIX
  where
          i_manufact_id in (select
   i_manufact_id
 from
- item
+ item_TABLESUFFIX
 where i_category in ('Electronics'))
  and     ss_item_sk              = i_item_sk
  and     ss_sold_date_sk         = d_date_sk
@@ -30,15 +30,15 @@ where i_category in ('Electronics'))
  select
           i_manufact_id,sum(cs_ext_sales_price) total_sales
  from
- 	catalog_sales,
- 	date_dim,
-         customer_address,
-         item
+ 	catalog_sales_TABLESUFFIX,
+ 	date_dim_TABLESUFFIX,
+         customer_address_TABLESUFFIX,
+         item_TABLESUFFIX
  where
          i_manufact_id               in (select
   i_manufact_id
 from
- item
+ item_TABLESUFFIX
 where i_category in ('Electronics'))
  and     cs_item_sk              = i_item_sk
  and     cs_sold_date_sk         = d_date_sk
@@ -51,15 +51,15 @@ where i_category in ('Electronics'))
  select
           i_manufact_id,sum(ws_ext_sales_price) total_sales
  from
- 	web_sales,
- 	date_dim,
-         customer_address,
-         item
+ 	web_sales_TABLESUFFIX,
+ 	date_dim_TABLESUFFIX,
+         customer_address_TABLESUFFIX,
+         item_TABLESUFFIX
  where
          i_manufact_id               in (select
   i_manufact_id
 from
- item
+ item_TABLESUFFIX
 where i_category in ('Electronics'))
  and     ws_item_sk              = i_item_sk
  and     ws_sold_date_sk         = d_date_sk
