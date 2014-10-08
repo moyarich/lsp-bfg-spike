@@ -237,11 +237,10 @@ class Tpcds(Workload):
         total_paralle = self.nsegs
         seg_num = self.nsegs / self.seg_host_num
         seg_hosts = []
+        count = 1
         for cur_host in self.seg_hostname_list:
             self.output('generate script for %s' % (cur_host))
             # generate python command for each segment.
-            
-            count = 1
             child = '[' + str(count)
             count += 1
             i = 1
@@ -330,32 +329,10 @@ class Tpcds(Workload):
             self.output('ERROR: Cannot find DDL to create tables for TPCDS: %s does not exists' % (data_directory))
             return
 
-        data_files = [
-              'call_center',  #0
-              'catalog_page',  #1
-              'catalog_returns', #2
-              'catalog_sales', #3
-              'customer', #4
-              'customer_address', #5
-              'customer_demographics', #6
-              'date_dim', #7
-              'household_demographics', #8
-              'income_band', #9
-              'inventory', #10
-              'item', #11
-              'promotion', #12
-              'reason', #13
-              'ship_mode', #14
-              'store',#15
-              'store_returns',#16
-              'store_sales',#17
-              'time_dim',#18
-              'warehouse',#19
-              'web_page',#20
-              'web_returns',#21
-              'web_sales',#22
-              'web_site',#23
-              ]
+        data_files = ['call_center', 'catalog_page', 'catalog_returns', 'catalog_sales', 'customer', 'customer_address',
+              'customer_demographics', 'date_dim', 'household_demographics', 'income_band', 'inventory', 'item', 
+              'promotion', 'reason', 'ship_mode', 'store', 'store_returns', 'store_sales', 'time_dim',
+              'warehouse', 'web_page', 'web_returns', 'web_sales', 'web_site']
 
         gpfdist_map = {}
         for item in data_files:
