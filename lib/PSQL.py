@@ -113,10 +113,10 @@ class PSQL:
             arg = '-c "%s"' % cmd
         elif ifile:
             arg = ' < ' + ifile
-            if not (flag == '-q'):
-                arg = '-e < ' + ifile
-            if flag == '-a':
-                arg = '-f ' + ifile
+   #         if not (flag == '-q'):
+    #            arg = '-e < ' + ifile
+     #       if flag == '-a':
+      #          arg = '-f ' + ifile
         else:
             raise PSQLError('missing cmd and ifile')
 
@@ -136,6 +136,7 @@ class PSQL:
                                 (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), 
                                  timeout=timeout)
 
+
     def runcmd(self, cmd, dbname = None, ofile = '-', flag = '-t -q', username = None, password = None,
         PGOPTIONS = None, host = None, port = None, background = False):
         '''
@@ -153,7 +154,7 @@ class PSQL:
                         PGOPTIONS = PGOPTIONS, host = host, port = port,
                         background = background)
 
-    def runfile(self, ifile, flag='', timeout = 900, dbname = None, outputPath = "", outputFile = "", 
+    def runfile(self, ifile, flag='', timeout = 900, dbname = None, outputPath = "", outputFile = "-", 
         username = None, password = None, PGOPTIONS = None, host = None, port = None,
         background = False):
         '''
@@ -166,7 +167,7 @@ class PSQL:
         @param host: host
         @param port: port
         '''
-        return self.run(ifile = ifile, ofile = '', flag = flag, 
+        return self.run(ifile = ifile, ofile = outputFile, flag = flag, 
                              timeout = timeout, dbname = dbname, username = username, password = password, 
                              PGOPTIONS = PGOPTIONS, host = host, port = port,
                              background = background)
