@@ -14,14 +14,14 @@ select
  ,sum(sr_net_loss) as store_returns_loss
  ,sum(cs_net_profit) as catalog_sales_profit
  from
- store_sales
- ,store_returns
- ,catalog_sales
- ,date_dim d1
- ,date_dim d2
- ,date_dim d3
- ,store
- ,item
+ store_sales_TABLESUFFIX
+ ,store_returns_TABLESUFFIX
+ ,catalog_sales_TABLESUFFIX
+ ,date_dim_TABLESUFFIX d1
+ ,date_dim_TABLESUFFIX d2
+ ,date_dim_TABLESUFFIX d3
+ ,store_TABLESUFFIX
+ ,item_TABLESUFFIX
  where
  d1.d_moy = 4
  and d1.d_year = 2001

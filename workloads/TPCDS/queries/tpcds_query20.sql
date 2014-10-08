@@ -13,9 +13,9 @@ select  i_item_desc
        ,sum(cs_ext_sales_price) as itemrevenue 
        ,sum(cs_ext_sales_price)*100/sum(sum(cs_ext_sales_price)) over
            (partition by i_class) as revenueratio  from 
-     catalog_sales
-     ,item 
-     ,date_dim
+     catalog_sales_TABLESUFFIX
+     ,item_TABLESUFFIX 
+     ,date_dim_TABLESUFFIX
  where cs_item_sk = i_item_sk 
    and i_category in ('Sports', 'Books', 'Home')
    and cs_sold_date_sk = d_date_sk
