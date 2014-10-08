@@ -9,20 +9,20 @@ select
    substr(w_warehouse_name,1,20)
   ,sm_type
   ,cc_name
-  ,sum(case when (cs_ship_date_sk - cs_sold_date_sk <= 30 ) then 1 else 0 end)  as days_le_30
+  ,sum(case when (cs_ship_date_sk - cs_sold_date_sk <= 30 ) then 1 else 0 end)  as "30 days" 
   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk > 30) and 
-                 (cs_ship_date_sk - cs_sold_date_sk <= 60) then 1 else 0 end )  as days_31_to_60
+                 (cs_ship_date_sk - cs_sold_date_sk <= 60) then 1 else 0 end )  as "31-60 days" 
   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk > 60) and 
-                 (cs_ship_date_sk - cs_sold_date_sk <= 90) then 1 else 0 end)  as  days_61_to_90
+                 (cs_ship_date_sk - cs_sold_date_sk <= 90) then 1 else 0 end)  as "61-90 days" 
   ,sum(case when (cs_ship_date_sk - cs_sold_date_sk > 90) and
-                 (cs_ship_date_sk - cs_sold_date_sk <= 120) then 1 else 0 end)  as days_91_to_120
-  ,sum(case when (cs_ship_date_sk - cs_sold_date_sk  > 120) then 1 else 0 end)  as days_gt_120 
+                 (cs_ship_date_sk - cs_sold_date_sk <= 120) then 1 else 0 end)  as "91-120 days" 
+  ,sum(case when (cs_ship_date_sk - cs_sold_date_sk  > 120) then 1 else 0 end)  as ">120 days" 
 from
-   catalog_sales_TABLESUFFIX
-  ,warehouse_TABLESUFFIX
-  ,ship_mode_TABLESUFFIX
-  ,call_center_TABLESUFFIX
-  ,date_dim_TABLESUFFIX
+   catalog_sales
+  ,warehouse
+  ,ship_mode
+  ,call_center
+  ,date_dim
 where
     extract (year from d_date) = 2000
 and cs_ship_date_sk   = d_date_sk

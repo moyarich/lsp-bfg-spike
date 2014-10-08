@@ -8,7 +8,7 @@
 with ssci as (
 select ss_customer_sk customer_sk
       ,ss_item_sk item_sk
-from store_sales_TABLESUFFIX,date_dim_TABLESUFFIX
+from store_sales,date_dim
 where ss_sold_date_sk = d_date_sk
   and d_year=2000
 group by ss_customer_sk
@@ -16,7 +16,7 @@ group by ss_customer_sk
 csci as(
  select cs_bill_customer_sk customer_sk
       ,cs_item_sk item_sk
-from catalog_sales_TABLESUFFIX,date_dim_TABLESUFFIX
+from catalog_sales,date_dim
 where cs_sold_date_sk = d_date_sk
   and d_year=2000
 group by cs_bill_customer_sk

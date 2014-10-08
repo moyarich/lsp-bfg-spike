@@ -6,9 +6,9 @@
 
 -- start query 1 in stream 0 using template query16.tpl
 select  
-   count(distinct cs_order_number) as order_count
-  ,sum(cs_ext_ship_cost) as total_shipping_cost
-  ,sum(cs_net_profit) as total_net_profit
+   count(distinct cs_order_number) as "order count"
+  ,sum(cs_ext_ship_cost) as "total shipping cost"
+  ,sum(cs_net_profit) as "total net profit"
 from
    catalog_sales_TABLESUFFIX cs1
   ,date_dim_TABLESUFFIX

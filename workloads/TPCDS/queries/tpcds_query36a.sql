@@ -13,10 +13,10 @@ with results as
    ,i_class
    ,0 as g_category, 0 as g_class
  from
-    store_sales_TABLESUFFIX
-   ,date_dim_TABLESUFFIX       d1
-   ,item_TABLESUFFIX
-   ,store_TABLESUFFIX
+    store_sales
+   ,date_dim       d1
+   ,item
+   ,store
  where
     d1.d_year = 2001 
     and d1.d_date_sk = ss_sold_date_sk

@@ -9,13 +9,13 @@ select i_item_desc
       ,i_category 
       ,i_class 
       ,i_current_price
-      ,sum(ss_ext_sales_price) as item_revenue 
+      ,sum(ss_ext_sales_price) as itemrevenue 
       ,sum(ss_ext_sales_price)*100/sum(sum(ss_ext_sales_price)) over
           (partition by i_class) as revenueratio
 from	
-	store_sales_TABLESUFFIX
-    	,item_TABLESUFFIX 
-    	,date_dim_TABLESUFFIX
+	store_sales
+    	,item 
+    	,date_dim
 where 
 	ss_item_sk = i_item_sk 
   	and i_category in ('Sports', 'Books', 'Home')

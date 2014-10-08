@@ -9,9 +9,9 @@ with ss as
  (select s_store_sk,
          sum(ss_ext_sales_price) as sales,
          sum(ss_net_profit) as profit
- from store_sales_TABLESUFFIX,
-      date_dim_TABLESUFFIX,
-      store_TABLESUFFIX
+ from store_sales,
+      date_dim,
+      store
  where ss_sold_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date) 
                   and (cast('2000-08-23' as date) +  30 ) 
@@ -22,9 +22,9 @@ with ss as
  (select s_store_sk,
          sum(sr_return_amt) as returns,
          sum(sr_net_loss) as profit_loss
- from store_returns_TABLESUFFIX,
-      date_dim_TABLESUFFIX,
-      store_TABLESUFFIX
+ from store_returns,
+      date_dim,
+      store
  where sr_returned_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  30 )
@@ -34,8 +34,8 @@ with ss as
  (select cs_call_center_sk,
         sum(cs_ext_sales_price) as sales,
         sum(cs_net_profit) as profit
- from catalog_sales_TABLESUFFIX,
-      date_dim_TABLESUFFIX
+ from catalog_sales,
+      date_dim
  where cs_sold_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  30 )
@@ -45,8 +45,8 @@ with ss as
  (select
         sum(cr_return_amount) as returns,
         sum(cr_net_loss) as profit_loss
- from catalog_returns_TABLESUFFIX,
-      date_dim_TABLESUFFIX
+ from catalog_returns,
+      date_dim
  where cr_returned_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  30 )
@@ -55,9 +55,9 @@ with ss as
  ( select wp_web_page_sk,
         sum(ws_ext_sales_price) as sales,
         sum(ws_net_profit) as profit
- from web_sales_TABLESUFFIX,
-      date_dim_TABLESUFFIX,
-      web_page_TABLESUFFIX
+ from web_sales,
+      date_dim,
+      web_page
  where ws_sold_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  30 )
@@ -67,9 +67,9 @@ with ss as
  (select wp_web_page_sk,
         sum(wr_return_amt) as returns,
         sum(wr_net_loss) as profit_loss
- from web_returns_TABLESUFFIX,
-      date_dim_TABLESUFFIX,
-      web_page_TABLESUFFIX
+ from web_returns,
+      date_dim,
+      web_page
  where wr_returned_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  30 )

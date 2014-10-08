@@ -89,7 +89,7 @@ with ssr as
            cast(0 as decimal(7,2)) as profit,
            wr_return_amt as return_amt,
            wr_net_loss as net_loss
-    from web_returns_TABLESUFFIX left outer join web_sales_TABLESUFFIX on
+    from web_returns left outer join web_sales on
          ( wr_item_sk = ws_item_sk
            and wr_order_number = ws_order_number)
    ) salesreturns,

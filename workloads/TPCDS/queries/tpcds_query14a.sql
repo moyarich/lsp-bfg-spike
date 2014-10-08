@@ -11,7 +11,7 @@ with  cross_items as
      ,iss.i_class_id class_id
      ,iss.i_category_id category_id
  from store_sales_TABLESUFFIX
-     ,item_TABLESUFFIX iss
+     ,item iss_TABLESUFFIX
      ,date_dim_TABLESUFFIX d1
  where ss_item_sk = iss.i_item_sk
    and ss_sold_date_sk = d1.d_date_sk

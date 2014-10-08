@@ -10,8 +10,8 @@ select
   ws_item_sk item_sk, d_date, sum(ws_sales_price) sumws,
   row_number()
       over (partition by ws_item_sk order by d_date) rk
-from web_sales_TABLESUFFIX
-    ,date_dim_TABLESUFFIX
+from web_sales
+    ,date_dim
 where ws_sold_date_sk=d_date_sk
   and d_year= 2000
   and ws_item_sk is not NULL
@@ -28,8 +28,8 @@ select
   ss_item_sk item_sk, d_date, sum(ss_sales_price) sumss,
   row_number()
       over (partition by ss_item_sk order by d_date) rk
-from store_sales_TABLESUFFIX
-    ,date_dim_TABLESUFFIX
+from store_sales
+    ,date_dim
 where ss_sold_date_sk=d_date_sk
   and d_year= 2000
   and ss_item_sk is not NULL

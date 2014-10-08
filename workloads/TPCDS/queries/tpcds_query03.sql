@@ -6,8 +6,8 @@
 
 -- start query 1 in stream 0 using template query3.tpl
 select  dt.d_year 
-       ,item_TABLESUFFIX.i_brand_id brand_id 
-       ,item_TABLESUFFIX.i_brand brand
+       ,item.i_brand_id brand_id 
+       ,item.i_brand brand
        ,sum(ss_ext_sales_price) ext_price
  from  date_dim_TABLESUFFIX dt 
       ,store_sales_TABLESUFFIX

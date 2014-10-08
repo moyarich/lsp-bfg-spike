@@ -19,11 +19,11 @@ with customer_total_return as
  -- adding the following qual to speed up the query
  HAVING sum(sr_return_amt) > 6000)
   select  c_customer_id
- from customer_total_return ctr1
+ from customer_total_return_TABLESUFFIX ctr1
      ,store_TABLESUFFIX
      ,customer_TABLESUFFIX
  where ctr1.ctr_total_return > (select avg(ctr_total_return)*1.2
- 			              from customer_total_return ctr2 
+ 			              from customer_total_return_TABLESUFFIX ctr2 
                   	        where ctr1.ctr_store_sk = ctr2.ctr_store_sk)
        and s_store_sk = ctr1.ctr_store_sk
        and s_state = 'TN'

@@ -10,10 +10,10 @@ select  i_product_name
              ,i_class
              ,i_category
              ,avg(inv_quantity_on_hand) qoh
-       from inventory_TABLESUFFIX
-           ,date_dim_TABLESUFFIX
-           ,item_TABLESUFFIX
-           ,warehouse_TABLESUFFIX
+       from inventory
+           ,date_dim
+           ,item
+           ,warehouse
        where inv_date_sk=d_date_sk
               and inv_item_sk=i_item_sk
               and inv_warehouse_sk = w_warehouse_sk

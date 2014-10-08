@@ -8,9 +8,9 @@
 with results as
 ( select sum(ws_net_paid) as total_sum, i_category, i_class, 0 as g_category, 0 as g_class 
  from
-    web_sales_TABLESUFFIX
-   ,date_dim_TABLESUFFIX       d1
-   ,item_TABLESUFFIX
+    web_sales
+   ,date_dim       d1
+   ,item
  where
     d1.d_year = 2000
  and d1.d_date_sk = ws_sold_date_sk

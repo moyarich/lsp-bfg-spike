@@ -9,9 +9,9 @@ with results as
 ( select
     sum(ss_net_profit) as total_sum ,s_state ,s_county, 0 as gstate, 0 as g_county
  from
-    store_sales_TABLESUFFIX
-   ,date_dim_TABLESUFFIX       d1
-   ,store_TABLESUFFIX
+    store_sales
+   ,date_dim       d1
+   ,store
  where
     d1.d_year = 2000
  and d1.d_date_sk = ss_sold_date_sk
@@ -20,7 +20,7 @@ with results as
              ( select s_state
                from  (select s_state as s_state,
  			    rank() over ( partition by s_state order by sum(ss_net_profit) desc) as ranking
-                      from   store_sales_TABLESUFFIX, store_TABLESUFFIX, date_dim_TABLESUFFIX
+                      from   store_sales, store, date_dim
                       where  d_year =2000 
  			    and d_date_sk = ss_sold_date_sk
  			    and s_store_sk  = ss_store_sk

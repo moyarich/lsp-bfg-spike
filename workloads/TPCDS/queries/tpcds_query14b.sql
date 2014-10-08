@@ -7,7 +7,7 @@
 
 with  cross_items as
  (select i_item_sk ss_item_sk
- from item_TABLESUFFIX,
+ from item,
  (select iss.i_brand_id brand_id
      ,iss.i_class_id class_id
      ,iss.i_category_id category_id
@@ -88,7 +88,7 @@ with  cross_items as
    and ss_item_sk = i_item_sk
    and ss_sold_date_sk = d_date_sk
    and d_week_seq = (select d_week_seq
-                     from date_dim_TABLESUFFIX
+                     from date_dim
                      where d_year = 1999
                        and d_moy = 12
                        and d_dom = 8)

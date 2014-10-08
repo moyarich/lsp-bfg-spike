@@ -10,18 +10,18 @@ select
     ,i_item_desc
     ,s_store_id
     ,s_store_name
-    ,sum(ss_quantity)        as store_sales_TABLESUFFIX_quantity
-    ,sum(sr_return_quantity) as store_returns_TABLESUFFIX_quantity
-    ,sum(cs_quantity)        as catalog_sales_TABLESUFFIX_quantity
+    ,sum(ss_quantity)        as store_sales_quantity
+    ,sum(sr_return_quantity) as store_returns_quantity
+    ,sum(cs_quantity)        as catalog_sales_quantity
  from
-    store_sales_TABLESUFFIX
-   ,store_returns_TABLESUFFIX
-   ,catalog_sales_TABLESUFFIX
-   ,date_dim_TABLESUFFIX             d1
-   ,date_dim_TABLESUFFIX             d2
-   ,date_dim_TABLESUFFIX             d3
-   ,store_TABLESUFFIX
-   ,item_TABLESUFFIX
+    store_sales
+   ,store_returns
+   ,catalog_sales
+   ,date_dim             d1
+   ,date_dim             d2
+   ,date_dim             d3
+   ,store
+   ,item
  where
      d1.d_moy               = 4 
  and d1.d_year              = 1999

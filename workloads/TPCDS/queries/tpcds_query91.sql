@@ -11,13 +11,13 @@ select
         cc_manager Manager,
         sum(cr_net_loss) Returns_Loss
 from
-        call_center_TABLESUFFIX,
-        catalog_returns_TABLESUFFIX,
-        date_dim_TABLESUFFIX,
-        customer_TABLESUFFIX,
-        customer_address_TABLESUFFIX,
-        customer_demographics_TABLESUFFIX,
-        household_demographics_TABLESUFFIX
+        call_center,
+        catalog_returns,
+        date_dim,
+        customer,
+        customer_address,
+        customer_demographics,
+        household_demographics
 where
         cr_call_center_sk       = cc_call_center_sk
 and     cr_returned_date_sk     = d_date_sk

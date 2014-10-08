@@ -9,15 +9,15 @@ with ss as (
  select
           i_item_id,sum(ss_ext_sales_price) total_sales
  from
- 	store_sales_TABLESUFFIX,
- 	date_dim_TABLESUFFIX,
-         customer_address_TABLESUFFIX,
-         item_TABLESUFFIX
+ 	store_sales,
+ 	date_dim,
+         customer_address,
+         item
  where
          i_item_id in (select
   i_item_id
 from
- item_TABLESUFFIX
+ item
 where i_category in ('Music'))
  and     ss_item_sk              = i_item_sk
  and     ss_sold_date_sk         = d_date_sk
@@ -30,15 +30,15 @@ where i_category in ('Music'))
  select
           i_item_id,sum(cs_ext_sales_price) total_sales
  from
- 	catalog_sales_TABLESUFFIX,
- 	date_dim_TABLESUFFIX,
-         customer_address_TABLESUFFIX,
-         item_TABLESUFFIX
+ 	catalog_sales,
+ 	date_dim,
+         customer_address,
+         item
  where
          i_item_id               in (select
   i_item_id
 from
- item_TABLESUFFIX
+ item
 where i_category in ('Music'))
  and     cs_item_sk              = i_item_sk
  and     cs_sold_date_sk         = d_date_sk
@@ -51,15 +51,15 @@ where i_category in ('Music'))
  select
           i_item_id,sum(ws_ext_sales_price) total_sales
  from
- 	web_sales_TABLESUFFIX,
- 	date_dim_TABLESUFFIX,
-         customer_address_TABLESUFFIX,
-         item_TABLESUFFIX
+ 	web_sales,
+ 	date_dim,
+         customer_address,
+         item
  where
          i_item_id               in (select
   i_item_id
 from
- item_TABLESUFFIX
+ item
 where i_category in ('Music'))
  and     ws_item_sk              = i_item_sk
  and     ws_sold_date_sk         = d_date_sk

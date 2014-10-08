@@ -9,7 +9,7 @@ select  s_store_name
       ,sum(ss_net_profit)
  from store_sales_TABLESUFFIX
      ,date_dim_TABLESUFFIX
-     ,store_TABLESUFFIX ,
+     ,store_TABLESUFFIX,
      (select ca_zip
      from (
      (SELECT substr(ca_zip,1,5) ca_zip
