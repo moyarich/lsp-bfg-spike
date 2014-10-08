@@ -30,7 +30,7 @@ except ImportError:
 command_template = """
 import subprocess, os, time
 
-children = [%s, %s, %s, %s]
+children = %s
 parallel_setting = %s;
 scale = %s
 data_dir = '%s'
@@ -234,20 +234,27 @@ class Tpcds(Workload):
             sys.exit(2)
        
     def _data_gen_segment(self):
-        total_paralle = self.host_num * 4
+        total_paralle = self.host_num * self.nsegs
         seg_hosts = []
         for cur_host in self.seg_hostname_list:
             self.output('generate script for %s' % (cur_host))
             # generate python command for each segment.
-            child_1 = 1
-            child_2 = 2
-            child_3 = 3
-            child_4 = 4
+            
+            count = 1
+            child = '[' + str(count)
+            count += 1
+            i = 1
+            while(i < self.nsegs):
+                child = child + ',' + str(count)
+                i += 1
+                count += 1
+            child += ']'
+
             python_script_base_name = cur_host+'.py'
             host_python_script = os.path.join(self.pwd, cur_host+'.py')
             with open(host_python_script, 'w') as f:
                 f.write(command_template
-                    % (child_1, child_2, child_3, child_4, total_paralle, self.scale_factor, self.tmp_tpcds_data_folder))
+                    % (child, total_paralle, self.scale_factor, self.tmp_tpcds_data_folder))
             
             cmd1 = 'gpscp -h %s %s =:%s'%(cur_host, host_python_script, self.tmp_tpcds_folder)
             (s1, o1) = commands.getstatusoutput(cmd1)
@@ -407,7 +414,6 @@ class Tpcds(Workload):
                 self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
                     % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
 
-
     def _start_gpfdist(self):       
         # find port 
         self.gpfdist_port = self._getOpenPort()
@@ -479,7 +485,7 @@ class Tpcds(Workload):
         self.load_data()
 
         # vacuum_analyze
-        # self.vacuum_analyze()
+        self.vacuum_analyze()
 
         # run workload concurrently and loop by iteration
         self.run_workload()
