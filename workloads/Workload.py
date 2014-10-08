@@ -327,9 +327,10 @@ class Workload(object):
             # run all queries in each sql file
             for q in qf_path:
                 q = q.replace('TABLESUFFIX', self.tbl_suffix)
-                q = q.replace('SQLSUFFIX', self.sql_suffix)
                 self.output(q)
-                (ok, result) = psql.runcmd(cmd = q, dbname = self.database_name)
+                with open('run_query_tmp.sql','w') as f:
+                    f.write(q)
+                (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name, flag = '-t -q')
                 self.output('RESULT: ' + str(result))
                 if not ok:
                     run_success_flag = False

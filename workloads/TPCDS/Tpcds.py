@@ -90,7 +90,7 @@ class Tpcds(Workload):
         self.hostfile_master = os.path.join(self.pwd, 'hostfile_master')
         self.hostfile_seg = os.path.join(self.pwd, 'hostfile_seg')
         self.seg_hostname_list = None
-        self.host_num = 1
+        self.seg_host_num = 1
         self.tmp_tpcds_folder = '/data/tmp/tpcds_loading/'
         self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
 
@@ -144,7 +144,7 @@ class Tpcds(Workload):
 
         # prep hostfile_seg
         self.seg_hostname_list = config.getSegHostNames()
-        self.host_num = len(self.seg_hostname_list)
+        self.seg_host_num = len(self.seg_hostname_list)
         with open(self.hostfile_seg, 'w') as f:
             f.write('\n'.join(self.seg_hostname_list))
         
@@ -234,7 +234,8 @@ class Tpcds(Workload):
             sys.exit(2)
        
     def _data_gen_segment(self):
-        total_paralle = self.host_num * self.nsegs
+        total_paralle = self.nsegs
+        seg_num = self.nsegs / self.seg_host_num
         seg_hosts = []
         for cur_host in self.seg_hostname_list:
             self.output('generate script for %s' % (cur_host))
@@ -244,7 +245,7 @@ class Tpcds(Workload):
             child = '[' + str(count)
             count += 1
             i = 1
-            while(i < self.nsegs):
+            while(i < seg_num):
                 child = child + ',' + str(count)
                 i += 1
                 count += 1
