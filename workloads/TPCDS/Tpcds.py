@@ -91,8 +91,8 @@ class Tpcds(Workload):
         self.hostfile_seg = os.path.join(self.pwd, 'hostfile_seg')
         self.seg_hostname_list = None
         self.seg_host_num = 1
-        self.tmp_tpcds_folder = '/data/tmp/tpcds_loading/'
-        self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
+        self.tmp_tpcds_folder = '/data1/tmp/tpcds_loading/'
+        self.tmp_tpcds_data_folder = '/data1/tmp/tpcds_loading/data'
 
     def setup(self):
         pass
