@@ -16,9 +16,9 @@ with year_total as (
        ,d_year dyear
        ,sum(((ss_ext_list_price-ss_ext_wholesale_cost-ss_ext_discount_amt)+ss_ext_sales_price)/2) year_total
        ,'s' sale_type
- from customer
-     ,store_sales
-     ,date_dim
+ from customer_TABLESUFFIX
+     ,store_sales_TABLESUFFIX
+     ,date_dim_TABLESUFFIX
  where c_customer_sk = ss_customer_sk
    and ss_sold_date_sk = d_date_sk and
    (d_year = 2001 or d_year = 2002)
@@ -42,9 +42,9 @@ with year_total as (
        ,d_year dyear
        ,sum((((cs_ext_list_price-cs_ext_wholesale_cost-cs_ext_discount_amt)+cs_ext_sales_price)/2) ) year_total
        ,'c' sale_type
- from customer
-     ,catalog_sales
-     ,date_dim
+ from customer_TABLESUFFIX
+     ,catalog_sales_TABLESUFFIX
+     ,date_dim_TABLESUFFIX
  where c_customer_sk = cs_bill_customer_sk
    and cs_sold_date_sk = d_date_sk and
    (d_year = 2001 or d_year = 2002)

@@ -6,13 +6,13 @@
 
 with  cross_items as
  (select i_item_sk ss_item_sk
- from item,
+ from item_TABLESUFFIX,
  (select iss.i_brand_id brand_id
      ,iss.i_class_id class_id
      ,iss.i_category_id category_id
- from store_sales
-     ,item iss
-     ,date_dim d1
+ from store_sales_TABLESUFFIX
+     ,item_TABLESUFFIX iss
+     ,date_dim_TABLESUFFIX d1
  where ss_item_sk = iss.i_item_sk
    and ss_sold_date_sk = d1.d_date_sk
    and d1.d_year between 1999 AND 1999 + 2
@@ -20,9 +20,9 @@ with  cross_items as
  select ics.i_brand_id
      ,ics.i_class_id
      ,ics.i_category_id
- from catalog_sales
-     ,item ics
-     ,date_dim d2
+ from catalog_sales_TABLESUFFIX
+     ,item_TABLESUFFIX ics
+     ,date_dim_TABLESUFFIX d2
  where cs_item_sk = ics.i_item_sk
    and cs_sold_date_sk = d2.d_date_sk
    and d2.d_year between 1999 AND 1999 + 2
@@ -30,9 +30,9 @@ with  cross_items as
  select iws.i_brand_id
      ,iws.i_class_id
      ,iws.i_category_id
- from web_sales
-     ,item iws
-     ,date_dim d3
+ from web_sales_TABLESUFFIX
+     ,item_TABLESUFFIX iws
+     ,date_dim_TABLESUFFIX d3
  where ws_item_sk = iws.i_item_sk
    and ws_sold_date_sk = d3.d_date_sk
    and d3.d_year between 1999 AND 1999 + 2) x
@@ -44,22 +44,22 @@ with  cross_items as
  (select avg(quantity*list_price) average_sales
   from (select ss_quantity quantity
              ,ss_list_price list_price
-       from store_sales
-           ,date_dim
+       from store_sales_TABLESUFFIX
+           ,date_dim_TABLESUFFIX
        where ss_sold_date_sk = d_date_sk
          and d_year between 1999 and 2001 
        union all 
        select cs_quantity quantity 
              ,cs_list_price list_price
-       from catalog_sales
-           ,date_dim
+       from catalog_sales_TABLESUFFIX
+           ,date_dim_TABLESUFFIX
        where cs_sold_date_sk = d_date_sk
          and d_year between 1999 and 1999 + 2 
        union all
        select ws_quantity quantity
              ,ws_list_price list_price
-       from web_sales
-           ,date_dim
+       from web_sales_TABLESUFFIX
+           ,date_dim_TABLESUFFIX
        where ws_sold_date_sk = d_date_sk
          and d_year between 1999 and 1999 + 2) x)
 ,
@@ -69,9 +69,9 @@ with  cross_items as
        select 'store' channel, i_brand_id,i_class_id
              ,i_category_id,sum(ss_quantity*ss_list_price) sales
              , count(*) number_sales
-       from store_sales
-           ,item
-           ,date_dim
+       from store_sales_TABLESUFFIX
+           ,item_TABLESUFFIX
+           ,date_dim_TABLESUFFIX
        where ss_item_sk in (select ss_item_sk from cross_items)
          and ss_item_sk = i_item_sk
          and ss_sold_date_sk = d_date_sk
@@ -81,9 +81,9 @@ with  cross_items as
        having sum(ss_quantity*ss_list_price) > (select average_sales from avg_sales)
        union all
        select 'catalog' channel, i_brand_id,i_class_id,i_category_id, sum(cs_quantity*cs_list_price) sales, count(*) number_sales
-       from catalog_sales
-           ,item
-           ,date_dim
+       from catalog_sales_TABLESUFFIX
+           ,item_TABLESUFFIX
+           ,date_dim_TABLESUFFIX
        where cs_item_sk in (select ss_item_sk from cross_items)
          and cs_item_sk = i_item_sk
          and cs_sold_date_sk = d_date_sk
@@ -93,9 +93,9 @@ with  cross_items as
        having sum(cs_quantity*cs_list_price) > (select average_sales from avg_sales)
        union all
        select 'web' channel, i_brand_id,i_class_id,i_category_id, sum(ws_quantity*ws_list_price) sales , count(*) number_sales
-       from web_sales
-           ,item
-           ,date_dim
+       from web_sales_TABLESUFFIX
+           ,item_TABLESUFFIX
+           ,date_dim_TABLESUFFIX
        where ws_item_sk in (select ss_item_sk from cross_items)
          and ws_item_sk = i_item_sk
          and ws_sold_date_sk = d_date_sk

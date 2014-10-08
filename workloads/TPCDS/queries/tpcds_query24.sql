@@ -18,12 +18,12 @@ with ssales as
       ,i_units
       ,i_size
       ,sum(ss_net_paid) netpaid
-from store_sales
-    ,store_returns
-    ,store
-    ,item
-    ,customer
-    ,customer_address
+from store_sales_TABLESUFFIX
+    ,store_returns_TABLESUFFIX
+    ,store_TABLESUFFIX
+    ,item_TABLESUFFIX
+    ,customer_TABLESUFFIX
+    ,customer_address_TABLESUFFIX
 where ss_ticket_number = sr_ticket_number
   and ss_item_sk = sr_item_sk
   and ss_customer_sk = c_customer_sk

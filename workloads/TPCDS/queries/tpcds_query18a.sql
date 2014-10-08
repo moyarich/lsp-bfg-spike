@@ -17,7 +17,7 @@ with results as
         avg( cast(cs_net_profit as numeric(12,2))) agg5,
         avg( cast(c_birth_year as numeric(12,2))) agg6,
         avg( cast(cd1.cd_dep_count as numeric(12,2))) agg7 
- from catalog_sales, customer_demographics cd1, customer_demographics cd2, customer, customer_address, date_dim, item
+ from catalog_sales_TABLESUFFIX, customer_demographics_TABLESUFFIX cd1, customer_demographics_TABLESUFFIX cd2, customer_TABLESUFFIX, customer_address_TABLESUFFIX, date_dim_TABLESUFFIX, item_TABLESUFFIX
  where cs_sold_date_sk = d_date_sk and
        cs_item_sk = i_item_sk and
        cs_bill_cdemo_sk = cd1.cd_demo_sk and

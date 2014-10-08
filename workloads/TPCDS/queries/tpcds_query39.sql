@@ -10,10 +10,10 @@ with inv as
        ,stdev,mean, case mean when 0 then null else stdev/mean end cov
  from (select w_warehouse_name,w_warehouse_sk,i_item_sk,d_moy
             ,stddev_samp(inv_quantity_on_hand) stdev,avg(inv_quantity_on_hand) mean
-      from inventory
-          ,item
-          ,warehouse
-          ,date_dim
+      from inventory_TABLESUFFIX
+          ,item_TABLESUFFIX
+          ,warehouse_TABLESUFFIX
+          ,date_dim_TABLESUFFIX
       where inv_item_sk = i_item_sk
         and inv_warehouse_sk = w_warehouse_sk
         and inv_date_sk = d_date_sk

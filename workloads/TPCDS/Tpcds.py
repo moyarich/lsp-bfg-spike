@@ -40,7 +40,7 @@ process_pool = []
 process_name = {}
 
 for child in children:
-    cmd = './dsdgen -scale '+str(scale)+' -dir '+data_dir+' -parallel '+str(parallel_setting)+' -child '+str(child)
+    cmd = './dsdgen -scale ' + str(scale) + ' -dir ' + data_dir + ' -parallel ' + str(parallel_setting) + ' -child ' + str(child)
     process = subprocess.Popen(cmd.split(' '))
     process_pool.append(process)
     process_name[process] = 'Process_' + str(child) + '_' + str(parallel_setting)
@@ -109,7 +109,11 @@ class Tpcds(Workload):
 
         self.output('-- Start loading data')
 
-        tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
+        tables = ['call_center', 'catalog_page', 'catalog_returns', 'catalog_sales', 'customer', 'customer_address',
+        'customer_demographics', 'date_dim', 'household_demographics', 'income_band', 'inventory', 'item',
+        'promotion', 'reason', 'ship_mode', 'store', 'store_returns', 'store_sales',
+        'time_dim', 'warehouse','web_page', 'web_returns', 'web_sales', 'web_site',]
+        
         if not self.load_data_flag:
             beg_time = str(datetime.now()).split('.')[0]
             for table_name in tables:
@@ -120,17 +124,16 @@ class Tpcds(Workload):
         else:
             self.load_setup()
             self.load_generate()
-            self.load_loading()
+            self.load_loading(tables = tables)
             self.load_clean_up()
-            print 'loading success'
-            sys.exit(2)
         self.output('-- Complete loading data')      
     
     
     def load_setup(self):
-        print('\n-- Start _check_hostfile')
+        self.output('--Check files hostfile_master and hostfile_seg')
         self._prepare_hostfile()
-        print('\n-- Start _check_data_gen')
+        
+        self.output('--Check files dsdgen and tpcds.idx')
         self._prepare_data_gen()
 
     def _prepare_hostfile(self):
@@ -142,11 +145,8 @@ class Tpcds(Workload):
         # prep hostfile_seg
         self.seg_hostname_list = config.getSegHostNames()
         self.host_num = len(self.seg_hostname_list)
-        seg_names = ''
-        for seg_hostname in self.seg_hostname_list:
-            seg_names = seg_names + seg_hostname + '\n'
         with open(self.hostfile_seg, 'w') as f:
-            f.write(seg_names)
+            f.write('\n'.join(self.seg_hostname_list))
         
     def _prepare_data_gen(self):
         # Check if dsdgen file exists, else make it
@@ -181,16 +181,17 @@ class Tpcds(Workload):
             sys.exit(2)
             
 
-
     def load_generate(self):
         """
         copy dsdgen to each host and generate data in parallel 
         """
-        print '\n-- Start _prepare_folder'
+        self.output('--Prepare tmp folder')
         self._prepare_tmp_folder()
-        print '\n-- Start _scp_data_gen_code'
+        
+        self.output('--Scp dsdgen and tpcds.idx to hostfile_seg')
         self._scp_data_gen_code()
-        print '\n-- Start _data_gen_segment'
+        
+        self.output('-- Generate data on every segments')
         self._data_gen_segment()
     
     def _prepare_tmp_folder(self):
@@ -217,8 +218,6 @@ class Tpcds(Workload):
             print(cmd1)
             print(o1)
             sys.exit(2);
-        else:
-            print('gpscp dsdgen finished.')
             
         (s2, o2) = commands.getstatusoutput(cmd2)
         if s2 != 0:
@@ -226,8 +225,6 @@ class Tpcds(Workload):
             print(cmd2)
             print(o2)
             sys.exit(2);
-        else:
-            print('gpscp tpcds.idx finished.')
         
         (s3, o3) = commands.getstatusoutput(cmd3)
         if s3 != 0:
@@ -257,7 +254,7 @@ class Tpcds(Workload):
             if s1 != 0:
                 print('Error happen in scp seg python script.')
                 print(o1)
-                sys.exit()
+                sys.exit(2)
             
             cmd2 = "gpssh -h %s -e 'cd %s;chmod 755 %s'"%(cur_host,self.tmp_tpcds_folder, python_script_base_name)
             (s2, o2) = commands.getstatusoutput(cmd2)
@@ -275,7 +272,7 @@ class Tpcds(Workload):
                 print(output)
                 sys.exit(2)
             else:
-                print('execute generate script in segment succeed')
+                self.output('execute generate script in segment succeed')
             seg_hosts.append(cur_host)
             
             
@@ -295,7 +292,7 @@ class Tpcds(Workload):
                     sys.exit(2)
                 
                 if o1.find('done') != -1:
-                    print('%s finished' % (cur_host))
+                    self.output('%s finished' % (cur_host))
                     finished_pool.append(cur_host)
                 else:
                     finish_generating = False
@@ -306,23 +303,25 @@ class Tpcds(Workload):
                 seg_hosts.remove(p)
 
             if finish_generating:
-                print ('Data generation finished in all segments.')
-                print ('total generation time: %s minutes' % (total_minutes))
+                self.output('Data generation finished in all segments.')
+                self.output('total generation time: %s minutes' % (total_minutes))
                 break
             else:
-                print ('Data generation still going on. Wait another 0.5 minutes')
+                self.output('Data generation still going on. Wait another 0.5 minutes')
                 time.sleep(30)
                 total_minutes += 0.5       
 
     
 
-    def load_loading(self):
+    def load_loading(self, tables):
+        self.output('--Start gpfdist')
+        self._start_gpfdist()
+
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
             self.output('ERROR: Cannot find DDL to create tables for TPCDS: %s does not exists' % (data_directory))
             return
 
-        tables = ['customer_address']
         data_files = [
               'call_center',  #0
               'catalog_page',  #1
@@ -377,7 +376,7 @@ class Tpcds(Workload):
                         else:
                             gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'" % (cur_host, self.gpfdist_port, file_name))
         
-        
+        self.output('--Start loading data into tables')
         for table_name in tables:
             load_success_flag = True
             qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
@@ -386,10 +385,6 @@ class Tpcds(Workload):
             for cmd in qf_path:
                 cmd = self.replace_sql(sql = cmd, table_name = table_name)
                 location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
-                print location
-                print ','.join(gpfdist_map[table_name])
-           #     for key in gpfdist_map.keys():
-            #        self.sed('LOCATION_%s_ext'%key,"LOCATION("+','.join(gpfdist_map[key])+")", external_script)
                 cmd = cmd.replace('LOCATION', location)
                 self.output(cmd)
                 (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
@@ -412,26 +407,11 @@ class Tpcds(Workload):
                 self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
                     % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
 
-    def _create_schema(self):
-        if self.partitions > 0:
-            create_schema = os.path.join(self.schema_folder, 'ddl_tpcds_partition.sql')
-        else:
-            create_schema = os.path.join(self.schema_folder, 'ddl_tpcds_no_partition.sql')
-        
-        command = 'psql -d %s -a -f %s' % (self.database_name, create_schema)
-        (status, output) = commands.getstatusoutput(command)
-        if status != 0:
-            print('Fail to create schema. ')
-            print(command)
-            print(output)
-            sys.exit(2)
-        else:
-            print('Successfully create schema.')
 
     def _start_gpfdist(self):       
         # find port 
         self.gpfdist_port = self._getOpenPort()
-        print ('GPFDIST PORT: %s' % self.gpfdist_port)
+        self.output('GPFDIST PORT: %s' % self.gpfdist_port)
         
         cmd = 'gpfdist -d %s -p %s -l %s/fdist.%s.log &' \
         %(self.tmp_tpcds_data_folder, self.gpfdist_port, self.tmp_tpcds_data_folder, self.gpfdist_port)        
@@ -442,8 +422,7 @@ class Tpcds(Workload):
             print (output)
             sys.exit(2)
         else:
-            print (output)
-            print ('gpfdist on segments succeed. ')
+            self.output('gpfdist on segments succeed. ')
     
     def _getOpenPort(self,port = 8050):
         defaultPort = port
@@ -453,161 +432,31 @@ class Tpcds(Workload):
         addr, defaultPort = s.getsockname()
         s.close()
         return defaultPort
-
-    def _create_external_table(self):  
-        # find data files in each segment host     
-        data_files = [
-              'call_center',  #0
-              'catalog_page',  #1
-              'catalog_returns', #2
-              'catalog_sales', #3
-              'customer', #4
-              'customer_address', #5
-              'customer_demographics', #6
-              'date_dim', #7
-              'household_demographics', #8
-              'income_band', #9
-              'inventory', #10
-              'item', #11
-              'promotion', #12
-              'reason', #13
-              'ship_mode', #14
-              'store',#15
-              'store_returns',#16
-              'store_sales',#17
-              'time_dim',#18
-              'warehouse',#19
-              'web_page',#20
-              'web_returns',#21
-              'web_sales',#22
-              'web_site',#23
-              ]
-        gpfdist_map = {}
-        for item in data_files:
-            gpfdist_map[item] = []
-        
-        for cur_host in self.seg_hostname_list:
-            cmd = "gpssh -h %s -e 'cat %s'" % (cur_host, os.path.join(self.tmp_tpcds_folder, 'dat_files.txt'))
-            dat_file_suffix = '.dat'
-            
-            (status, output) = commands.getstatusoutput(cmd)
-            if status != 0:
-                print('Error happen in ls data dir in %s' % (cur_host))
-                print(output)
-                sys.exit(2)
-            else:
-                lines = output.split('\n')
-                for line in lines:
-                    if line.find(dat_file_suffix) != -1:
-                        file_name = line.split(' ')[-1].strip()
-                        tmp_name = file_name[:file_name.rindex('_')]
-                        table_name = tmp_name[:tmp_name.rindex('_')]
-                        if table_name not in gpfdist_map.keys():
-                            if table_name.find('dbgen_version')==-1:
-                                print('Error: %s not find in gpfdist_map' %(table_name))
-                                sys.exit(2)
-                        else:
-                            gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'" %(cur_host, self.gpfdist_port, file_name))
-        
-        for key in gpfdist_map.keys():
-            self.output('%s: %s dat files' % (key, len(gpfdist_map[key])))
-            print('%s: %s' % (key, str(gpfdist_map[key])))
-
-        
-        # modify the prep_external_table_script
-        external_script = os.path.join(self.schema_folder,'prep_external_tables2.sql')
-        shutil.copyfile(os.path.join(self.schema_folder,'prep_external_tables.sql'), external_script)
-        for key in gpfdist_map.keys():
-            self.sed('LOCATION_%s_ext'%key,"LOCATION("+','.join(gpfdist_map[key])+")", external_script)
-        
-        load_external_command = 'psql -d %s -a -f %s' % (self.database_name, external_script)
-        (s2, o2) = commands.getstatusoutput(load_external_command)
-        if s2 != 0:
-            print('Error in prep external tables.')
-            print(load_external_command)
-            print(o2)
-            sys.exit(2)
-        else:
-            print('Successfully prep external tables.')
-            print(o2)
-    
-
-    def cmdstr(self, string):
-        dir=''
-        for i in string:
-            if i == os.sep:
-                dir = dir + '\/'
-            elif i=='\\' :
-                dir = dir + '\\\\\\'
-            else:
-                dir = dir + i
-        return dir
-    
-    def sed(self, string1,string2,filename):
-        str1=self.cmdstr(string1)
-        str2=self.cmdstr(string2)
-        # Add this for mac only
-#        test=r'sed -i "" "s/%s/%s/g" %s'%(str1,str2,filename) 
-        test=r'sed -i "s/%s/%s/g" %s'%(str1,str2,filename) 
-        # Add this for mac only
-#        print('Execute sed command: '+test);
-        os.system(test)      
-
     
 
 
     def load_clean_up(self):
-        print '-- Start _stop_gpfdist\n'
+        self.output('--Stop gpfdist')
         self._stop_gpfdist()
-        print '-- Start _delete_data\n'
-  #      self._delete_data()
+        self.output('--Delete tmp data folder')
+        self._delete_data()
         
     def _stop_gpfdist(self):
         cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
         command = "gpssh -f %s -e \"%s\"" % (self.hostfile_seg, cmd)
-        print command
         (status, output) = commands.getstatusoutput(command)
-        print(output)
-        print('kill gpfdist on segments succeed. ')
+        self.output('kill gpfdist on segments succeed. ')
 
     def _delete_data(self):
         # mkdir in each segment
         cmd = "gpssh -f %s -e 'cd %s; rm -rf *'" % (self.hostfile_seg, self.tmp_tpcds_folder)
-        print ('Execute: ' + cmd)
         (status, output) = commands.getstatusoutput(cmd)
         if status != 0:
             print('gpssh to delete data folder failed. ')
             print(output)
             sys.exit(2)
         else:
-            print('delete data folder succeed.')
-    
-    def get_partition_suffix(self, num_partitions = 128, table_name = ''):
-        beg_date = date(1992, 01, 01)
-        end_date = date(1998, 12, 31)
-        duration_days = int(round(float((end_date - beg_date).days) / float(num_partitions)))
-
-        part = ''
-
-        if table_name == 'lineitem':
-            part = '''PARTITION BY RANGE(l_shipdate)\n    (\n'''
-        elif table_name == 'orders':
-            part = '''PARTITION BY RANGE(o_orderdate)\n    (\n'''
-                
-        for i in range(1, num_partitions+1):
-            beg_cur = beg_date + timedelta(days = (i-1)*duration_days)
-            end_cur = beg_date + timedelta(days = i*duration_days)
-
-            part += '''        PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )''' % (i, beg_cur, end_cur, duration_days, table_name + '_' + self.tbl_suffix, i, self.sql_suffix)
-            
-            if i != num_partitions:
-                part += ''',\n'''
-            else:
-                part += '''\n'''
-
-        part += '''    )'''
-                
-        return part 
+            self.output('delete data folder succeed.')
 
     def replace_sql(self, sql, table_name):
         sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
@@ -615,11 +464,9 @@ class Tpcds(Workload):
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
         if self.partitions == 0 or self.partitions is None:
-            sql = sql.replace('PARTITIONS', '')
+            return sql.split('PARTITION BY')[0]
         else:
-            part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
-            sql = sql.replace('PARTITIONS', part_suffix)
-        return sql
+            return sql
     
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
@@ -632,7 +479,7 @@ class Tpcds(Workload):
         self.load_data()
 
         # vacuum_analyze
-        self.vacuum_analyze()
+        # self.vacuum_analyze()
 
         # run workload concurrently and loop by iteration
         self.run_workload()

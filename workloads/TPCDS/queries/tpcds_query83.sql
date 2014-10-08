@@ -8,48 +8,48 @@
 with sr_items as
  (select i_item_id item_id,
         sum(sr_return_quantity) sr_item_qty
- from store_returns,
-      item,
-      date_dim
+ from store_returns_TABLESUFFIX,
+      item_TABLESUFFIX,
+      date_dim_TABLESUFFIX
  where sr_item_sk = i_item_sk
  and   d_date    in 
 	(select d_date
-	from date_dim
+	from date_dim_TABLESUFFIX
 	where d_week_seq in 
 		(select d_week_seq
-		from date_dim
+		from date_dim_TABLESUFFIX
 	  where d_date in ('2000-06-30','2000-09-27','2000-11-17')))
  and   sr_returned_date_sk   = d_date_sk
  group by i_item_id),
  cr_items as
  (select i_item_id item_id,
         sum(cr_return_quantity) cr_item_qty
- from catalog_returns,
-      item,
-      date_dim
+ from catalog_returns_TABLESUFFIX,
+      item_TABLESUFFIX,
+      date_dim_TABLESUFFIX
  where cr_item_sk = i_item_sk
  and   d_date    in 
 	(select d_date
-	from date_dim
+	from date_dim_TABLESUFFIX
 	where d_week_seq in 
 		(select d_week_seq
-		from date_dim
+		from date_dim_TABLESUFFIX
 	  where d_date in ('2000-06-30','2000-09-27','2000-11-17')))
  and   cr_returned_date_sk   = d_date_sk
  group by i_item_id),
  wr_items as
  (select i_item_id item_id,
         sum(wr_return_quantity) wr_item_qty
- from web_returns,
-      item,
-      date_dim
+ from web_returns_TABLESUFFIX,
+      item_TABLESUFFIX,
+      date_dim_TABLESUFFIX
  where wr_item_sk = i_item_sk
  and   d_date    in 
 	(select d_date
-	from date_dim
+	from date_dim_TABLESUFFIX
 	where d_week_seq in 
 		(select d_week_seq
-		from date_dim
+		from date_dim_TABLESUFFIX
 		where d_date in ('2000-06-30','2000-09-27','2000-11-17')))
  and   wr_returned_date_sk   = d_date_sk
  group by i_item_id)

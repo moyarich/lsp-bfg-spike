@@ -12,7 +12,7 @@ create table customer_demographics_TABLESUFFIX
     cd_dep_count              integer                       ,
     cd_dep_employed_count     integer                       ,
     cd_dep_college_count      integer                       
-)WITH (SQLSUFFIX)PARTITIONS distributed by (cd_demo_sk);
+) WITH (SQLSUFFIX) distributed by (cd_demo_sk);
 
 
 CREATE EXTERNAL TABLE e_customer_demographics_TABLESUFFIX

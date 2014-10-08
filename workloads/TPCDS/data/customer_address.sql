@@ -1,5 +1,5 @@
 DROP TABLE IF EXISTS customer_address_TABLESUFFIX CASCADE;
-DROP EXTERNAL WEB TABLE IF EXISTS e_customer_address_TABLESUFFIX;
+DROP EXTERNAL TABLE IF EXISTS e_customer_address_TABLESUFFIX;
 
 create table customer_address_TABLESUFFIX
 (
@@ -15,8 +15,9 @@ create table customer_address_TABLESUFFIX
     ca_zip                    char(10)                      ,
     ca_country                varchar(20)                   ,
     ca_gmt_offset             decimal(5,2)                  ,
-    ca_location_type          char(20)                     
-) WITH (SQLSUFFIX)PARTITIONS distributed by (ca_address_sk);
+    ca_location_type          char(20)                      
+) WITH (SQLSUFFIX) distributed by (ca_address_sk);
+
 
 CREATE EXTERNAL TABLE e_customer_address_TABLESUFFIX
 (

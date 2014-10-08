@@ -7,10 +7,10 @@
 -- start query 1 in stream 0 using template query15.tpl
 select  ca_zip
        ,sum(cs_sales_price)
- from catalog_sales
-     ,customer
-     ,customer_address
-     ,date_dim
+ from catalog_sales_TABLESUFFIX
+     ,customer_TABLESUFFIX
+     ,customer_address_TABLESUFFIX
+     ,date_dim_TABLESUFFIX
  where cs_bill_customer_sk = c_customer_sk
  	and c_current_addr_sk = ca_address_sk 
  	and ( substr(ca_zip,1,5) in ('85669', '86197','88274','83405','86475',

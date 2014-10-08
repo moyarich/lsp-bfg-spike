@@ -9,10 +9,10 @@ select  *
 from (select i_manager_id
              ,sum(ss_sales_price) sum_sales
              ,avg(sum(ss_sales_price)) over (partition by i_manager_id) avg_monthly_sales
-      from item
-          ,store_sales
-          ,date_dim
-          ,store
+      from item_TABLESUFFIX
+          ,store_sales_TABLESUFFIX
+          ,date_dim_TABLESUFFIX
+          ,store_TABLESUFFIX
       where ss_item_sk = i_item_sk
         and ss_sold_date_sk = d_date_sk
         and ss_store_sk = s_store_sk

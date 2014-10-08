@@ -13,12 +13,12 @@ select
   ,sum(case when (cast(d_date as date) >= cast ('2000-03-11' as date)) 
  		then cs_sales_price - coalesce(cr_refunded_cash,0) else 0 end) as sales_after
  from
-   catalog_sales left outer join catalog_returns on
+   catalog_sales_TABLESUFFIX left outer join catalog_returns_TABLESUFFIX on
        (cs_order_number = cr_order_number 
         and cs_item_sk = cr_item_sk)
-  ,warehouse 
-  ,item
-  ,date_dim
+  ,warehouse_TABLESUFFIX 
+  ,item_TABLESUFFIX
+  ,date_dim_TABLESUFFIX
  where
      i_current_price between 0.99 and 1.49
  and i_item_sk          = cs_item_sk

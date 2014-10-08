@@ -7,13 +7,13 @@
 -- start query 1 in stream 0 using template query8.tpl
 select  s_store_name
       ,sum(ss_net_profit)
- from store_sales
-     ,date_dim
-     ,store,
+ from store_sales_TABLESUFFIX
+     ,date_dim_TABLESUFFIX
+     ,store_TABLESUFFIX ,
      (select ca_zip
      from (
      (SELECT substr(ca_zip,1,5) ca_zip
-      FROM customer_address
+      FROM customer_address_TABLESUFFIX
       WHERE substr(ca_zip,1,5) IN (
                           '24128','76232','65084','87816','83926','77556',
                           '20548','26231','43848','15126','91137',
@@ -98,7 +98,7 @@ select  s_store_name
      intersect
      (select ca_zip
       from (SELECT substr(ca_zip,1,5) ca_zip,count(*) cnt
-            FROM customer_address, customer
+            FROM customer_address_TABLESUFFIX, customer_TABLESUFFIX
             WHERE ca_address_sk = c_current_addr_sk and
                   c_preferred_cust_flag='Y'
             group by ca_zip

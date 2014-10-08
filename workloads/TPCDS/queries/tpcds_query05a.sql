@@ -18,7 +18,7 @@ with ssr as
             ss_net_profit as profit,
             cast(0 as decimal(7,2)) as return_amt,
             cast(0 as decimal(7,2)) as net_loss
-    from store_sales
+    from store_sales_TABLESUFFIX
     union all
     select sr_store_sk as store_sk,
            sr_returned_date_sk as date_sk,
@@ -26,10 +26,10 @@ with ssr as
            cast(0 as decimal(7,2)) as profit,
            sr_return_amt as return_amt,
            sr_net_loss as net_loss
-    from store_returns
+    from store_returns_TABLESUFFIX
    ) salesreturns,
-     date_dim,
-     store
+     date_dim_TABLESUFFIX,
+     store_TABLESUFFIX
  where date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date) 
                   and (cast('2000-08-23' as date) +  14 )
@@ -49,7 +49,7 @@ with ssr as
             cs_net_profit as profit,
             cast(0 as decimal(7,2)) as return_amt,
             cast(0 as decimal(7,2)) as net_loss
-    from catalog_sales
+    from catalog_sales_TABLESUFFIX
     union all
     select cr_catalog_page_sk as page_sk,
            cr_returned_date_sk as date_sk,
@@ -57,10 +57,10 @@ with ssr as
            cast(0 as decimal(7,2)) as profit,
            cr_return_amount as return_amt,
            cr_net_loss as net_loss
-    from catalog_returns
+    from catalog_returns_TABLESUFFIX
    ) salesreturns,
-     date_dim,
-     catalog_page
+     date_dim_TABLESUFFIX,
+     catalog_page_TABLESUFFIX
  where date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  14 )
@@ -80,7 +80,7 @@ with ssr as
             ws_net_profit as profit,
             cast(0 as decimal(7,2)) as return_amt,
             cast(0 as decimal(7,2)) as net_loss
-    from web_sales
+    from web_sales_TABLESUFFIX
     union all
     select ws_web_site_sk as wsr_web_site_sk,
            wr_returned_date_sk as date_sk,
@@ -88,12 +88,12 @@ with ssr as
            cast(0 as decimal(7,2)) as profit,
            wr_return_amt as return_amt,
            wr_net_loss as net_loss
-    from web_returns left outer join web_sales on
+    from web_returns_TABLESUFFIX left outer join web_sales_TABLESUFFIX on
          ( wr_item_sk = ws_item_sk
            and wr_order_number = ws_order_number)
    ) salesreturns,
-     date_dim,
-     web_site
+     date_dim_TABLESUFFIX,
+     web_site_TABLESUFFIX
  where date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  14 )

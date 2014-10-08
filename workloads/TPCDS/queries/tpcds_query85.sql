@@ -9,8 +9,8 @@ select  substr(r_reason_desc,1,20)
        ,avg(ws_quantity)
        ,avg(wr_refunded_cash)
        ,avg(wr_fee)
- from web_sales, web_returns, web_page, customer_demographics cd1,
-      customer_demographics cd2, customer_address, date_dim, reason 
+ from web_sales_TABLESUFFIX, web_returns_TABLESUFFIX, web_page_TABLESUFFIX, customer_demographics_TABLESUFFIX cd1,
+      customer_demographics_TABLESUFFIX cd2, customer_address_TABLESUFFIX, date_dim_TABLESUFFIX, reason_TABLESUFFIX 
  where ws_web_page_sk = wp_web_page_sk
    and ws_item_sk = wr_item_sk
    and ws_order_number = wr_order_number

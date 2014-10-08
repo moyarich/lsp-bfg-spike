@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS warehouse_TABLESUFFIX CASCADE;
-DROP EXTERNAL TABLE IF EXISTS warehouse_ext;
+DROP EXTERNAL TABLE IF EXISTS e_warehouse_TABLESUFFIX;
 
-create table warehouse
+create table warehouse_TABLESUFFIX
 (
     w_warehouse_sk            integer               not null,
     w_warehouse_id            char(16)              not null,
@@ -17,9 +17,9 @@ create table warehouse
     w_zip                     char(10)                      ,
     w_country                 varchar(20)                   ,
     w_gmt_offset              decimal(5,2)                  
-) distributed by (w_warehouse_sk);
+) WITH (SQLSUFFIX) distributed by (w_warehouse_sk);
 
-CREATE EXTERNAL TABLE warehouse_ext
+CREATE EXTERNAL TABLE e_warehouse_TABLESUFFIX
 (
 w_warehouse_sk            integer               ,
 w_warehouse_id            char(16)              ,
@@ -36,7 +36,7 @@ w_zip                     char(10)                      ,
 w_country                 varchar(20)                   ,
 w_gmt_offset              decimal(5,2)
 )
-LOCATION_warehouse_ext
+LOCATION
 FORMAT 'TEXT' (DELIMITER '|' NULL AS '');
 
-INSERT INTO warehouse SELECT * FROM warehouse_ext;
+INSERT INTO warehouse_TABLESUFFIX SELECT * FROM e_warehouse_TABLESUFFIX;
