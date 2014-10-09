@@ -10,8 +10,8 @@ select
   ws_item_sk item_sk, d_date,
   sum(sum(ws_sales_price))
       over (partition by ws_item_sk order by d_date rows between unbounded preceding and current row) cume_sales
-from web_sales
-    ,date_dim
+from web_sales_TABLESUFFIX
+    ,date_dim_TABLESUFFIX
 where ws_sold_date_sk=d_date_sk
   and d_year=2000
   and ws_item_sk is not NULL
@@ -21,8 +21,8 @@ select
   ss_item_sk item_sk, d_date,
   sum(sum(ss_sales_price))
       over (partition by ss_item_sk order by d_date rows between unbounded preceding and current row) cume_sales
-from store_sales
-    ,date_dim
+from store_sales_TABLESUFFIX
+    ,date_dim_TABLESUFFIX
 where ss_sold_date_sk=d_date_sk
   and d_year=2000
   and ss_item_sk is not NULL

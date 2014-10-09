@@ -18,11 +18,11 @@ select
                  (ws_ship_date_sk - ws_sold_date_sk <= 120) then 1 else 0 end)  as "91-120 days" 
   ,sum(case when (ws_ship_date_sk - ws_sold_date_sk  > 120) then 1 else 0 end)  as ">120 days" 
 from
-   web_sales
-  ,warehouse
-  ,ship_mode
-  ,web_site
-  ,date_dim
+   web_sales_TABLESUFFIX
+  ,warehouse_TABLESUFFIX
+  ,ship_mode_TABLESUFFIX
+  ,web_site_TABLESUFFIX
+  ,date_dim_TABLESUFFIX
 where
     extract(year from d_date) = 2000
 and ws_ship_date_sk   = d_date_sk

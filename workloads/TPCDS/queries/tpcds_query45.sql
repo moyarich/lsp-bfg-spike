@@ -6,7 +6,7 @@
 
 -- start query 1 in stream 0 using template query45.tpl
 select  ca_zip, sum(ws_sales_price)
- from web_sales, customer, customer_address, date_dim, item
+ from web_sales_TABLESUFFIX, customer_TABLESUFFIX, customer_address_TABLESUFFIX, date_dim_TABLESUFFIX, item_TABLESUFFIX
  where ws_bill_customer_sk = c_customer_sk
  	and c_current_addr_sk = ca_address_sk 
  	and ws_item_sk = i_item_sk 

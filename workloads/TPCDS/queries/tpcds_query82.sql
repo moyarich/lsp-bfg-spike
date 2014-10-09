@@ -8,7 +8,7 @@
 select  i_item_id
        ,i_item_desc
        ,i_current_price
- from item, inventory, date_dim, store_sales
+ from item_TABLESUFFIX, inventory_TABLESUFFIX, date_dim_TABLESUFFIX, store_sales_TABLESUFFIX
  where i_current_price between 62 and 62+30
  and inv_item_sk = i_item_sk
  and d_date_sk=inv_date_sk

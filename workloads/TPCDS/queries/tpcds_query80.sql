@@ -10,12 +10,12 @@ with ssr as
           sum(ss_ext_sales_price) as sales,
           sum(coalesce(sr_return_amt, 0)) as returns,
           sum(ss_net_profit - coalesce(sr_net_loss, 0)) as profit
-  from store_sales left outer join store_returns on
+  from store_sales_TABLESUFFIX left outer join store_returns_TABLESUFFIX on
          (ss_item_sk = sr_item_sk and ss_ticket_number = sr_ticket_number),
-     date_dim,
-     store,
-     item,
-     promotion
+     date_dim_TABLESUFFIX,
+     store_TABLESUFFIX,
+     item_TABLESUFFIX,
+     promotion_TABLESUFFIX
  where ss_sold_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date) 
                   and (cast('2000-08-23' as date) +  30)
@@ -31,12 +31,12 @@ with ssr as
           sum(cs_ext_sales_price) as sales,
           sum(coalesce(cr_return_amount, 0)) as returns,
           sum(cs_net_profit - coalesce(cr_net_loss, 0)) as profit
-  from catalog_sales left outer join catalog_returns on
+  from catalog_sales_TABLESUFFIX left outer join catalog_returns_TABLESUFFIX on
          (cs_item_sk = cr_item_sk and cs_order_number = cr_order_number),
-     date_dim,
-     catalog_page,
-     item,
-     promotion
+     date_dim_TABLESUFFIX,
+     catalog_page_TABLESUFFIX,
+     item_TABLESUFFIX,
+     promotion_TABLESUFFIX
  where cs_sold_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  30 )
@@ -52,12 +52,12 @@ group by cp_catalog_page_id)
           sum(ws_ext_sales_price) as sales,
           sum(coalesce(wr_return_amt, 0)) as returns,
           sum(ws_net_profit - coalesce(wr_net_loss, 0)) as profit
-  from web_sales left outer join web_returns on
+  from web_sales_TABLESUFFIX left outer join web_returns_TABLESUFFIX on
          (ws_item_sk = wr_item_sk and ws_order_number = wr_order_number),
-     date_dim,
-     web_site,
-     item,
-     promotion
+     date_dim_TABLESUFFIX,
+     web_site_TABLESUFFIX,
+     item_TABLESUFFIX,
+     promotion_TABLESUFFIX
  where ws_sold_date_sk = d_date_sk
        and d_date between cast('2000-08-23' as date)
                   and (cast('2000-08-23' as date) +  30 )

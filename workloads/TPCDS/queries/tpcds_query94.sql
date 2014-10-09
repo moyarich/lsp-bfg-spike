@@ -10,10 +10,10 @@ select
   ,sum(ws_ext_ship_cost) as "total shipping cost"
   ,sum(ws_net_profit) as "total net profit"
 from
-   web_sales ws1
-  ,date_dim
-  ,customer_address
-  ,web_site
+   web_sales_TABLESUFFIX ws1
+  ,date_dim_TABLESUFFIX
+  ,customer_address_TABLESUFFIX
+  ,web_site_TABLESUFFIX
 where
     d_date between '1999-2-01' and 
            (cast('1999-2-01' as date) + 60 )

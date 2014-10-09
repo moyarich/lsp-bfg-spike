@@ -12,16 +12,16 @@ with my_customers as (
         ( select cs_sold_date_sk sold_date_sk,
                  cs_bill_customer_sk customer_sk,
                  cs_item_sk item_sk
-          from   catalog_sales
+          from   catalog_sales_TABLESUFFIX
           union all
           select ws_sold_date_sk sold_date_sk,
                  ws_bill_customer_sk customer_sk,
                  ws_item_sk item_sk
-          from   web_sales
+          from   web_sales_TABLESUFFIX
          ) cs_or_ws_sales,
-         item,
-         date_dim,
-         customer
+         item_TABLESUFFIX,
+         date_dim_TABLESUFFIX,
+         customer_TABLESUFFIX
  where   sold_date_sk = d_date_sk
          and item_sk = i_item_sk
          --and i_category = 'Sports'
@@ -34,10 +34,10 @@ with my_customers as (
  select c_customer_sk,
         sum(ss_ext_sales_price) as revenue
  from   my_customers,
-        store_sales,
-        customer_address,
-        store,
-        date_dim
+        store_sales_TABLESUFFIX,
+        customer_address_TABLESUFFIX,
+        store_TABLESUFFIX,
+        date_dim_TABLESUFFIX
  where  c_current_addr_sk = ca_address_sk
         and ca_county = s_county
         and ca_state = s_state

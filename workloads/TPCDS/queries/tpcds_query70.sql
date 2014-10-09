@@ -13,9 +13,9 @@ select
  	partition by s_state,s_county
  	order by sum(ss_net_profit) desc) as rank_within_parent
  from
-    store_sales
-   ,date_dim       d1
-   ,store
+    store_sales_TABLESUFFIX
+   ,date_dim_TABLESUFFIX       d1
+   ,store_TABLESUFFIX
  where
     d1.d_year = 2000
  and d1.d_date_sk = ss_sold_date_sk
@@ -24,7 +24,7 @@ select
              ( select s_state
                from  (select s_state as s_state,
  			    rank() over ( partition by s_state order by sum(ss_net_profit) desc) as ranking
-                      from   store_sales, store, date_dim
+                      from   store_sales_TABLESUFFIX, store_TABLESUFFIX, date_dim_TABLESUFFIX
                       where  d_year =2000 
  			    and d_date_sk = ss_sold_date_sk
  			    and s_store_sk  = ss_store_sk

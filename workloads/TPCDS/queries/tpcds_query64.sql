@@ -8,8 +8,8 @@
 with cs_ui as
  (select cs_item_sk
         ,sum(cs_ext_list_price) as sale,sum(cr_refunded_cash+cr_reversed_charge+cr_store_credit) as refund
-  from catalog_sales
-      ,catalog_returns
+  from catalog_sales_TABLESUFFIX
+      ,catalog_returns_TABLESUFFIX
   where cs_item_sk = cr_item_sk
     and cs_order_number = cr_order_number
   group by cs_item_sk
@@ -34,24 +34,24 @@ cross_sales as
      ,sum(ss_wholesale_cost) s1
      ,sum(ss_list_price) s2
      ,sum(ss_coupon_amt) s3
-  FROM   store_sales
-        ,store_returns
+  FROM   store_sales_TABLESUFFIX
+        ,store_returns_TABLESUFFIX
         ,cs_ui
-        ,date_dim d1
-        ,date_dim d2
-        ,date_dim d3
-        ,store
-        ,customer
-        ,customer_demographics cd1
-        ,customer_demographics cd2
-        ,promotion
-        ,household_demographics hd1
-        ,household_demographics hd2
-        ,customer_address ad1
-        ,customer_address ad2
-        ,income_band ib1
-        ,income_band ib2
-        ,item
+        ,date_dim_TABLESUFFIX d1
+        ,date_dim_TABLESUFFIX d2
+        ,date_dim_TABLESUFFIX d3
+        ,store_TABLESUFFIX
+        ,customer_TABLESUFFIX
+        ,customer_demographics_TABLESUFFIX cd1
+        ,customer_demographics_TABLESUFFIX cd2
+        ,promotion_TABLESUFFIX
+        ,household_demographics_TABLESUFFIX hd1
+        ,household_demographics_TABLESUFFIX hd2
+        ,customer_address_TABLESUFFIX ad1
+        ,customer_address_TABLESUFFIX ad2
+        ,income_band_TABLESUFFIX ib1
+        ,income_band_TABLESUFFIX ib2
+        ,item_TABLESUFFIX
   WHERE  ss_store_sk = s_store_sk AND
          ss_sold_date_sk = d1.d_date_sk AND
          ss_customer_sk = c_customer_sk AND

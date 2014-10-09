@@ -6,10 +6,10 @@
 
 -- start query 1 in stream 0 using template query41.tpl
 select  distinct(i_product_name)
- from item i1
+ from item_TABLESUFFIX i1
  where i_manufact_id between 738 and 738+40 
    and (select count(*) as item_cnt
-        from item
+        from item_TABLESUFFIX
         where (i_manufact = i1.i_manufact and
         ((i_category = 'Women' and 
         (i_color = 'powder' or i_color = 'khaki') and 
