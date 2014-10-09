@@ -5,26 +5,37 @@ import datetime
 try:
     from workloads.TPCH.Tpch import Tpch
 except ImportError:
-    sys.stderr.write('LSP needs Tpch Workload in workloads/TPCH/Tpch.py\n')
+    sys.stderr.write('Executor needs Tpch Workload in workloads/TPCH/Tpch.py\n')
     sys.exit(2)
 
 try:
     from workloads.XMARQ.Xmarq import Xmarq
 except ImportError:
-    sys.stderr.write('LSP needs Xmarq Workload in workloads/XMARQ/Xmarq.py\n')
+    sys.stderr.write('Executor needs Xmarq Workload in workloads/XMARQ/Xmarq.py\n')
     sys.exit(2)
 
 try:
     from workloads.TPCDS.Tpcds import Tpcds
 except ImportError:
-    sys.stderr.write('LSP needs Tpcds Workload in workloads/TPCDS/Tpcds.py\n')
+    sys.stderr.write('Executor needs Tpcds Workload in workloads/TPCDS/Tpcds.py\n')
     sys.exit(2)
 
 try:
     from workloads.COPY.Copy import Copy
 except ImportError:
-    sys.stderr.write('LSP needs Copy Workload in workloads/COPY/Copy.py\n')
+    sys.stderr.write('Executor needs Copy Workload in workloads/COPY/Copy.py\n')
     sys.exit(2)
+
+try:
+    from workloads.SRI.Sri import Sri
+except ImportError:
+    sys.stderr.write('Executor needs Sru Workload in workloads/SRI/Sri.py\n')
+
+try:
+    from workloads.GPFDIST.Gpfdist import Gpfdist
+except ImportError:
+    sys.stderr.write('Executor needs Gpfdist Workload in workloads/GPFDIST/Gpfdist.py\n')
+
 
 LSP_HOME = os.getenv('LSP_HOME')
 
@@ -65,7 +76,7 @@ class Executor(object):
                 continue
 
             # add one workload into the workloads_instance list
-            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY'):
+            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 wl_instance = workload_category.lower().capitalize() + \

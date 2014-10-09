@@ -110,7 +110,7 @@ class Tpch(Workload):
                 for cmd in qf_path:
                     cmd = self.replace_sql(sql = cmd, table_name = table_name)
                     self.output(cmd)
-                    (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
+                    (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name, flag = '')
                     self.output('RESULT: ' + str(result))
                     if not ok:
                         load_success_flag = False
