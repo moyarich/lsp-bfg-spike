@@ -65,6 +65,7 @@ class Copy(Workload):
         if status != 0:
             print("generate data file %s error. " % (self.fname))
             sys.exit(2)
+        self.output('generate data file successed. ')
 
         # get the data dir
         data_directory = self.workload_directory + os.sep + 'data'
