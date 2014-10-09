@@ -69,16 +69,32 @@ class Workload(object):
                 sys.stderr.write('The db user name is wrong!\n')
                 sys.exit(2)
         
-        self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
-        self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
+        try:
+            self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
+        except Exception, e:
+            self.load_data_flag = 'FALSE'
+        
+        try:
+            self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
+        except Exception, e:
+            self.run_workload_flag = 'FALSE'
+        
         
         # get table setting and set table suffix, sql suffix, check_condition, and wl_values
         self.get_table_setting(workload_specification)
 
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
-        self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
-        self.num_iteration = int(str(workload_specification['num_iteration']).strip())
-
+        
+        try:
+            self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
+        except Exception, e:
+            self.num_concurrency = 1
+        
+        try:
+            self.num_iteration = int(str(workload_specification['num_iteration']).strip())
+        except Exception, e:
+            self.num_iteration = 1
+        
         self.check_condition += ' and wl_iteration = %d and wl_concurrency = %d' % (self.num_iteration, self.num_concurrency)
         self.wl_values += ', %d, %d' % (self.num_iteration, self.num_concurrency)
 

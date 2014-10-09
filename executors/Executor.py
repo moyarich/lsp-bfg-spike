@@ -20,6 +20,12 @@ except ImportError:
     sys.stderr.write('LSP needs Tpcds Workload in workloads/TPCDS/Tpcds.py\n')
     sys.exit(2)
 
+try:
+    from workloads.COPY.Copy import Copy
+except ImportError:
+    sys.stderr.write('LSP needs Copy Workload in workloads/COPY/Copy.py\n')
+    sys.exit(2)
+
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
@@ -59,7 +65,7 @@ class Executor(object):
                 continue
 
             # add one workload into the workloads_instance list
-            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS'):
+            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 wl_instance = workload_category.lower().capitalize() + \

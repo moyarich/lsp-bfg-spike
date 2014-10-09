@@ -1,0 +1,18 @@
+workloads_list: copy_ao_row
+workloads_mode: sequential
+
+workloads_content:
+
+    - workload_name: copy_ao_row
+      database_name: copy
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 3
