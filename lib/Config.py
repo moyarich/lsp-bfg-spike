@@ -90,7 +90,7 @@ class Config:
 
     def getSegHostNames(self):
         
-        (ok, out) = psql.run(flag='-q -t', cmd='select distinct hostname from gp_segment_configuration where content <> -1', ofile='-', dbname='template1') 
+        (ok, out) = psql.run(flag='-q -t', cmd='select distinct hostname from gp_segment_configuration where content <> -1 order by hostname', ofile='-', dbname='template1') 
 
         if not ok:
             sys.exit('Unable to select gp_segment_configuration')
