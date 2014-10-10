@@ -1,5 +1,6 @@
 import os
 import sys
+import commands
 from datetime import datetime
 
 try:
@@ -123,9 +124,31 @@ if __name__ == '__main__':
     beg_time = datetime.now()
     # add test run information in backend database if lsp not run in standalone mode
     if standalone_mode is False:
+
+        output = commands.getoutput('cat ~/qa.sh')
+        try:
+            wd = output[output.index('wd='):].split('"')[1]
+            output = commands.getoutput('cd %s; cat build_info_file.txt' % (wd))
+            build_id = output[output.index('PULSE_ID_INFO'):].split('\n')[0].split('=')[1]
+            build_url = output[output.index('PULSE_PROJECT_INFO'):].split('\n')[0].split('=')[1]
+        except Exception, e:
+            print('read build_info_file error. ')
+            build_id = -1
+            build_url = 'Local'
+
+        (status, output) = commands.getstatusoutput('rpm -qa | grep hadoop | grep hdfs | grep -v node')
+        hdfs_version = output
+        if status != 0 or hdfs_version == '':
+            hdfs_version = 'Local HDFS Deployment'
+
+        (status, output) = commands.getstatusoutput('rpm -qa | grep hawq')
+        hawq_version = output
+        if status != 0 or hawq_version == '':
+            hawq_version = 'Local HAWQ Deployment'
+
         check.insert_new_record(table_name = 'hst.test_run', 
             col_list = 'pulse_build_id, pulse_build_url, hdfs_version, hawq_version, start_time', 
-            values = "'%s', '%s', '%s', '%s', '%s'" % ('build_id', 'build_url', 'PHD 2.2', 'HAWQ1.2.1.0', str(beg_time).split('.')[0]))
+            values = "'%s', '%s', '%s', '%s', '%s'" % (build_id, build_url, hdfs_version, hawq_version, str(beg_time).split('.')[0]))
 
     # parse schedule file
     for schedule_name in schedule_list:
@@ -177,14 +200,18 @@ if __name__ == '__main__':
 
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')
-        col_list = "'Test Suite Name|'|| wl_name || '|Test Case Name|' || action_type ||'.' || action_target \
-                    || '|Test Detail|' \
-                    || 'Actural Run time is: ' || CASE WHEN runtime is NOT NULL THEN runtime::int::text ELSE 'N.A.' END || ' ms, ' \
-                    || 'Baseline time is: ' || CASE WHEN basetime IS NOT NULL THEN basetime::int::text ELSE 'N.A.' END || ' ms, ' \
-                    || 'Comparision is: ' || CASE WHEN deviration is NOT NULL THEN deviration::decimal(5,2)::text ELSE 'N.A.' END \
-                    || ' ('|| CASE WHEN runtime is NOT NULL THEN runtime::int::text ELSE '0' END || ' ms)' \
-                    || '|Test Status|' || testresult"
-        result = check.get_result(col_list = col_list, table_list = 'hst.test_report_details')
+        tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
+        sql = "select 'Test Suite Name|'|| wl_name || '|Test Case Name|' || action_type ||'.' || action_target \
+        || '|Test Detail|' \
+        || 'Actural Run time is: ' || CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE 'N.A.' END || ' ms, ' \
+        || 'Baseline time is: ' || CASE WHEN baseline_execution_time IS NOT NULL THEN baseline_execution_time::int::text ELSE 'N.A.' END || ' ms, ' \
+        || 'Comparision is: ' || CASE WHEN deviation is NOT NULL THEN deviation::decimal(5,2)::text ELSE 'N.A.' END \
+        || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
+        || '|Test Status|' || test_result \
+        from \
+            hst.f_generate_test_report_detail(%s, 'PHD 2.1', 'HAWQ 1.2.1.0 build 10335');" % (tr_id)
+
+        result = check.get_result_by_sql(sql = sql)
         
         result = str(result).strip().split('\r\n')
         for one_tuple in result:
