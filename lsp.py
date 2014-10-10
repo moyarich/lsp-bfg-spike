@@ -128,7 +128,7 @@ if __name__ == '__main__':
         output = commands.getoutput('cat ~/qa.sh')
         try:
             wd = output[output.index('wd='):].split('"')[1]
-            output = commands.getoutput('cd %s; cat build_info_file.txt' % (wd))
+            output = commands.getoutput('%s; cat build_info_file.txt' % (wd))
             build_id = output[output.index('PULSE_ID_INFO'):].split('\n')[0].split('=')[1]
             build_url = output[output.index('PULSE_PROJECT_INFO'):].split('\n')[0].split('=')[1]
         except Exception, e:
