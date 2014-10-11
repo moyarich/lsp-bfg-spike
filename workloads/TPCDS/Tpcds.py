@@ -118,7 +118,6 @@ class Tpcds(Workload):
             beg_time = str(datetime.now()).split('.')[0]
             for table_name in tables:
                 self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
-                self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
                 self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
                     % (self.tr_id, self.s_id, table_name, beg_time, beg_time))
         else:
@@ -330,7 +329,7 @@ class Tpcds(Workload):
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
             self.output('ERROR: Cannot find DDL to create tables for TPCDS: %s does not exists' % (data_directory))
-            return
+            sys.exit(2)
 
         gpfdist_map = {}
         for item in tables:
@@ -360,35 +359,35 @@ class Tpcds(Workload):
                             gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'" % (cur_host, self.gpfdist_port, file_name))
         
         self.output('--Start loading data into tables')
+        # run all sql in each loading data file
         for table_name in tables:
-            load_success_flag = True
-            qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
+            with open(os.path.join(data_directory, table_name + '.sql'), 'r') as f:
+                cmd = f.read()
+            cmd = self.replace_sql(sql = cmd, table_name = table_name)
+            location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
+            cmd = cmd.replace('LOCATION', location)
+            with open('tpcds_loading_data_tmp.sql', 'w') as f:
+                f.write(cmd)
+
+            self.output(cmd)    
             beg_time = datetime.now()
-            # run all sql in each loading data file
-            for cmd in qf_path:
-                cmd = self.replace_sql(sql = cmd, table_name = table_name)
-                location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
-                cmd = cmd.replace('LOCATION', location)
-                self.output(cmd)
-                (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name, flag = '')
-                self.output('RESULT: ' + str(result))
-                if not ok:
-                    load_success_flag = False
-            
+            (ok, result) = psql.runfile(ifile = 'tpcds_loading_data_tmp.sql', dbname = self.database_name)
             end_time = datetime.now()
+            self.output('RESULT: ' + str(result))
+            
+            if ok: 
+                status = 'SUCCESS'    
+            else:
+                status = 'ERROR'
+
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
-
-            if load_success_flag:    
-                self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-                self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
-            else:
-                self.output('ERROR: Failed to load data for table %s' % (table_name))
-                self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
+            beg_time = str(beg_time).split('.')[0]
+            end_time = str(end_time).split('.')[0]
+            
+            self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, status, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+                % (self.tr_id, self.s_id, table_name, status, beg_time, end_time, duration))
 
     def _start_gpfdist(self):       
         # find port 
@@ -461,7 +460,6 @@ class Tpcds(Workload):
     
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
-        self.report('-- Start running workload %s' % (self.workload_name))
 
         # setup
         self.setup()
@@ -470,7 +468,8 @@ class Tpcds(Workload):
         self.load_data()
 
         # vacuum_analyze
-        self.vacuum_analyze()
+        if self.load_data_flag:
+            self.vacuum_analyze()
 
         # run workload concurrently and loop by iteration
         self.run_workload()
@@ -479,5 +478,4 @@ class Tpcds(Workload):
         self.clean_up()
         
         self.output('-- Complete running workload %s' % (self.workload_name))
-        self.report('-- Complete running workload %s' % (self.workload_name))
 

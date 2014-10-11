@@ -1,4 +1,4 @@
-workloads_list: tpcds_ao_row
+workloads_list: tpcds_ao_parquet
 workloads_mode: sequential
 
 workloads_content:
@@ -13,6 +13,23 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
+      load_data_flag: false
+      run_workload_flag: false
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpcds_ao_parquet
+      database_name: tpcds_ao_parquet
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          partitions: 0
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL

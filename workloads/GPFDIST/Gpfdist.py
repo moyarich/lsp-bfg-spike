@@ -54,7 +54,6 @@ class Gpfdist(Workload):
         sql = sql.replace('GPFDIST_PORT', str(self.gpfdist_port))
         return sql
 
-
     def load_data(self):
         self.output('-- Start loading data ')
 
@@ -148,8 +147,7 @@ class Gpfdist(Workload):
                 tryAgain = False
                 s.close()
         return defaultPort
-        
-    
+         
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
 
