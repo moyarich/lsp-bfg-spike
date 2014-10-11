@@ -6,7 +6,7 @@ import random
 from multiprocessing import Process, Queue, Value , Array
 
 # pkgs = [('lib.PSQL', 'psql', 'lib/PSQL.py'), ('lib.utils.Check', 'check', 'lib/utils/Check.py'), \
-#         ('lib.Config', 'config', 'lib/Config.py'), ('QueryFile', 'QueryFile', 'lib/QueryFile.py'), \
+#         ('lib.Config', 'config', 'lib/Config.py'), \
 #         ('utils.Log', 'Log', 'lib/utils/Log.py'), ('utils.Report', 'Report', 'lib/utils/Report.py')]
 
 #for pkg in pkgs:
@@ -31,12 +31,6 @@ try:
     from lib.Config import config
 except ImportError:
     sys.stderr.write('Workload needs config in lib/Config.py\n')
-    sys.exit(2)
-
-try:
-    from QueryFile import QueryFile
-except ImportError:
-    sys.stderr.write('Workload needs QueryFile in lib/QueryFile.py\n')
     sys.exit(2)
 
 try:
@@ -110,7 +104,6 @@ class Workload(object):
         os.system('mkdir -p %s' % (self.report_directory))
         # set output log and report
         self.output_file = os.path.join(self.report_directory, 'output.csv')
-        self.report_file = os.path.join(self.report_directory, 'report.csv')
 
         # set report.sql file
         self.report_sql_file = report_sql_file
@@ -300,73 +293,55 @@ class Workload(object):
     def report_sql(self, msg):
         Report(self.report_sql_file, msg)
 
-    def report(self, msg):
-        Report(self.report_file, msg)
-
     def load_data(self):
         '''Load data for workload'''
         pass
 
     def run_queries(self, iteration, stream):
-        '''
-        Run queries in lsp/workloads/$workload_name/queries/*.sql one by one in user-specified order
-        1) The queries would be run in one or more times as specified by niteration
-        2) The queries would be run in one or more concurrent streams as specified by nconcurrency
-        It needs to be overwritten in child class if user want run queries of the workload in customized way
-        '''
         queries_directory = self.workload_directory + os.sep + 'queries'
         if not os.path.exists(queries_directory):
             print 'Not find the queries_directory for %s' % (self.workload_name)
-            return
-        query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
+            sys.exit(2)
 
+        query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
         if self.run_workload_mode == 'SEQUENTIAL':
             query_files = sorted(query_files)
         else:
             random.shuffle(query_files)
 
-        # skip all queries
-        if not self.run_workload_flag:
-            beg_time = str(datetime.now()).split('.')[0]
-            for qf_name in query_files:
-                self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
-                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SKIP', 0))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, beg_time, beg_time))
-            return
-
         # run all sql files in queries directory
         for qf_name in query_files:
-            run_success_flag = True
-            qf_path = QueryFile(os.path.join(queries_directory, qf_name))
-            beg_time = datetime.now()
-            # run all queries in each sql file
-            for q in qf_path:
-                q = q.replace('TABLESUFFIX', self.tbl_suffix)
-                self.output(q)
+            if self.run_workload_flag:
+                with open(os.path.join(queries_directory, qf_name),'r') as f:
+                    query = f.read()
+                query = query.replace('TABLESUFFIX', self.tbl_suffix)
                 with open('run_query_tmp.sql','w') as f:
-                    f.write(q)
-                (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name, flag = '-t -q')
-                self.output('RESULT: ' + str(result))
-                if not ok:
-                    run_success_flag = False
+                    f.write(query)
 
-            end_time = datetime.now()
+                self.output(query)
+                beg_time = datetime.now()
+                (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name)
+                end_time = datetime.now()
+                self.output('RESULT: ' + str(result))
+                
+                if ok:
+                    status = 'SUCCESS'
+                else:
+                    status = 'ERROR'
+            
+            else:
+                status = 'SKIP'
+                beg_time = datetime.now()
+                end_time = beg_time
+                
             duration = end_time - beg_time
-            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
+            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000     
             beg_time = str(beg_time).split('.')[0]
             end_time = str(end_time).split('.')[0]
-            
-            if run_success_flag:
-                self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
-                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'SUCCESS', duration))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, beg_time, end_time, duration))
-            else:
-                self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', duration))
-                self.report('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, 'ERROR', duration))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, beg_time, end_time, duration))
+            self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+                % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration))
+                
                 
     def run_workload(self):
         niteration = 1
@@ -416,12 +391,10 @@ class Workload(object):
     
         if ok:   
             self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
-            self.report('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
             self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
                 % (self.tr_id, self.s_id, beg_time, end_time, duration))
         else:
             self.output('   ERROR: VACUUM ANALYZE failure')
-            self.report('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'ERROR', 0))
             self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
                 % (self.tr_id, self.s_id, beg_time, end_time, duration))
         

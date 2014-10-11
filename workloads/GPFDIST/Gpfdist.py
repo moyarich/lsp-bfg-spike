@@ -67,12 +67,14 @@ class Gpfdist(Workload):
         self.output('-- start gpfdist service')
         self.gpfdist_port = self._getOpenPort()
 
-        cmd = "gpssh -h %s -e 'gpfdist -d %s -p %d -l ./gpfdist.log &' "% (self.host_name, self.workload_directory, self.gpfdist_port)
+        cmd = "gpssh -h %s -e 'gpfdist -d %s -p %d -l ./gpfdist.log &'" % (self.host_name, self.workload_directory, self.gpfdist_port)
         (status, output) = commands.getstatusoutput(cmd)
         self.output(cmd)
+        self.output(output)
+        
         cmd = 'ps -ef | grep gpfdist'
+        (status, output) = commands.getstatusoutput(cmd)
         self.output(cmd)
-        output = commands.getoutput(cmd)
         self.output(output)
         
         self.output('-- generate data file: %s' % (self.fname))
@@ -90,42 +92,38 @@ class Gpfdist(Workload):
         niteration = 1
         while niteration <= self.num_iteration:
             self.output('-- Start iteration %d' % (niteration))
-            if self.load_data_flag or self.run_workload_flag:
-                for table_name in tables:
-                    load_success_flag = True
-                    qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
-                    beg_time = datetime.now()
-                    # run all sql in each loading data file
-                    for cmd in qf_path:
-                        cmd = self.replace_sql(sql = cmd, table_name = table_name, num = niteration)
-                        self.output(cmd)
-                        (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name, flag = '')
-                        self.output('RESULT: ' + str(result))
-                        if not ok:
-                            load_success_flag = False
+            for table_name in tables:
+                if self.load_data_flag or self.run_workload_flag:
+                    with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
+                        cmd = f.read()
+                    cmd = self.replace_sql(sql = cmd, table_name = table_name, num = niteration)
+                    with open('loading_data_tmp.sql', 'w') as f:
+                        f.write(cmd)
 
+                    self.output(cmd)    
+                    beg_time = datetime.now()
+                    (ok, result) = psql.runfile(ifile = 'loading_data_tmp.sql', dbname = self.database_name)
                     end_time = datetime.now()
-                    duration = end_time - beg_time
-                    duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
-          
-                    if load_success_flag:    
-                        self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, 'SUCCESS', duration))
-                        self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, 'SUCCESS', duration))
-                        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', %d, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
-                            % (self.tr_id, self.s_id, table_name, niteration, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
+                    self.output('RESULT: ' + str(result))
+
+                    if ok: 
+                        status = 'SUCCESS'    
                     else:
-                        self.output('ERROR: Failed to load data for table %s' % (table_name))
-                        self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, 'ERROR', 0)) 
-                        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', %d, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
-                            % (self.tr_id, self.s_id, table_name, niteration, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
+                        status = 'ERROR'
                 
-            else:
-                beg_time = str(datetime.now()).split('.')[0]
-                for table_name in tables:
-                    self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, 'SKIP', 0))
-                    self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, 'SKIP', 0)) 
-                    self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', %d, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
-                        % (self.tr_id, self.s_id, table_name, niteration, beg_time, beg_time))
+                else:
+                    status = 'SKIP'
+                    beg_time = datetime.now()
+                    end_time = beg_time
+                    
+                duration = end_time - beg_time
+                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
+                beg_time = str(beg_time).split('.')[0]
+                end_time = str(end_time).split('.')[0]
+                
+                self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, status, duration))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', %d, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+                    % (self.tr_id, self.s_id, table_name, niteration, status, beg_time, end_time, duration))
                 
             self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
@@ -133,8 +131,8 @@ class Gpfdist(Workload):
         cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
         self.output(cmd)
         (status, output) = commands.getstatusoutput(cmd)
-        self.output(output)
-        self.output('kill gpfdist succeed. ')
+        self.output('kill gpfdist: ' + output)
+        
         self.output('-- Complete loading data')      
     
     def _getOpenPort(self, port = 8050):
@@ -154,7 +152,6 @@ class Gpfdist(Workload):
     
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
-        self.report('-- Start running workload %s' % (self.workload_name))
 
         # setup
         self.setup()
@@ -166,5 +163,4 @@ class Gpfdist(Workload):
         self.clean_up()
         
         self.output('-- Complete running workload %s' % (self.workload_name))
-        self.report('-- Complete running workload %s' % (self.workload_name))
 
