@@ -59,8 +59,15 @@ class Sri(Workload):
                 partition_query = p.read()
             partition_query = partition_query.replace('table_name', 'sri_table_' + self.tbl_suffix)
             partition_query = partition_query.replace('table_orientation', self.orientation)
-            partition_query = partition_query.replace('table_compresstype', str(self.compression_type))
-            partition_query = partition_query.replace('table_compresslevel', str(self.compression_level))
+            if self.compression_type is None:
+                partition_query = partition_query.replace(', compresstype=table_compresstype', '')
+            else:
+                partition_query = partition_query.replace('table_compresstype', str(self.compression_type))
+
+            if self.compression_level is None:
+                partition_query = partition_query.replace(', compresslevel=table_compresslevel', '')
+            else:
+                partition_query = partition_query.replace('table_compresslevel', str(self.compression_level))
 
         cmd = cmd + partition_query + ';'
 
