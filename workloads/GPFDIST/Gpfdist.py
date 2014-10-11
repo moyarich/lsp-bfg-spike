@@ -128,8 +128,9 @@ class Gpfdist(Workload):
             niteration += 1
 
         cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
-        self.output(cmd)
-        (status, output) = commands.getstatusoutput(cmd)
+        command = "gpssh -h %s -e \"%s\"" % (self.host_name , cmd)
+        self.output(command)
+        (status, output) = commands.getstatusoutput(command)
         self.output('kill gpfdist: ' + output)
         
         self.output('-- Complete loading data')      
