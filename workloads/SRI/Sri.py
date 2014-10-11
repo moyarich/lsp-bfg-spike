@@ -49,9 +49,23 @@ class Sri(Workload):
     def load_data(self):
         self.output('-- Start loading data')
 
-        cmd = 'drop table if exists sri_table_%s;\n \
-        create table sri_table_%s (tid int, bdate date, aid int, delta int, mtime timestamp) \
-        with (%s) distributed by (tid);' % (self.tbl_suffix, self.tbl_suffix, self.sql_suffix)
+        cmd = 'drop table if exists sri_table_%s;\n' % (self.tbl_suffix) + 'create table sri_table_%s (tid int, bdate date, aid int, delta int, mtime timestamp) with (%s) distributed by (tid)' % (self.tbl_suffix, self.sql_suffix)
+        
+        
+        if self.partitions == 0 or self.partitions is None:
+            partition_query = ''
+        else:
+            with open(self.workload_directory + os.sep + 'partition.tpl', 'r') as p:
+                partition_query = p.read()
+            partition_query = partition_query.replace('table_name', 'sri_table_' + self.tbl_suffix)
+            partition_query = partition_query.replace('table_orientation', self.orientation)
+            partition_query = partition_query.replace('table_compresstype', str(self.compression_type))
+            partition_query = partition_query.replace('table_compresslevel', str(self.compression_level))
+
+        cmd = cmd + partition_query + ';'
+
+        print partition_query
+
         with open('sri_tmp.sql', 'w') as f:
             f.write(cmd)
         

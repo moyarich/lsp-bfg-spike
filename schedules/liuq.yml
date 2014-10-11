@@ -1,4 +1,4 @@
-workloads_list: gpfdist_ao_row
+workloads_list: sri_ao_parquet
 workloads_mode: sequential
 
 workloads_content:
@@ -55,7 +55,7 @@ workloads_content:
           orientation: PARQUET
           row_group_size: 8388608
           page_size: 1048576
-          partitions: 0
+          partitions: 128
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
       num_iteration: 100
