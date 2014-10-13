@@ -54,6 +54,7 @@ class Workload(object):
         self.s_id = 0
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
+        self.continue_flag = True
         
         self.user = workload_specification['user'].strip()
         # check us_id if exist
@@ -311,26 +312,30 @@ class Workload(object):
 
         # run all sql files in queries directory
         for qf_name in query_files:
-            if self.run_workload_flag:
-                with open(os.path.join(queries_directory, qf_name),'r') as f:
-                    query = f.read()
-                query = query.replace('TABLESUFFIX', self.tbl_suffix)
-                with open('run_query_tmp.sql','w') as f:
-                    f.write(query)
+            if self.continue_flag:
+                if self.run_workload_flag:
+                    with open(os.path.join(queries_directory, qf_name),'r') as f:
+                        query = f.read()
+                    query = query.replace('TABLESUFFIX', self.tbl_suffix)
+                    with open('run_query_tmp.sql','w') as f:
+                        f.write(query)
 
-                self.output(query)
-                beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name)
-                end_time = datetime.now()
-                self.output('RESULT: ' + str(result))
-                
-                if ok:
-                    status = 'SUCCESS'
+                    self.output(query)
+                    beg_time = datetime.now()
+                    (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name, flag = '-t')
+                    end_time = datetime.now()
+                    self.output('RESULT: ' + str(result))
+                    
+                    if ok:
+                        status = 'SUCCESS'
+                    else:
+                        status = 'ERROR'
                 else:
-                    status = 'ERROR'
-            
+                    status = 'SKIP'
+                    beg_time = datetime.now()
+                    end_time = beg_time
             else:
-                status = 'SKIP'
+                status = 'ERROR'
                 beg_time = datetime.now()
                 end_time = beg_time
                 
@@ -378,25 +383,37 @@ class Workload(object):
     def vacuum_analyze(self):
         self.output('-- Start vacuum analyze')     
         
-        sql = 'VACUUM ANALYZE;'
-        self.output(sql)
-        beg_time = datetime.now()
-        (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name)
-        end_time = datetime.now()
-        self.output('RESULT: ' + str(result))
+        if self.continue_flag:
+            if self.load_data_flag:
+                sql = 'VACUUM ANALYZE;'
+                self.output(sql)
+                beg_time = datetime.now()
+                (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name)
+                end_time = datetime.now()
+                self.output('RESULT: ' + str(result))
+
+                if ok:
+                    status = 'SUCCESS'
+                else:
+                    status = 'ERROR'
+                    self.continue_flag = False
+            else:
+                status = 'SKIP'
+                beg_time = datetime.now()
+                end_time = beg_time
+        else:
+            status = 'ERROR'
+            beg_time = datetime.now()
+            end_time = beg_time
+
         duration = end_time - beg_time
         duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
         beg_time = str(beg_time).split('.')[0]
         end_time = str(end_time).split('.')[0]
-    
-        if ok:   
-            self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, 'SUCCESS', duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, beg_time, end_time, duration))
-        else:
-            self.output('   ERROR: VACUUM ANALYZE failure')
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, beg_time, end_time, duration))
+ 
+        self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, status, duration))
+        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+            % (self.tr_id, self.s_id, status, beg_time, end_time, duration))
         
         self.output('-- Complete vacuum analyze')
 

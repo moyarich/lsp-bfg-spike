@@ -93,25 +93,31 @@ class Tpch(Workload):
 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         for table_name in tables:
-            if self.load_data_flag:
-                with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
-                    cmd = f.read()
-                cmd = self.replace_sql(sql = cmd, table_name = table_name)
-                with open('tpch_loading_data_tmp.sql', 'w') as f:
-                    f.write(cmd)
+            if self.continue_flag:
+                if self.load_data_flag:
+                    with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
+                        cmd = f.read()
+                    cmd = self.replace_sql(sql = cmd, table_name = table_name)
+                    with open('tpch_loading_data_tmp.sql', 'w') as f:
+                        f.write(cmd)
 
-                self.output(cmd)
-                beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = 'tpch_loading_data_tmp.sql', dbname = self.database_name)
-                end_time = datetime.now()
-                self.output('RESULT: ' + str(result))
+                    self.output(cmd)
+                    beg_time = datetime.now()
+                    (ok, result) = psql.runfile(ifile = 'tpch_loading_data_tmp.sql', dbname = self.database_name)
+                    end_time = datetime.now()
+                    self.output('RESULT: ' + str(result))
 
-                if ok:
-                    status = 'SUCCESS'
+                    if ok:
+                        status = 'SUCCESS'
+                    else:
+                        status = 'ERROR'
+                        self.continue_flag = False
                 else:
-                    status = 'ERROR'
+                    status = 'SKIP'
+                    beg_time = datetime.now()
+                    end_time = beg_time
             else:
-                status = 'SKIP'
+                status = 'ERROR'
                 beg_time = datetime.now()
                 end_time = beg_time
                 

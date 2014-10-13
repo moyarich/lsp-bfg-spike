@@ -361,24 +361,28 @@ class Tpcds(Workload):
         self.output('--Start loading data into tables')
         # run all sql in each loading data file
         for table_name in tables:
-            with open(os.path.join(data_directory, table_name + '.sql'), 'r') as f:
-                cmd = f.read()
-            cmd = self.replace_sql(sql = cmd, table_name = table_name)
-            location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
-            cmd = cmd.replace('LOCATION', location)
-            with open('tpcds_loading_data_tmp.sql', 'w') as f:
-                f.write(cmd)
+            if self.continue_flag:
+                with open(os.path.join(data_directory, table_name + '.sql'), 'r') as f:
+                    cmd = f.read()
+                cmd = self.replace_sql(sql = cmd, table_name = table_name)
+                location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
+                cmd = cmd.replace('LOCATION', location)
+                with open('tpcds_loading_data_tmp.sql', 'w') as f:
+                    f.write(cmd)
 
-            self.output(cmd)    
-            beg_time = datetime.now()
-            (ok, result) = psql.runfile(ifile = 'tpcds_loading_data_tmp.sql', dbname = self.database_name)
-            end_time = datetime.now()
-            self.output('RESULT: ' + str(result))
-            
-            if ok: 
-                status = 'SUCCESS'    
-            else:
-                status = 'ERROR'
+                self.output(cmd)    
+                beg_time = datetime.now()
+                (ok, result) = psql.runfile(ifile = 'tpcds_loading_data_tmp.sql', dbname = self.database_name)
+                end_time = datetime.now()
+                self.output('RESULT: ' + str(result))
+                
+                if ok: 
+                    status = 'SUCCESS'    
+                else:
+                    status = 'ERROR'
+                    beg_time = datetime.now()
+                    end_time = beg_time
+                    self.continue_flag = False
 
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000

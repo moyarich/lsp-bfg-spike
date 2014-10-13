@@ -112,7 +112,7 @@ class PSQL:
         if cmd:
             arg = '-c "%s"' % cmd
         elif ifile:
-            arg = ' < ' + ifile
+            arg = ' -f ' + ifile
    #         if not (flag == '-q'):
     #            arg = '-e < ' + ifile
      #       if flag == '-a':
