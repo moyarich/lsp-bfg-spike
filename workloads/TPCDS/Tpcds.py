@@ -95,9 +95,6 @@ class Tpcds(Workload):
         self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
 
     def setup(self):
-        pass
-
-    def load_data(self):
         # check if the database exist
         try: 
             cnx = pg.connect(dbname = self.database_name)
@@ -107,12 +104,13 @@ class Tpcds(Workload):
         finally:
             cnx.close()
 
+    def load_data(self):
         self.output('-- Start loading data')
 
         tables = ['call_center', 'catalog_page', 'catalog_returns', 'catalog_sales', 'customer', 'customer_address',
         'customer_demographics', 'date_dim', 'household_demographics', 'income_band', 'inventory', 'item',
         'promotion', 'reason', 'ship_mode', 'store', 'store_returns', 'store_sales',
-        'time_dim', 'warehouse','web_page', 'web_returns', 'web_sales', 'web_site',]
+        'time_dim', 'warehouse','web_page', 'web_returns', 'web_sales', 'web_site']
         
         if not self.load_data_flag:
             beg_time = str(datetime.now()).split('.')[0]
@@ -124,7 +122,6 @@ class Tpcds(Workload):
             self.load_setup()
             self.load_generate()
             self.load_loading(tables = tables)
-            self.load_clean_up()
         self.output('-- Complete loading data')      
     
     
@@ -357,6 +354,9 @@ class Tpcds(Workload):
                                 sys.exit(2)
                         else:
                             gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'" % (cur_host, self.gpfdist_port, file_name))
+
+        for table_name in tables:
+            self.output(table_name + ':' + str(len(gpfdist_map[table_name])) + ' data files')
         
         self.output('--Start loading data into tables')
         # run all sql in each loading data file
@@ -421,7 +421,7 @@ class Tpcds(Workload):
     
 
 
-    def load_clean_up(self):
+    def clean_up(self):
         self.output('--Stop gpfdist')
         self._stop_gpfdist()
         self.output('--Delete tmp data folder')
@@ -453,10 +453,13 @@ class Tpcds(Workload):
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
-        if self.partitions == 0 or self.partitions is None:
-            return sql.split('PARTITION BY')[0]
-        else:
-            return sql
+        tables = [ 'catalog_returns', 'catalog_sales', 'date_dim',  'inventory', 'store_returns', 'store_sales', 'web_returns', 'web_sales']
+        if (self.partitions == 0 or self.partitions is None) and (table_name in tables):
+            beg_index = sql.index('PARTITION BY')
+            end_index = sql.index(';', beg_index, )
+            partitions_string = sql[beg_index:end_index]
+            sql = sql.replace(partitions_string, '') 
+        return sql
     
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))

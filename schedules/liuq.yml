@@ -1,4 +1,4 @@
-workloads_list: sri_ao_parquet
+workloads_list: gpfdist_ao_row,gpfdist_ao_parquet,copy_ao_row,copy
 workloads_mode: sequential
 
 workloads_content:
@@ -17,19 +17,49 @@ workloads_content:
       run_workload_mode: SEQUENTIAL
       num_iteration: 2
 
-    - workload_name: gpfdist_ao_row
-      database_name: gpfdist
+    - workload_name: copy_ao_parquet
+      database_name: copy_ao_parquet
       user: gpadmin
       table_setting:
           data_volume_type: total
           data_volume_size: 1
           append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          partitions: 0
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+
+    - workload_name: gpfdist_ao_row
+      database_name: gpfdist_ao_row
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 2
+          append_only: true
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
-      load_data_flag: false
+      load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 10
+      num_iteration: 2
+
+    - workload_name: gpfdist_ao_parquet
+      database_name: gpfdist_ao_parquet
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          partitions: 0
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
 
     - workload_name: sri_ao_row
       database_name: sri
@@ -43,7 +73,7 @@ workloads_content:
           compression_level: 1
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 100
+      num_iteration: 10
 
     - workload_name: sri_ao_parquet
       database_name: sri_ao_parquet
@@ -58,4 +88,6 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 100
+      num_iteration: 10
+
+    
