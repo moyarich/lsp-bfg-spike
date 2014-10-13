@@ -126,12 +126,6 @@ class Gpfdist(Workload):
                 
             self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
-
-        cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
-        command = "gpssh -h %s -e \"%s\"" % (self.host_name , cmd)
-        self.output(command)
-        (status, output) = commands.getstatusoutput(command)
-        self.output('kill gpfdist: ' + output)
         
         self.output('-- Complete loading data')      
     
@@ -148,7 +142,23 @@ class Gpfdist(Workload):
                 tryAgain = False
                 s.close()
         return defaultPort
-         
+    
+    def clean_up(self):
+        self.output('-- gpfdist clean up')
+        cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
+        command = "gpssh -h %s -e \"%s\"" % (self.host_name , cmd)
+        self.output(command)
+        (status, output) = commands.getstatusoutput(command)
+        self.output('kill gpfdist: ' + output)
+
+        command = "rm -rf %s" % (self.fname)
+        self.output(command)
+        (status, output) = commands.getstatusoutput(command)
+        if status != 0:
+            print('remove %s error. ' % (self.fname))
+        else:
+            self.output('remove %s successed ' % (self.fname))
+
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
 
