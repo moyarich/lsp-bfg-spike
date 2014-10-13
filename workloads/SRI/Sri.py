@@ -71,8 +71,6 @@ class Sri(Workload):
 
         cmd = cmd + partition_query + ';'
 
-        print partition_query
-
         with open('sri_tmp.sql', 'w') as f:
             f.write(cmd)
         
