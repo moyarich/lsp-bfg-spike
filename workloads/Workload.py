@@ -52,9 +52,11 @@ class Workload(object):
         self.us_id = 0
         self.tr_id = 0
         self.s_id = 0
+        self.continue_flag = True
+        
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
-        self.continue_flag = True
+        
         
         self.user = workload_specification['user'].strip()
         # check us_id if exist
@@ -95,6 +97,10 @@ class Workload(object):
 
         # set workload source directory
         self.workload_directory = workload_directory
+
+        # prepare result directory for workload
+        self.result_directory = self.workload_directory + os.sep + 'query_result'
+        os.system('mkdir -p %s' % (self.result_directory))
         
         # prepare report directory for workload
         if report_directory != '':
@@ -322,12 +328,13 @@ class Workload(object):
 
                     self.output(query)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name, flag = '-t')
+                    (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name, flag = '-t -A')
                     end_time = datetime.now()
-                    self.output('RESULT: ' + str(result))
                     
                     if ok:
                         status = 'SUCCESS'
+                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.ans', 'w') as f:
+                            f.write(str(result[0]))
                     else:
                         status = 'ERROR'
                 else:

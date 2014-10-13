@@ -143,8 +143,7 @@ class Tpch(Workload):
         self.load_data()
 
         # vacuum_analyze
-        if self.load_data_flag:
-            self.vacuum_analyze()
+        self.vacuum_analyze()
 
         # run workload concurrently and loop by iteration
         self.run_workload()
