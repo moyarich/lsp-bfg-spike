@@ -5,32 +5,32 @@ from datetime import datetime, date, timedelta
 try:
     from workloads.Workload import *
 except ImportError:
-    sys.stderr.write('TPCH needs workloads/Workload.py\n')
+    sys.stderr.write('XMARQ needs workloads/Workload.py\n')
     sys.exit(2)
 
 try:
     from pygresql import pg
 except ImportError:
-    sys.stderr.write('TPCH needs pygresql\n')
+    sys.stderr.write('XMARQ needs pygresql\n')
     sys.exit(2)
 
 try:
     from lib.PSQL import psql
 except ImportError:
-    sys.stderr.write('TPCH needs psql in lib/PSQL.py\n')
+    sys.stderr.write('XMARQ needs psql in lib/PSQL.py\n')
     sys.exit(2)
 
 try:
     from lib.QueryFile import QueryFile
 except ImportError:
-    sys.stderr.write('TPCH needs QueryFile in lib/QueryFile.py\n')
+    sys.stderr.write('XMARQ needs QueryFile in lib/QueryFile.py\n')
     sys.exit(2)
 
 
 class Xmarq(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
     
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)

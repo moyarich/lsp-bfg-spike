@@ -93,11 +93,15 @@ if __name__ == '__main__':
     parser.add_option('-a', '--standalone', dest='mode', action='store_true', default=False, help='Standalone mode')
     parser.add_option('-c', '--cluster', dest='cluster', action='store', help='Cluster for test execution')
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
+    parser.add_option('-v', '--validation', dest='validation', action='store_true', default=False, help='Validation')
     (options, args) = parser.parse_args()
     standalone_mode = options.mode
     cluster_name = options.cluster
     schedules = options.schedule
+    validation = options.validation
     cs_id = 0
+
+    print validation
 
     if schedules is None:
         sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
@@ -171,7 +175,7 @@ if __name__ == '__main__':
         try:
             workloads_mode = schedule_parser['workloads_mode'].upper()
             if workloads_mode == 'SEQUENTIAL':
-                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
+                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id, validation)
             elif workloads_mode == 'CONCURRENT':
                 workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name)
             elif workloads_mode == 'DYNAMIC':

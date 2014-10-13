@@ -6,36 +6,6 @@ workloads_mode: sequential
 
 workloads_content:
 
-    - workload_name: copy_ao_parquet
-      database_name: copy_ao_parquet
-      user: gpadmin
-      table_setting:
-          data_volume_type: total
-          data_volume_size: 1
-          append_only: true
-          orientation: PARQUET
-          row_group_size: 8388608
-          page_size: 1048576
-          partitions: 0
-      load_data_flag: false
-      run_workload_flag: false
-      run_workload_mode: SEQUENTIAL
-      num_iteration: 2
-
-    - workload_name: copy_ao_row
-      database_name: copy_ao_row
-      user: gpadmin
-      table_setting:
-          data_volume_type: total
-          data_volume_size: 1
-          append_only: true
-          orientation: ROW
-          compression_type: QuickLZ
-          compression_level: 1
-      load_data_flag: true
-      run_workload_mode: SEQUENTIAL
-      num_iteration: 2
-
     - workload_name: tpch_ao_row
       database_name: gpsqltest_tpch_ao_row
       user: gpadmin
@@ -46,7 +16,7 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
-      load_data_flag: true
+      load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1

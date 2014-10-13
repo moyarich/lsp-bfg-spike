@@ -46,13 +46,17 @@ except ImportError:
     sys.exit(2)
 
 class Workload(object):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation):
         # initialize common propertities for workload
         self.cs_id = cs_id
         self.us_id = 0
         self.tr_id = 0
         self.s_id = 0
+        self.validation = validation
         self.continue_flag = True
+
+        # set report.sql file
+        self.report_sql_file = report_sql_file
         
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
@@ -111,9 +115,6 @@ class Workload(object):
         os.system('mkdir -p %s' % (self.report_directory))
         # set output log and report
         self.output_file = os.path.join(self.report_directory, 'output.csv')
-
-        # set report.sql file
-        self.report_sql_file = report_sql_file
 
         # check flag for data loading
         if self.load_data_flag == 'TRUE':

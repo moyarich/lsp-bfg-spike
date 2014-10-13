@@ -29,9 +29,9 @@ except ImportError:
     
 
 class Gpfdist(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
         self.fname = self.workload_directory + os.sep + 'gpfdist.lineitem.tbl'
         self.dss = self.workload_directory + os.sep + 'dists.dss'
         self.host_name = config.getMasterHostName()
