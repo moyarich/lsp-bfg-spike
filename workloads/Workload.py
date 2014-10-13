@@ -344,9 +344,16 @@ class Workload(object):
                             f.write(str(result[0]))
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
                             result = f.read()
-                            md5code = hashlib.md5(result).hexdigest().upper()
+                            md5code = hashlib.md5(result).hexdigest()
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
                             f.write(md5code)
+                        
+                        if self.validation:
+                            if os.path.exists(self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'):
+                                pass
+                            elif os.path.exists(self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'):
+                                pass
+
                     else:
                         status = 'ERROR'
                 else:
