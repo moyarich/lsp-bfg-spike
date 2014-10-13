@@ -3,6 +3,7 @@ import sys
 import time
 from datetime import datetime
 import random
+import hashlib
 from multiprocessing import Process, Queue, Value , Array
 
 # pkgs = [('lib.PSQL', 'psql', 'lib/PSQL.py'), ('lib.utils.Check', 'check', 'lib/utils/Check.py'), \
@@ -103,8 +104,13 @@ class Workload(object):
         self.workload_directory = workload_directory
 
         # prepare result directory for workload
-        self.result_directory = self.workload_directory + os.sep + 'query_result'
+        self.result_directory = self.workload_directory + os.sep + 'queries_result'
         os.system('mkdir -p %s' % (self.result_directory))
+        os.system('rm -rf %s/*' % (self.result_directory))
+
+        self.ans_directory = self.workload_directory + os.sep + 'queries_ans'
+        if not os.path.exists(self.ans_directory):
+            self.output('workload:%s self.ans_directory does not exists' % (self.workload_name))
         
         # prepare report directory for workload
         if report_directory != '':
@@ -334,8 +340,13 @@ class Workload(object):
                     
                     if ok:
                         status = 'SUCCESS'
-                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.ans', 'w') as f:
+                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
                             f.write(str(result[0]))
+                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
+                            result = f.read()
+                            md5code = hashlib.md5(result).hexdigest().upper()
+                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
+                            f.write(md5code)
                     else:
                         status = 'ERROR'
                 else:

@@ -101,7 +101,6 @@ if __name__ == '__main__':
     validation = options.validation
     cs_id = 0
 
-    print validation
 
     if schedules is None:
         sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
