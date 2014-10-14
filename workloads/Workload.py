@@ -303,6 +303,21 @@ class Workload(object):
     def report_sql(self, msg):
         Report(self.report_sql_file, msg)
 
+    def validation_query_result(self, ans_file, result_file):
+        import commands
+        (status, output) = commands.getstatusoutput('diff %s %s' % (ans_file, result_file) )
+        if status == 0:
+            if output == '':
+                return True
+            else:
+                with open(result_file.split('.') + '.diff', 'w') as f:
+                    f.write(output)
+                return False
+        else:
+            with open(result_file.split('.') + '.diff', 'w') as f:
+                    f.write('diff error:' + str(status) + ' output: '+ output)
+            return False
+
     def load_data(self):
         '''Load data for workload'''
         pass
@@ -345,11 +360,19 @@ class Workload(object):
                             f.write(md5code)
                         
                         if self.validation:
-                            if os.path.exists(self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'):
-                                pass
-                            elif os.path.exists(self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'):
-                                pass
-
+                            ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
+                            md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
+                            if os.path.exists(ans_file):
+                                self.output('Validation use .ans file')
+                                if not self.validation_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
+                                    status = 'ERROR'
+                            elif os.path.exists(md5_file):
+                                self.output('Validation use .md5 file')
+                                if not self.validation_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
+                                    status = 'ERROR'
+                            else:
+                                self.output('no answer file')
+                                status = 'ERROR'
                     else:
                         status = 'ERROR'
                 else:
