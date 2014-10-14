@@ -307,16 +307,11 @@ class Workload(object):
     def validation_query_result(self, ans_file, result_file):
         import commands
         (status, output) = commands.getstatusoutput('diff %s %s' % (ans_file, result_file) )
-        if status == 0:
-            if output == '':
-                return True
-            else:
-                with open(result_file.split('.')[0] + '.diff', 'w') as f:
-                    f.write('diff between %s and %s: ' % (ans_file, result_file) + '\n' + output)
-                return False
+        if output == '':
+            return True
         else:
             with open(result_file.split('.')[0] + '.diff', 'w') as f:
-                    f.write('diff error:' + str(status) + ' output: '+ output)
+                f.write('diff between %s and %s: ' % (ans_file, result_file) + '\n' + output)
             return False
 
     def load_data(self):
@@ -342,21 +337,22 @@ class Workload(object):
                     with open(os.path.join(queries_directory, qf_name),'r') as f:
                         query = f.read()
                     query = query.replace('TABLESUFFIX', self.tbl_suffix)
-                    with open('run_query_tmp.sql','w') as f:
+                    with open(self.tmp_folder + os.sep + 'run_query_temp.sql', 'w') as f:
                         f.write(query)
 
                     self.output(query)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = 'run_query_tmp.sql', dbname = self.database_name, flag = '-t -A')
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'run_query_temp.sql', dbname = self.database_name, flag = '-t -A')
                     end_time = datetime.now()
                     
                     if ok:
                         status = 'SUCCESS'
+                        # generate output and md5 file
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
                             f.write(str(result[0]))
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
                             result = f.read()
-                            md5code = hashlib.md5(result).hexdigest()
+                            md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
                             f.write(md5code)
                         
