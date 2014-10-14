@@ -368,7 +368,7 @@ class Workload(object):
                                     status = 'ERROR'
                             elif os.path.exists(md5_file):
                                 self.output('Validation use .md5 file')
-                                if not self.validation_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
+                                if not self.validation_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.md5'):
                                     status = 'ERROR'
                             else:
                                 self.output('no answer file')
