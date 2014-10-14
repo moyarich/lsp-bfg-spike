@@ -56,12 +56,21 @@ class Workload(object):
         self.validation = validation
         self.continue_flag = True
 
-        # set report.sql file
-        self.report_sql_file = report_sql_file
-        
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
-        
+
+        # prepare report directory for workload
+        if report_directory != '':
+            self.report_directory = os.path.join(report_directory, self.workload_name)
+        else:
+            print 'Test report directory is not available before preparing report directory for workload %s' % (self.workload_name)
+            exit(2)
+        os.system('mkdir -p %s' % (self.report_directory))
+        # set output log and report
+        self.output_file = os.path.join(self.report_directory, 'output.csv')
+
+        # set report.sql file
+        self.report_sql_file = report_sql_file
         
         self.user = workload_specification['user'].strip()
         # check us_id if exist
@@ -75,12 +84,27 @@ class Workload(object):
             self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
         except Exception, e:
             self.load_data_flag = 'FALSE'
+        # check flag for data loading
+        if self.load_data_flag == 'TRUE':
+            self.load_data_flag = True
+        elif self.load_data_flag == 'FALSE':
+            self.load_data_flag = False
+        else:
+            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.load_data_flag))
+            exit(-1)
         
         try:
             self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
         except Exception, e:
             self.run_workload_flag = 'FALSE'
-        
+        # check flag for workload execution
+        if self.run_workload_flag == 'TRUE':
+            self.run_workload_flag = True
+        elif self.run_workload_flag == 'FALSE':
+            self.run_workload_flag = False
+        else:
+            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.run_workload_flag))
+            exit(-1)
         
         # get table setting and set table suffix, sql suffix, check_condition, and wl_values
         self.get_table_setting(workload_specification)
@@ -91,7 +115,7 @@ class Workload(object):
             self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
         except Exception, e:
             self.num_concurrency = 1
-        
+
         try:
             self.num_iteration = int(str(workload_specification['num_iteration']).strip())
         except Exception, e:
@@ -108,37 +132,9 @@ class Workload(object):
         os.system('mkdir -p %s' % (self.result_directory))
         os.system('rm -rf %s/*' % (self.result_directory))
 
-        self.ans_directory = self.workload_directory + os.sep + 'queries_ans'
+        self.ans_directory = self.workload_directory + os.sep + 'queries_ans_%dg' % (self.scale_factor)
         if not os.path.exists(self.ans_directory):
-            self.output('workload:%s self.ans_directory does not exists' % (self.workload_name))
-        
-        # prepare report directory for workload
-        if report_directory != '':
-            self.report_directory = os.path.join(report_directory, self.workload_name)
-        else:
-            print 'Test report directory is not available before preparing report directory for workload %s' % (self.workload_name)
-            exit(-1)
-        os.system('mkdir -p %s' % (self.report_directory))
-        # set output log and report
-        self.output_file = os.path.join(self.report_directory, 'output.csv')
-
-        # check flag for data loading
-        if self.load_data_flag == 'TRUE':
-            self.load_data_flag = True
-        elif self.load_data_flag == 'FALSE':
-            self.load_data_flag = False
-        else:
-            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.load_data_flag))
-            exit(-1)
-
-        # check flag for workload execution
-        if self.run_workload_flag == 'TRUE':
-            self.run_workload_flag = True
-        elif self.run_workload_flag == 'FALSE':
-            self.run_workload_flag = False
-        else:
-            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.run_workload_flag))
-            exit(-1)
+            self.output('%s ans_directory:%s does not exists' % (self.workload_name, self.ans_directory))
 
         # check mode for workload execution
         if self.run_workload_mode == 'SEQUENTIAL':
@@ -418,7 +414,7 @@ class Workload(object):
                 end_time = datetime.now()
                 self.output('RESULT: ' + str(result))
 
-                if ok:
+                if ok and str(result).find('ERROR') == -1:
                     status = 'SUCCESS'
                 else:
                     status = 'ERROR'

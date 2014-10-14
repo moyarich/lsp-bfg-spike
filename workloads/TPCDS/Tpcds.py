@@ -86,7 +86,6 @@ class Tpcds(Workload):
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
         self.pwd = os.path.abspath(os.path.dirname(__file__))
-        self.schema_folder = os.path.join(self.pwd, 'schema')
         self.hostfile_master = os.path.join(self.pwd, 'hostfile_master')
         self.hostfile_seg = os.path.join(self.pwd, 'hostfile_seg')
         self.seg_hostname_list = None
@@ -310,9 +309,9 @@ class Tpcds(Workload):
                 self.output('total generation time: %s minutes' % (total_minutes))
                 break
             else:
-                self.output('Data generation still going on. Wait another 0.5 minutes')
+                self.output('Data generation still going on. Wait another 30 minutes')
                 time.sleep(30)
-                total_minutes += 0.5       
+                total_minutes += 0.5      
 
     
 
@@ -376,13 +375,17 @@ class Tpcds(Workload):
                 end_time = datetime.now()
                 self.output('RESULT: ' + str(result))
                 
-                if ok: 
+                if ok and str(result).find('ERROR') == -1: 
                     status = 'SUCCESS'    
                 else:
                     status = 'ERROR'
                     beg_time = datetime.now()
                     end_time = beg_time
                     self.continue_flag = False
+            else:
+                status = 'ERROR'
+                beg_time = datetime.now()
+                end_time = beg_time
 
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
@@ -475,8 +478,7 @@ class Tpcds(Workload):
         self.load_data()
 
         # vacuum_analyze
-        if self.load_data_flag:
-            self.vacuum_analyze()
+        self.vacuum_analyze()
 
         # run workload concurrently and loop by iteration
         self.run_workload()

@@ -107,7 +107,7 @@ class Tpch(Workload):
                     end_time = datetime.now()
                     self.output('RESULT: ' + str(result))
 
-                    if ok:
+                    if ok and str(result).find('ERROR') == -1:
                         status = 'SUCCESS'
                     else:
                         status = 'ERROR'
