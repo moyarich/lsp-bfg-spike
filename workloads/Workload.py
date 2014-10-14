@@ -314,7 +314,7 @@ class Workload(object):
                     f.write('diff between %s and %s: ' % (ans_file, result_file) + '\n' + output)
                 return False
         else:
-            with open(result_file.split('.') + '.diff', 'w') as f:
+            with open(result_file.split('.')[0] + '.diff', 'w') as f:
                     f.write('diff error:' + str(status) + ' output: '+ output)
             return False
 
@@ -363,15 +363,15 @@ class Workload(object):
                             ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
                             md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
                             if os.path.exists(ans_file):
-                                self.output('Validation use .ans file')
+                                self.output('Validation use ans file')
                                 if not self.validation_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
                                     status = 'ERROR'
                             elif os.path.exists(md5_file):
-                                self.output('Validation use .md5 file')
+                                self.output('Validation use md5 file')
                                 if not self.validation_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.md5'):
                                     status = 'ERROR'
                             else:
-                                self.output('no answer file')
+                                self.output('No answer file')
                                 status = 'ERROR'
                     else:
                         status = 'ERROR'
