@@ -121,6 +121,7 @@ if __name__ == '__main__':
     # prepare report directory with times and the report.sql file
     report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
     os.system('mkdir -p %s' % (report_directory))
+    os.system('mkdir -p %s' % (report_directory + os.sep + 'tmp'))
     report_sql_file = os.path.join(report_directory, 'report.sql')
     
     schedule_list = schedules.split(',')
