@@ -355,6 +355,8 @@ class Tpcds(Workload):
                             gpfdist_map[table_name].append("'gpfdist://%s:%s/%s'" % (cur_host, self.gpfdist_port, file_name))
 
         for table_name in tables:
+            if len(gpfdist_map[table_name]) == 0:
+                print(table_name + ' has no data files, generate data wrong in workload ' + self.workload_name)
             self.output(table_name + ':' + str(len(gpfdist_map[table_name])) + ' data files')
         
         self.output('--Start loading data into tables')
