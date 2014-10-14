@@ -4,7 +4,7 @@ workloads_mode: sequential
 workloads_content:
 
     - workload_name: tpcds_ao_row
-      database_name: tpcds
+      database_name: tpcds_ao_row
       user: gpadmin
       table_setting:
           data_volume_type: total
@@ -13,8 +13,9 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
-      load_data_flag: false
-      run_workload_flag: false
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1

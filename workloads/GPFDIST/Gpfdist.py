@@ -32,7 +32,7 @@ class Gpfdist(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
-        self.fname = self.workload_directory + os.sep + 'gpfdist.lineitem.tbl'
+        self.fname = self.tmp_folder + os.sep + 'gpfdist.lineitem.tbl'
         self.dss = self.workload_directory + os.sep + 'dists.dss'
         self.host_name = config.getMasterHostName()
 
@@ -66,7 +66,7 @@ class Gpfdist(Workload):
         self.output('-- start gpfdist service')
         self.gpfdist_port = self._getOpenPort()
 
-        cmd = "gpssh -h %s -e 'gpfdist -d %s -p %d -l ./gpfdist.log &'" % (self.host_name, self.workload_directory, self.gpfdist_port)
+        cmd = "gpssh -h %s -e 'gpfdist -d %s -p %d -l ./gpfdist.log &'" % (self.host_name, self.tmp_folder, self.gpfdist_port)
         (status, output) = commands.getstatusoutput(cmd)
         self.output(cmd)
         self.output(output)
@@ -96,16 +96,16 @@ class Gpfdist(Workload):
                     with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
                         cmd = f.read()
                     cmd = self.replace_sql(sql = cmd, table_name = table_name, num = niteration)
-                    with open('loading_data_tmp.sql', 'w') as f:
+                    with open(self.tmp_folder + os.sep + 'gpfdist_loading_temp.sql', 'w') as f:
                         f.write(cmd)
 
                     self.output(cmd)    
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = 'loading_data_tmp.sql', dbname = self.database_name)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'gpfdist_loading_temp.sql', dbname = self.database_name)
                     end_time = datetime.now()
                     self.output('RESULT: ' + str(result))
 
-                    if ok: 
+                    if ok and str(result).find('ERROR') == -1: 
                         status = 'SUCCESS'    
                     else:
                         status = 'ERROR'

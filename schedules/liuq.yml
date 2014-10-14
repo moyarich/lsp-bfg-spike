@@ -1,5 +1,5 @@
-#workloads_list: gpfdist_ao_row,gpfdist_ao_parquet,copy_ao_row,copy_ao_parquet,sri_ao_row,sri_ao_parquet
-workloads_list: copy_ao_row
+workloads_list: gpfdist_ao_row,copy_ao_parquet,sri_ao_row,sri_ao_parquet
+#workloads_list: copy_ao_row
 workloads_mode: sequential
 
 workloads_content:
@@ -43,7 +43,7 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
-      load_data_flag: false
+      load_data_flag: true
       run_workload_mode: SEQUENTIAL
       num_iteration: 2
 
@@ -58,7 +58,7 @@ workloads_content:
           row_group_size: 8388608
           page_size: 1048576
           partitions: 0
-      load_data_flag: false
+      load_data_flag: true
       run_workload_mode: SEQUENTIAL
       num_iteration: 2
 
@@ -72,7 +72,7 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
-      load_data_flag: false
+      load_data_flag: true
       run_workload_mode: SEQUENTIAL
       num_iteration: 10
 

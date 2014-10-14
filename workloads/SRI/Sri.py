@@ -51,7 +51,6 @@ class Sri(Workload):
 
         cmd = 'drop table if exists sri_table_%s;\n' % (self.tbl_suffix) + 'create table sri_table_%s (tid int, bdate date, aid int, delta int, mtime timestamp) with (%s) distributed by (tid)' % (self.tbl_suffix, self.sql_suffix)
         
-        
         if self.partitions == 0 or self.partitions is None:
             partition_query = ''
         else:
@@ -71,11 +70,11 @@ class Sri(Workload):
 
         cmd = cmd + partition_query + ';'
 
-        with open('sri_tmp.sql', 'w') as f:
+        with open(self.tmp_folder + os.sep + 'sri_loading_temp.sql', 'w') as f:
             f.write(cmd)
         
         self.output(cmd)    
-        (ok, result) = psql.runfile(ifile = 'sri_tmp.sql', dbname = self.database_name)
+        (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'sri_loading_temp.sql', dbname = self.database_name)
         self.output('RESULT: ' + str(result))
         
         niteration = 1
@@ -86,16 +85,16 @@ class Sri(Workload):
                 ' (tid, bdate, aid, delta, mtime) values ( %d, \'%d-%02d-%02d\', 1, 1, current_timestamp);' \
                 % (niteration, randint(1992,1997), randint(01, 12),randint(01, 28))
                 
-                with open('sri_tmp.sql', 'w') as f:
+                with open(self.tmp_folder + os.sep + 'sri_loading_temp.sql', 'w') as f:
                     f.write(cmd)
 
                 self.output(cmd)    
                 beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = 'sri_tmp.sql', dbname = self.database_name)
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'sri_loading_temp.sql', dbname = self.database_name)
                 end_time = datetime.now()
                 self.output('RESULT: ' + str(result))
 
-                if ok: 
+                if ok and str(result).find('ERROR') == -1: 
                     status = 'SUCCESS'    
                 else:
                     status = 'ERROR'

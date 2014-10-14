@@ -27,7 +27,7 @@ class Copy(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
-        self.fname = self.workload_directory + os.sep + 'copy.lineitem.tbl'
+        self.fname = self.tmp_folder + os.sep + 'copy.lineitem.tbl'
         self.dss = self.workload_directory + os.sep + 'dists.dss'
 
     def setup(self):
@@ -75,16 +75,16 @@ class Copy(Workload):
                     with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
                         cmd = f.read()
                     cmd = self.replace_sql(sql = cmd, table_name = table_name, num = niteration)
-                    with open('loading_data_tmp.sql', 'w') as f:
+                    with open(self.tmp_folder + os.sep + 'copy_loading_temp.sql', 'w') as f:
                         f.write(cmd)
 
                     self.output(cmd)    
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = 'loading_data_tmp.sql', dbname = self.database_name)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name)
                     end_time = datetime.now()
                     self.output('RESULT: ' + str(result))
 
-                    if ok: 
+                    if ok and str(result).find('ERROR') == -1: 
                         status = 'SUCCESS'    
                     else:
                         status = 'ERROR'
@@ -108,6 +108,16 @@ class Copy(Workload):
 
         self.output('-- Complete loading data')      
     
+    def clean_up(self):
+        command = "rm -rf %s" % (self.fname)
+        self.output(command)
+        (status, output) = commands.getstatusoutput(command)
+        if status != 0:
+            print('remove %s error. ' % (self.fname))
+        else:
+            self.output('remove %s successed ' % (self.fname))
+
+
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
 

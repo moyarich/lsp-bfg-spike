@@ -59,6 +59,9 @@ class Workload(object):
         self.workload_name = workload_specification['workload_name'].strip()
         self.database_name = workload_specification['database_name'].strip()
 
+        # set workload source directory
+        self.workload_directory = workload_directory
+
         # prepare report directory for workload
         if report_directory != '':
             self.report_directory = os.path.join(report_directory, self.workload_name)
@@ -69,8 +72,14 @@ class Workload(object):
         # set output log and report
         self.output_file = os.path.join(self.report_directory, 'output.csv')
 
-        # set report.sql file
+        # prepare result directory for workload
+        self.result_directory = self.report_directory + os.sep + 'queries_result'
+        os.system('mkdir -p %s' % (self.result_directory))
+        os.system('rm -rf %s/*' % (self.result_directory))
+
+        # set report.sql file and tmp folder
         self.report_sql_file = report_sql_file
+        self.tmp_folder = report_sql_file.replace('report.sql', 'tmp')
         
         self.user = workload_specification['user'].strip()
         # check us_id if exist
@@ -109,6 +118,10 @@ class Workload(object):
         # get table setting and set table suffix, sql suffix, check_condition, and wl_values
         self.get_table_setting(workload_specification)
 
+        self.ans_directory = self.workload_directory + os.sep + 'queries_ans_%dg' % (self.scale_factor)
+        if not os.path.exists(self.ans_directory):
+            self.output('%s ans_directory:%s does not exists' % (self.workload_name, self.ans_directory))
+
         self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
         
         try:
@@ -123,18 +136,6 @@ class Workload(object):
         
         self.check_condition += ' and wl_iteration = %d and wl_concurrency = %d' % (self.num_iteration, self.num_concurrency)
         self.wl_values += ', %d, %d' % (self.num_iteration, self.num_concurrency)
-
-        # set workload source directory
-        self.workload_directory = workload_directory
-
-        # prepare result directory for workload
-        self.result_directory = self.workload_directory + os.sep + 'queries_result'
-        os.system('mkdir -p %s' % (self.result_directory))
-        os.system('rm -rf %s/*' % (self.result_directory))
-
-        self.ans_directory = self.workload_directory + os.sep + 'queries_ans_%dg' % (self.scale_factor)
-        if not os.path.exists(self.ans_directory):
-            self.output('%s ans_directory:%s does not exists' % (self.workload_name, self.ans_directory))
 
         # check mode for workload execution
         if self.run_workload_mode == 'SEQUENTIAL':
