@@ -311,7 +311,7 @@ class Workload(object):
                 return True
             else:
                 with open(result_file.split('.')[0] + '.diff', 'w') as f:
-                    f.write('diff between %s and %s: ' % (ans_file, result_file) + output + '\n')
+                    f.write('diff between %s and %s: ' % (ans_file, result_file) + '\n' + output)
                 return False
         else:
             with open(result_file.split('.') + '.diff', 'w') as f:
