@@ -15,8 +15,6 @@ workloads_content:
           row_group_size: 8388608
           page_size: 1048576
           compression_type: SNAPPY
-          compression_level: 0
-          partitions: 0
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -33,7 +31,6 @@ workloads_content:
           orientation: ROW
           compression_type: QUICKLZ
           compression_level: 1
-          partitions: 0
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -50,7 +47,6 @@ workloads_content:
           orientation: COLUMN
           compression_type: QUICKLZ
           compression_level: 1
-          partitions: 0
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
