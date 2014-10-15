@@ -45,9 +45,6 @@ for child in children:
     process_pool.append(process)
     process_name[process] = 'Process_' + str(child) + '_' + str(parallel_setting)
     
-with open('status.txt','w') as f:
-    f.write('generating')
-    
 while True:
     finished_pool = []
     finish_generating = True
@@ -64,12 +61,8 @@ while True:
     if finish_generating:
         break
     else:
-        # 20 minutes
+        # 30 seconds
         time.sleep(30)
-        
-# update status
-with open('status.txt','w') as f:
-    f.write('done\\n')
 
 # write dat files
 with open('dat_files.txt','w') as f:
@@ -85,9 +78,8 @@ class Tpcds(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
-        self.pwd = os.path.abspath(os.path.dirname(__file__))
-        self.hostfile_master = os.path.join(self.pwd, 'hostfile_master')
-        self.hostfile_seg = os.path.join(self.pwd, 'hostfile_seg')
+        self.hostfile_master = os.path.join(self.tmp_folder, 'hostfile_master')
+        self.hostfile_seg = os.path.join(self.tmp_folder, 'hostfile_seg')
         self.seg_hostname_list = None
         self.seg_host_num = 1
         self.tmp_tpcds_folder = '/data/tmp/tpcds_loading/'
@@ -145,10 +137,10 @@ class Tpcds(Workload):
         
     def _prepare_data_gen(self):
         # Check if dsdgen file exists, else make it
-        if os.path.exists(os.path.join(self.pwd, 'dsdgen')):
+        if os.path.exists(os.path.join(self.workload_directory, 'dsdgen')):
             pass
         else:
-            data_gen_folder = os.path.join(self.pwd, 'data_gen')
+            data_gen_folder = os.path.join(self.workload_directory, 'data_gen')
             if not os.path.exists(data_gen_folder):
                 print('data_gen folder does not exist. Exit. ')
                 sys.exit(2)
@@ -161,7 +153,7 @@ class Tpcds(Workload):
                 sys.exit(2)
             else:
                 print('Compile data gen code.')
-                command2 = 'cd %s; cp dsdgen %s' % (data_gen_folder, self.pwd)
+                command2 = 'cd %s; cp dsdgen %s' % (data_gen_folder, self.workload_directory)
                 (s2, o2) = commands.getstatusoutput(command2)
                 if s2 != 0:
                     print('Error happen in copy dsdgen.')
@@ -170,7 +162,7 @@ class Tpcds(Workload):
                     print('Copy dsdgen to pwd.')
         
         # Check if tpcds_idx file exists
-        self.tpcds_idx = os.path.join(self.pwd, 'tpcds.idx')
+        self.tpcds_idx = os.path.join(self.workload_directory, 'tpcds.idx')
         if not os.path.exists(self.tpcds_idx):
             print('tpcds.idx does not exist. Exit. ')
             sys.exit(2)
@@ -202,7 +194,7 @@ class Tpcds(Workload):
             self.output('tmp folder prepared.')
 
     def _scp_data_gen_code(self):
-        cmd1 = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, os.path.join(self.pwd, 'dsdgen'), self.tmp_tpcds_folder)
+        cmd1 = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, os.path.join(self.workload_directory, 'dsdgen'), self.tmp_tpcds_folder)
         cmd2 = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.tpcds_idx, self.tmp_tpcds_folder)
         cmd3 ="gpssh -f %s -e 'chmod 755 %s; chmod 755 %s'" \
         % (self.hostfile_seg, os.path.join(self.tmp_tpcds_folder, 'dsdgen'), os.path.join(self.tmp_tpcds_folder, 'tpcds.idx'))
@@ -245,75 +237,36 @@ class Tpcds(Workload):
                 count += 1
             child += ']'
 
-            python_script_base_name = cur_host+'.py'
-            host_python_script = os.path.join(self.pwd, cur_host+'.py')
-            with open(host_python_script, 'w') as f:
+            python_script_name = 'tpcds_generate_data.py'
+            python_script_file = os.path.join(self.tmp_folder, python_script_name)
+            with open(python_script_file, 'w') as f:
                 f.write(command_template
                     % (child, total_paralle, self.scale_factor, self.tmp_tpcds_data_folder))
             
-            cmd1 = 'gpscp -h %s %s =:%s'%(cur_host, host_python_script, self.tmp_tpcds_folder)
+            cmd1 = 'gpscp -h %s %s =:%s'%(cur_host, python_script_file, self.tmp_tpcds_folder)
             (s1, o1) = commands.getstatusoutput(cmd1)
             if s1 != 0:
                 print('Error happen in scp seg python script.')
                 print(o1)
                 sys.exit(2)
             
-            cmd2 = "gpssh -h %s -e 'cd %s;chmod 755 %s'"%(cur_host,self.tmp_tpcds_folder, python_script_base_name)
+            cmd2 = "gpssh -h %s -e 'cd %s;chmod 755 %s'"%(cur_host,self.tmp_tpcds_folder, python_script_name)
             (s2, o2) = commands.getstatusoutput(cmd2)
             if s2 != 0:
                 print('Error happen in chmod seg python script.')
                 print(o2)
                 sys.exit(2)
                 
-            cmd = 'cd %s; python %s &' %(self.tmp_tpcds_folder, python_script_base_name)        
-            command = "gpssh -h %s -e '%s'" % (cur_host, cmd)
-            (status, output) = commands.getstatusoutput(command)
-            if status != 0:
-                print('execute generate script in segment failed ')
-                print(command)
-                print(output)
-                sys.exit(2)
-            else:
-                self.output('execute generate script in segment succeed')
-            seg_hosts.append(cur_host)
-            
-            
-        #wait for finish
-        total_minutes = 0
-        check_cmd_template = "gpssh -h %s -e 'cat " + os.path.join(self.tmp_tpcds_folder,'status.txt') + "'"
-        while True:                
-            finished_pool = []
-            finish_generating = True
-            for cur_host in seg_hosts:
-                # check if that is done
-                check_cmd =check_cmd_template % cur_host
-                (s1, o1) = commands.getstatusoutput(check_cmd)
-                if s1 != 0:
-                    print ('check status.txt failed.')
-                    print(o1)
-                    sys.exit(2)
-                
-                if o1.find('done') != -1:
-                    self.output('%s finished' % (cur_host))
-                    finished_pool.append(cur_host)
-                else:
-                    finish_generating = False
-                    break
-            
-            # remove finished
-            for p in finished_pool:
-                seg_hosts.remove(p)
-
-            if finish_generating:
-                self.output('Data generation finished in all segments.')
-                self.output('total generation time: %s minutes' % (total_minutes))
-                break
-            else:
-                self.output('Data generation still going on. Wait another 30 minutes')
-                time.sleep(30)
-                total_minutes += 0.5      
-
-    
+        cmd = 'cd %s; python %s' %(self.tmp_tpcds_folder, python_script_name)        
+        command = "gpssh -f %s -e '%s'" % (self.hostfile_seg, cmd)
+        (status, output) = commands.getstatusoutput(command)
+        if status != 0:
+            print('execute generate script in segment failed ')
+            print(command)
+            print(output)
+            sys.exit(2)
+        else:
+            self.output('execute generate script in segment %s succeed' % (str(self.seg_hostname_list)))
 
     def load_loading(self, tables):
         self.output('--Start gpfdist')
