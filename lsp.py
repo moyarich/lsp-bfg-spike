@@ -106,7 +106,7 @@ if __name__ == '__main__':
     schedule_list = schedules.split(',')
     beg_time = datetime.now()
 
-    start_flag = True
+    start_flag = False
     # parse schedule file
     for schedule_name in schedule_list:
         schedule_file = LSP_HOME + os.sep + 'schedules' + os.sep + schedule_name + '.yml'
@@ -122,9 +122,9 @@ if __name__ == '__main__':
                 sys.stderr.write('Invalid cluster name %s!\n' % (cluster_name))
                 continue
 
-        if start_flag:
+        if not start_flag:
             # add test run information in backend database if lsp not run in standalone mode
-            start_flag = False
+            start_flag = True
             if standalone_mode is False:
                 output = commands.getoutput('cat ~/qa.sh')
                 try:
@@ -190,7 +190,7 @@ if __name__ == '__main__':
     duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
 
     # update backend database to log execution time
-    if standalone_mode is False and start_flag is False:
+    if standalone_mode is False and start_flag:
         check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration), search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
 
         # add detailed execution information of test cases into backend database
