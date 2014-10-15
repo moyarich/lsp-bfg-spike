@@ -24,4 +24,5 @@ group by
  and n_name = 'ARGENTINA'
  )
 order by
+ ps_partkey desc,
  value desc;
