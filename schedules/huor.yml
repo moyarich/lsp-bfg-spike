@@ -2,7 +2,10 @@
 # workloads_list: tpch_ao_row,tpch_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_co
 workloads_list: tpch_ao_row
+
 workloads_mode: sequential
+
+cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
 

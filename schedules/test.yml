@@ -4,6 +4,8 @@ workloads_list: tpch_ao_parquet_nocomp_nopart_run3
 
 workloads_mode: sequential
 
+cluster_name: HAWQ main performance on Geneva cluster
+
 workloads_content:
 
     - workload_name: tpch_ao_parquet_nocomp_nopart_load_run

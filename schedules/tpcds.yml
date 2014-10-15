@@ -2,6 +2,8 @@ workloads_list: tpcds_parquet_3000g_snappy_nopart, tpcds_row_3000g_quicklz1_nopa
 
 workloads_mode: sequential
 
+cluster_name: HAWQ main performance on Geneva cluster
+
 workloads_content:
 
     - workload_name: tpcds_parquet_3000g_snappy_nopart

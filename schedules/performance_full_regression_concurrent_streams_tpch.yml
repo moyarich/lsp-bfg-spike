@@ -2,6 +2,8 @@ workloads_list: tpch_parquet_200gpn_snappy_part, tpch_row_200gpn_quicklz1_part, 
 
 workloads_mode: concurrent
 
+cluster_name: HAWQ main performance on Geneva cluster
+
 workloads_content:
 
     # TPC-H with parquet storage

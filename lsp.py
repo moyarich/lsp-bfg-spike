@@ -91,74 +91,71 @@ if __name__ == '__main__':
     # parse user options
     parser = OptionParser()
     parser.add_option('-a', '--standalone', dest='mode', action='store_true', default=False, help='Standalone mode')
-    parser.add_option('-c', '--cluster', dest='cluster', action='store', help='Cluster for test execution')
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
     parser.add_option('-v', '--validation', dest='validation', action='store_true', default=False, help='Validation')
     (options, args) = parser.parse_args()
     standalone_mode = options.mode
-    cluster_name = options.cluster
     schedules = options.schedule
     validation = options.validation
     cs_id = 0
 
-
     if schedules is None:
-        sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
+        sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
         sys.exit(2)
-    
-    # check cluster information if lsp not run in standalone mode
-    if standalone_mode is False:
-        if cluster_name is None:
-            sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -c cluster_name -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
-            sys.exit(2)
 
-        # check if specified cluster exists 
-        cs_id = check.check_id(result_id = 'cs_id', table_name = 'hst.cluster_settings', search_condition = "cs_name = '%s'" % (cluster_name))
-        if cs_id is None:
-            sys.stderr.write('Invalid cluster name %s!\n' % (cluster_name))
-            sys.exit(2)
-
-    # prepare report directory with times and the report.sql file
-    report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
-    os.system('mkdir -p %s' % (report_directory))
-    os.system('mkdir -p %s' % (report_directory + os.sep + 'tmp'))
-    report_sql_file = os.path.join(report_directory, 'report.sql')
-    
     schedule_list = schedules.split(',')
     beg_time = datetime.now()
-    # add test run information in backend database if lsp not run in standalone mode
-    if standalone_mode is False:
 
-        output = commands.getoutput('cat ~/qa.sh')
-        try:
-            wd = output[output.index('wd='):].split('"')[1]
-            output = commands.getoutput('%s; cat build_info_file.txt' % (wd))
-            build_id = output[output.index('PULSE_ID_INFO'):].split('\n')[0].split('=')[1]
-            build_url = output[output.index('PULSE_PROJECT_INFO'):].split('\n')[0].split('=')[1]
-        except Exception, e:
-            print('read build_info_file error. ')
-            build_id = -1
-            build_url = 'Local'
-
-        (status, output) = commands.getstatusoutput('rpm -qa | grep hadoop | grep hdfs | grep -v node')
-        hdfs_version = output
-        if status != 0 or hdfs_version == '':
-            hdfs_version = 'Local HDFS Deployment'
-
-        (status, output) = commands.getstatusoutput('rpm -qa | grep hawq')
-        hawq_version = output
-        if status != 0 or hawq_version == '':
-            hawq_version = 'Local HAWQ Deployment'
-
-        check.insert_new_record(table_name = 'hst.test_run', 
-            col_list = 'pulse_build_id, pulse_build_url, hdfs_version, hawq_version, start_time', 
-            values = "'%s', '%s', '%s', '%s', '%s'" % (build_id, build_url, hdfs_version, hawq_version, str(beg_time).split('.')[0]))
-
+    start_flag = True
     # parse schedule file
     for schedule_name in schedule_list:
         schedule_file = LSP_HOME + os.sep + 'schedules' + os.sep + schedule_name + '.yml'
         with open(schedule_file, 'r') as fschedule:
             schedule_parser = yaml.load(fschedule)
+
+        # check cluster information if lsp not run in standalone mode
+        if standalone_mode is False:
+            cluster_name = schedule_parser['cluster_name']
+            # check if specified cluster exists 
+            cs_id = check.check_id(result_id = 'cs_id', table_name = 'hst.cluster_settings', search_condition = "cs_name = '%s'" % (cluster_name))
+            if cs_id is None:
+                sys.stderr.write('Invalid cluster name %s!\n' % (cluster_name))
+                continue
+
+        if start_flag:
+            # add test run information in backend database if lsp not run in standalone mode
+            start_flag = False
+            if standalone_mode is False:
+                output = commands.getoutput('cat ~/qa.sh')
+                try:
+                    wd = output[output.index('wd='):].split('"')[1]
+                    output = commands.getoutput('%s; cat build_info_file.txt' % (wd))
+                    build_id = output[output.index('PULSE_ID_INFO'):].split('\n')[0].split('=')[1]
+                    build_url = output[output.index('PULSE_PROJECT_INFO'):].split('\n')[0].split('=')[1]
+                except Exception, e:
+                    print('read build_info_file error. ')
+                    build_id = -1
+                    build_url = 'Local'
+
+                (status, output) = commands.getstatusoutput('rpm -qa | grep hadoop | grep hdfs | grep -v node')
+                hdfs_version = output
+                if status != 0 or hdfs_version == '':
+                    hdfs_version = 'Local HDFS Deployment'
+
+                (status, output) = commands.getstatusoutput('rpm -qa | grep hawq')
+                hawq_version = output
+                if status != 0 or hawq_version == '':
+                    hawq_version = 'Local HAWQ Deployment'
+
+                check.insert_new_record(table_name = 'hst.test_run', 
+                    col_list = 'pulse_build_id, pulse_build_url, hdfs_version, hawq_version, start_time', 
+                    values = "'%s', '%s', '%s', '%s', '%s'" % (build_id, build_url, hdfs_version, hawq_version, str(beg_time).split('.')[0]))
+            
+            # prepare report directory with times and the report.sql file
+            report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
+            os.system('mkdir -p %s' % (report_directory))
+            os.system('mkdir -p %s' % (report_directory + os.sep + 'tmp'))
+            report_sql_file = os.path.join(report_directory, 'report.sql')
 
         # parse list of the workloads for execution
         workloads_list = schedule_parser['workloads_list']
