@@ -96,7 +96,7 @@ class Tpcds(Workload):
             cnx.close()
 
     def load_data(self):
-        self.output('-- Start loading data')
+        self.output('\n-- Start loading data')
 
         tables = ['call_center', 'catalog_page', 'catalog_returns', 'catalog_sales', 'customer', 'customer_address',
         'customer_demographics', 'date_dim', 'household_demographics', 'income_band', 'inventory', 'item',
@@ -117,10 +117,10 @@ class Tpcds(Workload):
     
     
     def load_setup(self):
-        self.output('--Check files hostfile_master and hostfile_seg')
+        self.output('\n--Check files hostfile_master and hostfile_seg')
         self._prepare_hostfile()
         
-        self.output('--Check files dsdgen and tpcds.idx')
+        self.output('\n--Check files dsdgen and tpcds.idx')
         self._prepare_data_gen()
 
     def _prepare_hostfile(self):
@@ -172,13 +172,13 @@ class Tpcds(Workload):
         """
         copy dsdgen to each host and generate data in parallel 
         """
-        self.output('--Prepare tmp folder')
+        self.output('\n--Prepare tmp folder')
         self._prepare_tmp_folder()
         
-        self.output('--Scp dsdgen and tpcds.idx to hostfile_seg')
+        self.output('\n--Scp dsdgen and tpcds.idx to hostfile_seg')
         self._scp_data_gen_code()
         
-        self.output('-- Generate data on every segments')
+        self.output('\n-- Generate data on every segments')
         self._data_gen_segment()
     
     def _prepare_tmp_folder(self):
@@ -223,11 +223,10 @@ class Tpcds(Workload):
     def _data_gen_segment(self):
         total_paralle = self.nsegs
         seg_num = self.nsegs / self.seg_host_num
-        seg_hosts = []
         count = 1
         for cur_host in self.seg_hostname_list:
             self.output('generate script for %s' % (cur_host))
-            # generate python command for each segment.
+            # generate  for each segment.
             child = '[' + str(count)
             count += 1
             i = 1
@@ -269,7 +268,7 @@ class Tpcds(Workload):
             self.output('execute generate script in segment %s succeed' % (str(self.seg_hostname_list)))
 
     def load_loading(self, tables):
-        self.output('--Start gpfdist')
+        self.output('\n--Start gpfdist')
         self._start_gpfdist()
         cmd = "gpssh -f %s -e 'ps -ef | grep gpfdist'" % (self.hostfile_seg)   
         (status, output) = commands.getstatusoutput(cmd)
@@ -312,7 +311,7 @@ class Tpcds(Workload):
                 print(table_name + ' has no data files, generate data wrong in workload ' + self.workload_name)
             self.output(table_name + ':' + str(len(gpfdist_map[table_name])) + ' data files')
         
-        self.output('--Start loading data into tables')
+        self.output('\n--Start loading data into tables')
         # run all sql in each loading data file
         for table_name in tables:
             if self.continue_flag:
@@ -384,9 +383,9 @@ class Tpcds(Workload):
 
 
     def clean_up(self):
-        self.output('--Stop gpfdist')
+        self.output('\n--Stop gpfdist')
         self._stop_gpfdist()
-        self.output('--Delete tmp data folder')
+        self.output('\n--Delete tmp data folder')
         self._delete_data()
         
     def _stop_gpfdist(self):
