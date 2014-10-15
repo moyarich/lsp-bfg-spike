@@ -190,7 +190,7 @@ if __name__ == '__main__':
     duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
 
     # update backend database to log execution time
-    if standalone_mode is False:
+    if standalone_mode is False and start_flag is False:
         check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration), search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
 
         # add detailed execution information of test cases into backend database
