@@ -1,8 +1,44 @@
-workloads_list: gpfdist_ao_row,copy_ao_parquet,sri_ao_row,sri_ao_parquet
+workloads_list: tpcds_parquet_1g_snappy_nopart
+#tpcds_row_1g_quicklz_part
+#gpfdist_ao_row,copy_ao_parquet,sri_ao_row,sri_ao_parquet
 #workloads_list: copy_ao_row
 workloads_mode: sequential
 
 workloads_content:
+
+    - workload_name: tpcds_parquet_1g_snappy_nopart
+      database_name: tpcds_parquet_1g_snappy_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+      load_data_flag: true
+      run_workload_flag: false
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpcds_row_1g_quicklz_part
+      database_name: tpcds_row_1g_quicklz_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
 
     - workload_name: copy_ao_row
       database_name: copy
