@@ -265,7 +265,7 @@ class Tpcds(Workload):
                 print(o2)
                 sys.exit(2)
                 
-            cmd = 'cd %s; python %s > ./%s 2>&1' %(self.tmp_tpcds_folder, python_script_base_name, python_script_base_name + '.out')        
+            cmd = 'cd %s; python %s &' %(self.tmp_tpcds_folder, python_script_base_name)        
             command = "gpssh -h %s -e '%s'" % (cur_host, cmd)
             (status, output) = commands.getstatusoutput(command)
             if status != 0:
