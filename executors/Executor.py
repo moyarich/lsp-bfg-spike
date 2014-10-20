@@ -29,13 +29,20 @@ except ImportError:
 try:
     from workloads.SRI.Sri import Sri
 except ImportError:
-    sys.stderr.write('Executor needs Sru Workload in workloads/SRI/Sri.py\n')
+    sys.stderr.write('Executor needs Sri Workload in workloads/SRI/Sri.py\n')
+    sys.exit(2)
 
 try:
     from workloads.GPFDIST.Gpfdist import Gpfdist
 except ImportError:
     sys.stderr.write('Executor needs Gpfdist Workload in workloads/GPFDIST/Gpfdist.py\n')
+    sys.exit(2)
 
+try:
+    from workloads.RETAIL.Retail import Retail
+except ImportError:
+    sys.stderr.write('Executor needs Retail Workload in workloads/RETAIL/Retail.py\n')
+    sys.exit(2)
 
 LSP_HOME = os.getenv('LSP_HOME')
 
@@ -75,7 +82,7 @@ class Executor(object):
                 continue
 
             # add one workload into the workloads_instance list
-            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST'):
+            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAIL'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 wl_instance = workload_category.lower().capitalize() + \
