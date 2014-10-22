@@ -2,6 +2,7 @@
 
 -- This script creates the demonstration UDFs
 
+set search_path = retail_demo;
 
 DROP FUNCTION IF EXISTS box_muller( FLOAT8, FLOAT8 );
 CREATE FUNCTION box_muller( FLOAT8, FLOAT8 ) RETURNS FLOAT8 AS 'bm.so', 'box_muller' LANGUAGE C STRICT;
