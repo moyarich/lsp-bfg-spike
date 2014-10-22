@@ -131,16 +131,10 @@ class Gpfdist(Workload):
     
     def _getOpenPort(self, port = 8050):
         defaultPort = port
-        tryAgain = True
         s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        while tryAgain:
-            try:
-                s.bind( ( "localhost", defaultPort ) )
-            except:
-                defaultPort += 1
-            finally:
-                tryAgain = False
-                s.close()
+        s.bind( ( "localhost", 0) ) 
+        addr, defaultPort = s.getsockname()
+        s.close()
         return defaultPort
     
     def clean_up(self):

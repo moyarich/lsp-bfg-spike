@@ -9,7 +9,7 @@ cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
 
-    - workload_name: retail_dw_row_1g_quicklz_part
+    - workload_name: retail_dw
       database_name: retail_dw
       user: gpadmin
       table_setting:
