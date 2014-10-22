@@ -19,6 +19,27 @@ except ImportError:
     sys.stderr.write('Retail needs psql in lib/PSQL.py\n')
     sys.exit(2)
 
+def run_sqlfile(dbname , sqlfile):
+        os.system("psql -a -d %s -f %s"%(dbname,sqlfile))
+
+def cmdstr(string):
+    dir=''
+    for i in string:
+        if i == os.sep:
+            dir = dir + '\/'
+        elif i=='\\' :
+            dir = dir + '\\\\\\'
+        else:
+            dir = dir + i
+
+    return dir
+
+def sed(string1,string2,filename):
+    str1=cmdstr(string1)
+    str2=cmdstr(string2)
+    test=r'sed -i "s/%s/%s/g" %s'%(str1,str2,filename) 
+    os.system(test)
+
 
 class Retail(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
@@ -36,14 +57,59 @@ class Retail(Workload):
         finally:
             cnx.close()
 
+    def load_data1(self):
+        self.check_seeds()
+
+        run_sqlfile(self.database_name, self.scripts_dir + '/prep_database.sql')
+
+        list=os.popen('psql -d %s -c \"SELECT hostname FROM pg_catalog.gp_segment_configuration  GROUP BY hostname ORDER by hostname;\"'%dbname).readlines()
+        lists=[i.strip() for i in list if 'hostname' not in i and '---' not in i and 'row' not in i and i !='\n']
+        hostfile=''
+        for host in lists:
+            hostfile = hostfile + '-h %s '%host
+        
+        port=self.getOpenPort()
+        hostname=socket.gethostname()
+
+        sed('//HOST:PORT','//%s:%s'%(hostname,port),self.scripts_dir+'/prep_external_tables.sql')
+        run_sqlfile(self.database_name, self.scripts_dir + '/prep_external_tables.sql')
+        sed('//.*:[0-9]*','//%s:%s'%('HOST','PORT'),self.scripts_dir+'/prep_external_tables.sql')
+
+        os.system("gpfdist -d %s -p %s -l %s/fdist.%s.log &"%(self.tmp_folder,port,self.tmp_folder,port))
+
+        gphome=os.environ['GPHOME']
+        box_muller = self.workload_directory + os.sep + 'box_muller'
+        os.system("cd %s;make clean;make install"%box_muller)
+        os.system("gpscp %s %s/bm.so =:%s/lib/postgresql/"%(hostfile,box_muller,gphome))
+
+        run_sqlfile(self.database_name, self.scripts_dir + '/prep_UDFs.sql')
+        os.system(self.scripts_dir + '/prep_GUCs.sh')
+
+        run_sqlfile(self.database_name, self.scripts_dir + '/prep_dimensions.sql')
+
+        sed('PATH_OF_DCA_DEMO_CONF_SQL','\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/prep_facts.sql')    
+        run_sqlfile(self.database_name, self.scripts_dir + '/prep_facts.sql')
+        sed('.*_conf.sql','PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/prep_facts.sql')    
+
+        sed('PATH_OF_DCA_DEMO_CONF_SQL','\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/gen_order_base.sql')    
+        run_sqlfile(self.database_name, self.scripts_dir + '/gen_order_base.sql')
+        sed('.*_conf.sql','PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/gen_order_base.sql')    
+
+        sed('PATH_OF_DCA_DEMO_CONF_SQL','\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/gen_facts.sql')    
+        run_sqlfile(self.database_name, self.scripts_dir + '/gen_facts.sql')
+        sed('.*_conf.sql','PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/gen_facts.sql')    
+
+        os.system('ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9'%port)
+
     def load_data(self):
 
         if self.load_data_flag:
             beg_time = datetime.now()
             end_time = beg_time
             status = 'ERROE'
-            if self.prep_e_tables() and self.prep_udfs() and self.check_seeds():
+            if self.check_seeds() and self.prep_e_tables() and self.prep_udfs():
                 status = 'SUCCESS'
+                os.system(self.scripts_dir + os.sep + 'prep_GUCs.sh')
 
                 # dca_demo_conf set the data scale 
                 with open(self.scripts_dir + os.sep + 'dca_demo_conf.sql', 'r') as f:
@@ -155,8 +221,6 @@ class Retail(Workload):
         else:
             self.output('prep_UDFs success. ')
 
-        (status, output) = commands.getstatusoutput(self.scripts_dir + os.sep + 'prep_GUCs.sh')
-        self.output(output)
         return True
 
     def check_seeds(self):
@@ -180,6 +244,7 @@ class Retail(Workload):
         addr, defaultPort = s.getsockname()
         s.close()
         return defaultPort
+
 
     def clean_up(self):
         cmd = 'ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9' % (self.port)
