@@ -45,12 +45,12 @@ CREATE TABLE retail_demo.Order_LineItems (
 , Ordering_Session_ID           VARCHAR(30)
 , Website_URL                   VARCHAR(500)
 )
-WITH (appendonly=true, compresstype=quicklz)
+WITH (SQLSUFFIX)
 DISTRIBUTED BY (Order_ID)
 PARTITION BY RANGE (order_datetime) (
-  START (:DATA_START) END (:MONTHLY_END) EVERY (interval '1 month') WITH (appendonly=true, compresstype=quicklz, orientation=row),
-  START (:MONTHLY_END) END (:PRELOAD_END) EVERY (interval '1 week') WITH (appendonly=true, compresstype=quicklz, orientation=row),
-  PARTITION today START (:PRELOAD_END) END (:DATA_END) INCLUSIVE WITH (appendonly=true, compresstype=quicklz, orientation=row),
+  START (:DATA_START) END (:MONTHLY_END) EVERY (interval '1 month') WITH (SQLSUFFIX),
+  START (:MONTHLY_END) END (:PRELOAD_END) EVERY (interval '1 week') WITH (SQLSUFFIX),
+  PARTITION today START (:PRELOAD_END) END (:DATA_END) INCLUSIVE WITH (SQLSUFFIX),
   DEFAULT PARTITION default_part
 )
 ;
@@ -92,12 +92,12 @@ CREATE TABLE retail_demo.Orders (
 , Ordering_Session_ID           VARCHAR(30)
 , Website_URL                   VARCHAR(500)
 )
-WITH (appendonly=true, compresstype=quicklz)
+WITH (SQLSUFFIX)
 DISTRIBUTED BY (Order_ID)
 PARTITION BY RANGE (order_datetime) (
-  START (:DATA_START) END (:MONTHLY_END) EVERY (interval '1 month') WITH (appendonly=true, compresstype=quicklz, orientation=row),
-  START (:MONTHLY_END) END (:PRELOAD_END) EVERY (interval '1 week') WITH (appendonly=true, compresstype=quicklz, orientation=row),
-  PARTITION today START (:PRELOAD_END) END (:DATA_END) INCLUSIVE WITH (appendonly=true, compresstype=quicklz, orientation=row),
+  START (:DATA_START) END (:MONTHLY_END) EVERY (interval '1 month') WITH (SQLSUFFIX),
+  START (:MONTHLY_END) END (:PRELOAD_END) EVERY (interval '1 week') WITH (SQLSUFFIX),
+  PARTITION today START (:PRELOAD_END) END (:DATA_END) INCLUSIVE WITH (SQLSUFFIX),
   DEFAULT PARTITION default_part
 )
 ;  
@@ -132,12 +132,12 @@ CREATE TABLE retail_demo.Shipment_LineItems (
 , Ship_Customer_Name            VARCHAR(200)
 , Ship_Customer_Email_Address   VARCHAR(200)
 )
-WITH (appendonly=true, compresstype=quicklz)
+WITH (SQLSUFFIX)
 DISTRIBUTED BY (Order_ID)
 PARTITION BY RANGE (Ship_Datetime) (
-  START (:DATA_START) END (:MONTHLY_END) EVERY (interval '1 month') WITH (appendonly=true, compresstype=quicklz, orientation=row),
-  START (:MONTHLY_END) END (:PRELOAD_END) EVERY (interval '1 week') WITH (appendonly=true, compresstype=quicklz, orientation=row),
-  PARTITION today START (:PRELOAD_END) END (:DATA_END) INCLUSIVE WITH (appendonly=true, compresstype=quicklz, orientation=row),
+  START (:DATA_START) END (:MONTHLY_END) EVERY (interval '1 month') WITH (SQLSUFFIX),
+  START (:MONTHLY_END) END (:PRELOAD_END) EVERY (interval '1 week') WITH (SQLSUFFIX),
+  PARTITION today START (:PRELOAD_END) END (:DATA_END) INCLUSIVE WITH (SQLSUFFIX),
   DEFAULT PARTITION default_part
 )
 ;
