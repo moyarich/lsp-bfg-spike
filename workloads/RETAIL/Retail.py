@@ -36,34 +36,6 @@ class Retail(Workload):
         finally:
             cnx.close()
 
-    def check_seeds(self):
-        os.system("cd %s;tar -zvxf seeds.tar.gz -C %s" % (self.workload_directory, self.tmp_folder))
-        files = ['female_first_names.txt', 'male_first_names.txt', 'products_full.dat', 'state_sales_tax.dat', \
-        'street_names.dat', 'surnames.dat', 'websites.dat', 'zip_codes.dat']
-        for seeds_file in files:
-            if os.path.exists(self.tmp_folder + os.sep + seeds_file):
-                pass
-            else:
-                self.output('error: %s not exists.' % (seeds_file))
-                return False
-        self.output('check seeds files success. ')
-        return True
-
-    def getOpenPort(self, port = 8050):
-        defaultPort = port
-        tryAgain = True
-        s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
-        while tryAgain:
-            try:
-                s.bind( ( "localhost", defaultPort ) )
-            except:
-                defaultPort += 1
-            finally:
-                tryAgain = False
-                s.close()
-                
-        return defaultPort
-
     def load_data(self):
         if self.load_data_flag:
             beg_time = datetime.now()
@@ -72,25 +44,25 @@ class Retail(Workload):
 
                 # dca_demo_conf set the data scale 
                 with open(self.scripts_dir + os.sep + 'dca_demo_conf.sql', 'r') as f:
-                    cmd = f.read()
+                    sql = f.read()
                     scale = int (8500000000 / 10.4 / 1024 * self.scale_factor)
-                    cmd = cmd.replace('8500000000', str(scale))
+                    sql = sql.replace('8500000000', str(scale))
                 with open(self.tmp_folder + os.sep + 'dca_demo_conf.sql', 'w') as f:
-                    f.write(cmd)
+                    f.write(sql)
                 
                 scripts = ['prep_dimensions.sql', 'prep_facts.sql', 'gen_order_base.sql', 'gen_facts.sql']
                 for script in scripts:
-                    self.output('------ Start %s ------' % (script))
-                    with open(self.scripts_dir + os.sep + script, 'r') as f:
-                        cmd = f.read()
-                    cmd = cmd.replace('PATH_OF_DCA_DEMO_CONF_SQL', '\i %s/dca_demo_conf.sql' % (self.tmp_folder))
-                    with open(self.tmp_folder + os.sep + script, 'w') as f:
-                        f.write(cmd)
+                    self.output('------ start %s ------' % (script))
 
-                 #   self.output(cmd)    
+                    with open(self.scripts_dir + os.sep + script, 'r') as f:
+                        sql = f.read()
+                    sql = sql.replace('PATH_OF_DCA_DEMO_CONF_SQL', '\i %s/dca_demo_conf.sql' % (self.tmp_folder))
+                    sql = sql.replace('SQLSUFFIX', self.sql_suffix)
+                    with open(self.tmp_folder + os.sep + script, 'w') as f:
+                        f.write(sql)   
                     
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + script, dbname = self.database_name)
-                    self.output('RESULT: ' + result[0])
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + script, dbname = self.database_name, flag = '-e')
+                    self.output('\n'.join(result))
 
                     if ok and str(result).find('ERROR') == -1: 
                         end_time = datetime.now()    
@@ -116,7 +88,7 @@ class Retail(Workload):
 
     def prep_e_tables(self):
         (ok, result) = psql.runfile(ifile = self.scripts_dir + os.sep + 'prep_database.sql', dbname = self.database_name)
-        self.output('create schema: \n' + result[0])
+        self.output('------ create schema ------\n' + '\n'.join(result))
         if not ok or str(result).find('ERROR') != -1:
             return False
         
@@ -124,20 +96,24 @@ class Retail(Workload):
         hostname = socket.gethostname()
         
         with open(self.scripts_dir + os.sep + 'prep_external_tables.sql', 'r') as f:
-            cmd = f.read()
-            cmd = cmd.replace('//HOST:PORT','//%s:%s' % (hostname, self.port) )
-            with open(self.tmp_folder + os.sep + 'prep_external_tables.sql', 'w') as f:
-                f.write(cmd)
+            sql = f.read()
+            sql = sql.replace('//HOST:PORT','//%s:%s' % (hostname, self.port) )
+        with open(self.tmp_folder + os.sep + 'prep_external_tables.sql', 'w') as f:
+            f.write(sql)
 
- #           self.output(cmd)      
-            (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'prep_external_tables.sql', dbname = self.database_name)
-            self.output('RESULT:\n' + result[0])
+        self.output('------ prep_external_tables ------')
+        (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'prep_external_tables.sql', dbname = self.database_name, flag = '-e')
+        self.output('/n'.join(result))
 
-            if ok and str(result).find('ERROR') == -1:
-                os.system("gpfdist -d %s -p %s -l %s/fdist.%s.log &" % (self.tmp_folder, self.port, self.tmp_folder, self.port))
-                return True    
-            else:
-                return False
+        if ok and str(result).find('ERROR') == -1:
+            cmd = 'gpfdist -d %s -p %s -l %s/fdist.%s.log &' % (self.tmp_folder, self.port, self.tmp_folder, self.port)
+            self.output(cmd)
+            result = os.system(cmd)
+            self.output(str(result))
+            return True    
+        else:
+            self.output('prep_external_tables error. ')
+            return False
 
     def prep_udfs(self):
         # make
@@ -169,15 +145,38 @@ class Retail(Workload):
             self.output('gpscp success. ')
 
         (ok, result) = psql.runfile(ifile = self.scripts_dir + os.sep + 'prep_UDFs.sql', dbname = self.database_name)
-        self.output('perp udfs result:\n' + result[0])
+        self.output('------ perp udfs ------\n' + '\n'.join(result))
         if not ok or str(result).find('ERROR') != -1:
-            self.output('prep udfs error. ')
+            self.output('prep_UDFs error. ')
             return False
         else:
             self.output('prep_UDFs success. ')
 
-        os.system(self.scripts_dir + os.sep + 'prep_GUCs.sh')
+        (status, output) = commands.getstatusoutput(self.scripts_dir + os.sep + 'prep_GUCs.sh')
+        self.output(output)
         return True
+
+    def check_seeds(self):
+        (status, output) = commands.getstatusoutput("cd %s;tar -zvxf seeds.tar.gz -C %s" % (self.workload_directory, self.tmp_folder))
+        
+        files = ['female_first_names.txt', 'male_first_names.txt', 'products_full.dat', \
+        'state_sales_tax.dat', 'street_names.dat', 'surnames.dat', 'websites.dat', 'zip_codes.dat']
+        for seeds_file in files:
+            if os.path.exists(self.tmp_folder + os.sep + seeds_file):
+                pass
+            else:
+                self.output('error: %s not exists.' % (seeds_file))
+                return False
+        self.output('check seeds files success. ')
+        return True
+
+    def getOpenPort(self, port = 8050):
+        defaultPort = port
+        s = socket.socket( socket.AF_INET, socket.SOCK_STREAM )
+        s.bind( ( "localhost", 0) ) 
+        addr, defaultPort = s.getsockname()
+        s.close()
+        return defaultPort
 
     def clean_up(self):
         cmd = 'ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9' % (self.port)
