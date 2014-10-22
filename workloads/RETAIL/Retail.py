@@ -62,44 +62,44 @@ class Retail(Workload):
 
         run_sqlfile(self.database_name, self.scripts_dir + '/prep_database.sql')
 
-        list=os.popen('psql -d %s -c \"SELECT hostname FROM pg_catalog.gp_segment_configuration  GROUP BY hostname ORDER by hostname;\"'%dbname).readlines()
-        lists=[i.strip() for i in list if 'hostname' not in i and '---' not in i and 'row' not in i and i !='\n']
+        list = os.popen('psql -d %s -c \"SELECT hostname FROM pg_catalog.gp_segment_configuration  GROUP BY hostname ORDER by hostname;\"'%dbname).readlines()
+        lists = [i.strip() for i in list if 'hostname' not in i and '---' not in i and 'row' not in i and i !='\n']
         hostfile=''
         for host in lists:
             hostfile = hostfile + '-h %s '%host
         
-        port=self.getOpenPort()
-        hostname=socket.gethostname()
+        self.port = self.getOpenPort()
+        hostname = socket.gethostname()
 
-        sed('//HOST:PORT','//%s:%s'%(hostname,port),self.scripts_dir+'/prep_external_tables.sql')
+        sed('//HOST:PORT', '//%s:%s' %(hostname,self.port),self.scripts_dir + '/prep_external_tables.sql')
         run_sqlfile(self.database_name, self.scripts_dir + '/prep_external_tables.sql')
-        sed('//.*:[0-9]*','//%s:%s'%('HOST','PORT'),self.scripts_dir+'/prep_external_tables.sql')
+        sed('//.*:[0-9]*','//%s:%s' % ('HOST','PORT'), self.scripts_dir + '/prep_external_tables.sql')
 
-        os.system("gpfdist -d %s -p %s -l %s/fdist.%s.log &"%(self.tmp_folder,port,self.tmp_folder,port))
+        os.system("gpfdist -d %s -p %s -l %s/fdist.%s.log &"%(self.tmp_folder, self.port, self.tmp_folder, self.port))
 
-        gphome=os.environ['GPHOME']
+        gphome = os.environ['GPHOME']
         box_muller = self.workload_directory + os.sep + 'box_muller'
-        os.system("cd %s;make clean;make install"%box_muller)
-        os.system("gpscp %s %s/bm.so =:%s/lib/postgresql/"%(hostfile,box_muller,gphome))
+        os.system("cd %s;make clean;make install" %box_muller)
+        os.system("gpscp %s %s/bm.so =:%s/lib/postgresql/" %(hostfile, box_muller, gphome))
 
         run_sqlfile(self.database_name, self.scripts_dir + '/prep_UDFs.sql')
         os.system(self.scripts_dir + '/prep_GUCs.sh')
 
         run_sqlfile(self.database_name, self.scripts_dir + '/prep_dimensions.sql')
 
-        sed('PATH_OF_DCA_DEMO_CONF_SQL','\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/prep_facts.sql')    
+        sed('PATH_OF_DCA_DEMO_CONF_SQL', '\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/prep_facts.sql')    
         run_sqlfile(self.database_name, self.scripts_dir + '/prep_facts.sql')
-        sed('.*_conf.sql','PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/prep_facts.sql')    
+        sed('.*_conf.sql', 'PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/prep_facts.sql')    
 
-        sed('PATH_OF_DCA_DEMO_CONF_SQL','\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/gen_order_base.sql')    
+        sed('PATH_OF_DCA_DEMO_CONF_SQL', '\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/gen_order_base.sql')    
         run_sqlfile(self.database_name, self.scripts_dir + '/gen_order_base.sql')
-        sed('.*_conf.sql','PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/gen_order_base.sql')    
+        sed('.*_conf.sql', 'PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/gen_order_base.sql')    
 
-        sed('PATH_OF_DCA_DEMO_CONF_SQL','\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/gen_facts.sql')    
+        sed('PATH_OF_DCA_DEMO_CONF_SQL', '\i %s/dca_demo_conf.sql'%self.scripts_dir ,self.scripts_dir + '/gen_facts.sql')    
         run_sqlfile(self.database_name, self.scripts_dir + '/gen_facts.sql')
-        sed('.*_conf.sql','PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/gen_facts.sql')    
+        sed('.*_conf.sql', 'PATH_OF_DCA_DEMO_CONF_SQL' ,self.scripts_dir + '/gen_facts.sql')    
 
-        os.system('ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9'%port)
+        os.system('ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9' %self.port)
 
     def load_data(self):
 
