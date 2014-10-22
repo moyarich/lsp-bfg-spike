@@ -1,5 +1,5 @@
-import os, sys, commands, socket, shutil
-from datetime import datetime, date, timedelta
+import os, sys, commands, socket
+from datetime import datetime
 
 try:
     from workloads.Workload import *
@@ -37,8 +37,11 @@ class Retail(Workload):
             cnx.close()
 
     def load_data(self):
+
         if self.load_data_flag:
             beg_time = datetime.now()
+            end_time = beg_time
+            status = 'ERROE'
             if self.prep_e_tables() and self.prep_udfs() and self.check_seeds():
                 status = 'SUCCESS'
 
