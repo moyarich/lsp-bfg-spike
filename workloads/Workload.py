@@ -85,6 +85,8 @@ class Workload(object):
         # set report.sql file and tmp folder
         self.report_sql_file = report_sql_file
         self.tmp_folder = report_sql_file.replace('report.sql', 'tmp')
+        self.tmp_folder = self.tmp_folder + os.sep + self.workload_name
+        os.system('mkdir -p %s' % (self.tmp_folder))
         
         self.user = workload_specification['user'].strip()
         # check us_id if exist
@@ -345,12 +347,12 @@ class Workload(object):
                         query = query.replace('TABLESUFFIX', self.tbl_suffix)
                     else:
                         query = query.replace('_TABLESUFFIX', '')
-                    with open(self.tmp_folder + os.sep + 'run_query_temp.sql', 'w') as f:
+                    with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
                         f.write(query)
 
                     self.output(query)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'run_query_temp.sql', dbname = self.database_name, flag = '-t -A')
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, flag = '-t -A')
                     end_time = datetime.now()
                     
                     if ok:

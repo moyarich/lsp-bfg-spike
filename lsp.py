@@ -183,7 +183,7 @@ if __name__ == '__main__':
             elif workloads_mode == 'CONCURRENT':
                 workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
             elif workloads_mode == 'DYNAMIC':
-                workloads_executor = DynamicExecutor(workloads_list, workloads_content)
+                workloads_executor = DynamicExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
             else:
                 print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
                 exit(-1)
