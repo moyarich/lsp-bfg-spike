@@ -93,53 +93,54 @@ class Xmarq(Workload):
 
         self.output('-- Start loading data')
 
+        # get the data dir
+        data_directory = self.workload_directory + os.sep + 'data'
+        if not os.path.exists(data_directory):
+            self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
+            sys.exit(2)
+
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem']
-        if not self.load_data_flag:
-            beg_time = str(datetime.now()).split('.')[0]
-            for table_name in tables:
-                self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
-                self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0)) 
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, table_name, beg_time, beg_time))
-        else:
-            # get the data dir
-            data_directory = self.workload_directory + os.sep + 'data'
-            if not os.path.exists(data_directory):
-                self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
-                return
-
-            for table_name in tables:
-                load_success_flag = True
-                qf_path = QueryFile(os.path.join(data_directory, table_name + '.sql'))
-                beg_time = datetime.now()
-                # run all sql in each loading data file
-                for cmd in qf_path:
+        for table_name in tables:
+            if self.continue_flag:
+                if self.load_data_flag:
+                    with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
+                        cmd = f.read()
                     cmd = self.replace_sql(sql = cmd, table_name = table_name)
-                    self.output(cmd)
-                    (ok, result) = psql.runcmd(cmd = cmd, dbname = self.database_name)
-                    self.output('RESULT: ' + str(result))
-                    if not ok:
-                        load_success_flag = False
+                    with open(self.tmp_folder + os.sep + table_name + '.sql', 'w') as f:
+                        f.write(cmd)
 
-                end_time = datetime.now()
-                duration = end_time - beg_time
-                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
-      
-                if load_success_flag:    
-                    self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-                    self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SUCCESS', duration))
-                    self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SUCCESS', '%s', '%s', %d, NULL, NULL, NULL);" 
-                        % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
+                    self.output(cmd)
+                    beg_time = datetime.now()
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)
+                    end_time = datetime.now()
+                    self.output('\n'.join(result))
+
+                    if ok and str(result).find('ERROR') == -1:
+                        status = 'SUCCESS'
+                    else:
+                        status = 'ERROR'
+                        self.continue_flag = False
                 else:
-                    self.output('ERROR: Failed to load data for table %s' % (table_name))
-                    self.report('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'ERROR', 0)) 
-                    self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'ERROR', '%s', '%s', %d, NULL, NULL, NULL);" 
-                        % (self.tr_id, self.s_id, table_name, str(beg_time).split('.')[0], str(end_time).split('.')[0], duration))
+                    status = 'SKIP'
+                    beg_time = datetime.now()
+                    end_time = beg_time
+            else:
+                status = 'ERROR'
+                beg_time = datetime.now()
+                end_time = beg_time
+                
+            duration = end_time - beg_time
+            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
+            beg_time = str(beg_time).split('.')[0]
+            end_time = str(end_time).split('.')[0]         
+            self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, status, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+                % (self.tr_id, self.s_id, table_name, status, beg_time, end_time, duration))
+               
         self.output('-- Complete loading data')
        
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
-        self.report('-- Start running workload %s' % (self.workload_name))
 
         # setup
         self.setup()
@@ -157,5 +158,5 @@ class Xmarq(Workload):
         self.clean_up()
         
         self.output('-- Complete running workload %s' % (self.workload_name))
-        self.report('-- Complete running workload %s' % (self.workload_name))
+
 

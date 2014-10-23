@@ -326,12 +326,12 @@ class Tpcds(Workload):
                 cmd = self.replace_sql(sql = cmd, table_name = table_name)
                 location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
                 cmd = cmd.replace('LOCATION', location)
-                with open(self.tmp_folder + os.sep + 'tpcds_loading_temp.sql', 'w') as f:
+                with open(self.tmp_folder + os.sep + table_name + '.sql', 'w') as f:
                     f.write(cmd)
 
                 self.output(cmd)    
                 beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'tpcds_loading_temp.sql', dbname = self.database_name)
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)
                 end_time = datetime.now()
                 self.output('\n'.join(result))
                 

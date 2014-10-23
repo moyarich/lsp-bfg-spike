@@ -15,6 +15,7 @@ class ConcurrentExecutor(Executor):
     def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id):
         Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
         self.AllProcess = []
+        self.should_stop = False
 
     def cleanup(self):
         ''' cleanup function , will be called after execution'''
@@ -53,7 +54,7 @@ class ConcurrentExecutor(Executor):
                 self.should_stop = True
                 continue
 
-            if len(self.AllProcess) == 0:
+            if len(self.AllProcess) != 0:
                 time.sleep(5)
 
 

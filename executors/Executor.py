@@ -54,7 +54,6 @@ class Executor(object):
         self.report_sql_file = report_sql_file
         self.cs_id = cs_id
         self.workloads_instance = []
-        self.should_stop = False
 
     def setup(self):
         # create report directory for schedule
