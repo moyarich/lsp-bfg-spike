@@ -46,14 +46,19 @@ except ImportError:
     sys.stderr.write('Workload needs Report in lib/utils/Report.py\n')
     sys.exit(2)
 
+try:
+    import gl
+except ImportError:
+    sys.stderr.write('Workload needs gl.py in lsp_home\n')
+    sys.exit(2)
+
 class Workload(object):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation):
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
         # initialize common propertities for workload
         self.cs_id = cs_id
         self.us_id = 0
         self.tr_id = 0
         self.s_id = 0
-        self.validation = validation
         self.continue_flag = True
 
         self.workload_name = workload_specification['workload_name'].strip()
@@ -336,7 +341,10 @@ class Workload(object):
                 if self.run_workload_flag:
                     with open(os.path.join(queries_directory, qf_name),'r') as f:
                         query = f.read()
-                    query = query.replace('TABLESUFFIX', self.tbl_suffix)
+                    if gl.suffix:
+                        query = query.replace('TABLESUFFIX', self.tbl_suffix)
+                    else:
+                        query = query.replace('_TABLESUFFIX', '')
                     with open(self.tmp_folder + os.sep + 'run_query_temp.sql', 'w') as f:
                         f.write(query)
 
@@ -356,7 +364,7 @@ class Workload(object):
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
                             f.write(md5code)
                         
-                        if self.validation:
+                        if gl.validation:
                             ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
                             md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
                             if os.path.exists(ans_file):

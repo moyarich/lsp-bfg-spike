@@ -26,12 +26,17 @@ except ImportError:
     sys.stderr.write('TPCH needs QueryFile in lib/QueryFile.py\n')
     sys.exit(2)
 
+try:
+    import gl
+except ImportError:
+    sys.stderr.write('TPCH needs gl.py in lsp_home\n')
+    sys.exit(2)
 
 class Tpch(Workload):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
 
     def setup(self):
         # check if the database exist
@@ -71,7 +76,10 @@ class Tpch(Workload):
         return part 
 
     def replace_sql(self, sql, table_name):
-        sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        if gl.suffix:
+            sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        else:
+            sql = sql.replace('_TABLESUFFIX', '')
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))

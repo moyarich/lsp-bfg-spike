@@ -12,8 +12,8 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class ConcurrentExecutor(Executor):
-    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id, validation):
-        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id, validation)
+    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id):
+        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
         self.AllProcess = []
 
     def cleanup(self):
