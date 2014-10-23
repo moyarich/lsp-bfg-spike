@@ -1,0 +1,181 @@
+workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10G, tpch_parquet_part_10G, tpch_parquet_100G, tpch_parquet_part_100G, sri_parquet, sri_parquet_part, sri_ao_co, sri_ao_part, copy
+
+workloads_mode: concurrent
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+
+    - workload_name: tpch_ao_co
+      database_name: gpsqltest_tpch_ao_co
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 100
+          append_only: true
+          orientation: COLUMN
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: RANDOM
+      num_concurrency: 5
+      num_iteration: 2
+
+    - workload_name: tpch_ao_part
+      database_name: gpsqltest_tpch_ao_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: RANDOM
+      num_concurrency: 5
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_10G
+      database_name: gpsqltest_tpch_parquet_10G
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 10
+          append_only: true
+          orientation: PARQUET
+          compression_type: SNAPPY
+          row_group_size: 8388608
+          page_size: 1048576
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 5
+      num_iteration: 2
+
+    - workload_name: tpch_parquet_10G
+      database_name: gpsqltest_tpch_parquet_10G
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 10
+          append_only: true
+          orientation: PARQUET
+          compression_type: GZIP
+          compression_level: 1
+          row_group_size: 8388608
+          page_size: 1048576
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 5
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_100G
+      database_name: gpsqltest_tpch_parquet_100G
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 10
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: RANDOM
+      num_concurrency: 2
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_part_100G
+      database_name: gpsqltest_tpch_parquet_part_100G
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 10
+          append_only: true
+          orientation: PARQUET
+          compression_type: SNAPPY
+          row_group_size: 8388608
+          page_size: 1048576
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 2
+      num_iteration: 1
+
+    - workload_name: sri_parquet
+      database_name: sri_parquet
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 5000
+
+    - workload_name: sri_parquet_part
+      database_name: sri_parquet_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          partitions: 128
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 5000
+
+    - workload_name: sri_ao_co
+      database_name: sri_ao_co
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: COLUMN
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 10000
+
+    - workload_name: sri_ao_part
+      database_name: sri_ao_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 10
+
+    - workload_name: copy
+      database_name: copy
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 10
