@@ -1,4 +1,5 @@
 import os
+import time
 from datetime import datetime
 from multiprocessing import Process, Queue, Value , Array
 
@@ -11,8 +12,8 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class ConcurrentExecutor(Executor):
-    def __init__(self, workloads_dict):
-        Executor.__init__(self, workloads_dict)
+    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id, validation):
+        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id, validation)
         self.AllProcess = []
 
     def cleanup(self):
@@ -31,12 +32,13 @@ class ConcurrentExecutor(Executor):
         # init workload and setup directories before execution
         self.setup()
 
-        # routine of workload running 
-        for workload in self.workloads:
-            p = Process(target=workload.start)
+        # routine of workload running
+        for wi in self.workloads_instance:
+            p = Process(target=wi.execute)
             self.AllProcess.append(p)
-            p.start()
+            p.start() 
  
+
         while True and not self.should_stop:
             for process in self.AllProcess[:]:
                 process.join(timeout = 1)
@@ -46,8 +48,13 @@ class ConcurrentExecutor(Executor):
                 else:
                     self.handle_workload_done(process)
                     self.AllProcess.remove(process)
-                    if len(self.AllProcess) == 0:
-                        self.should_stop = True
+                
+            if len(self.AllProcess) == 0:
+                self.should_stop = True
+                continue
+
+            if len(self.AllProcess) == 0:
+                time.sleep(5)
 
 
 

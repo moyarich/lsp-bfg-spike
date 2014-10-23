@@ -174,7 +174,7 @@ if __name__ == '__main__':
             if workloads_mode == 'SEQUENTIAL':
                 workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id, validation)
             elif workloads_mode == 'CONCURRENT':
-                workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name)
+                workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id, validation)
             elif workloads_mode == 'DYNAMIC':
                 workloads_executor = DynamicExecutor(workloads_list, workloads_content)
             else:
