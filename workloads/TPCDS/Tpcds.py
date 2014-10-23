@@ -27,6 +27,12 @@ except ImportError:
     sys.stderr.write('TPCDS needs config in lib/Config.py\n')
     sys.exit(2)
 
+try:
+    import gl
+except ImportError:
+    sys.stderr.write('TPCDS needs gl.py in lib/\n')
+    sys.exit(2)
+
 command_template = """
 import subprocess, os, time
 
@@ -75,9 +81,9 @@ with open('dat_files.txt','w') as f:
 """
 
 class Tpcds(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
         self.hostfile_master = os.path.join(self.tmp_folder, 'hostfile_master')
         self.hostfile_seg = os.path.join(self.tmp_folder, 'hostfile_seg')
         self.seg_hostname_list = None
@@ -327,7 +333,7 @@ class Tpcds(Workload):
                 beg_time = datetime.now()
                 (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'tpcds_loading_temp.sql', dbname = self.database_name)
                 end_time = datetime.now()
-                self.output('RESULT: ' + str(result))
+                self.output('\n'.join(result))
                 
                 if ok and str(result).find('ERROR') == -1: 
                     status = 'SUCCESS'    
@@ -410,7 +416,10 @@ class Tpcds(Workload):
 
 
     def replace_sql(self, sql, table_name):
-        sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        if gl.suffix:
+            sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        else:
+            sql = sql.replace('_TABLESUFFIX', '')
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))

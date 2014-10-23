@@ -21,12 +21,18 @@ except ImportError:
     sys.stderr.write('COPY needs psql in lib/PSQL.py\n')
     sys.exit(2)
 
+try:
+    import gl
+except ImportError:
+    sys.stderr.write('COPY needs gl.py in lib/\n')
+    sys.exit(2)
+
 
 class Copy(Workload):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
         self.fname = self.tmp_folder + os.sep + 'copy.lineitem.tbl'
         self.dss = self.workload_directory + os.sep + 'dists.dss'
 
@@ -41,7 +47,10 @@ class Copy(Workload):
             cnx.close()
 
     def replace_sql(self, sql, table_name, num):
-        sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        if gl.suffix:
+            sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        else:
+            sql = sql.replace('_TABLESUFFIX', '')
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('NUMBER', str(num))
         sql = sql.replace('FNAME', self.fname)
@@ -82,7 +91,7 @@ class Copy(Workload):
                     beg_time = datetime.now()
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name)
                     end_time = datetime.now()
-                    self.output('RESULT: ' + str(result))
+                    self.output('\n'.join(result))
 
                     if ok and str(result).find('ERROR') == -1: 
                         status = 'SUCCESS'    

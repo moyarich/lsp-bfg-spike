@@ -26,11 +26,17 @@ except ImportError:
     sys.stderr.write('XMARQ needs QueryFile in lib/QueryFile.py\n')
     sys.exit(2)
 
+try:
+    import gl
+except ImportError:
+    sys.stderr.write('XMARQ needs gl.py in lib/\n')
+    sys.exit(2)
+
 
 class Xmarq(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
     
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
@@ -60,7 +66,11 @@ class Xmarq(Workload):
         return part 
 
     def replace_sql(self, sql, table_name):
-        sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        if gl.suffix:
+            sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        else:
+            sql = sql.replace('_TABLESUFFIX', '')
+        
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))

@@ -26,12 +26,18 @@ try:
 except ImportError:
     sys.stderr.write('GPFDIST needs config in lib/Config.py\n')
     sys.exit(2)
+
+try:
+    import gl
+except ImportError:
+    sys.stderr.write('GPFDIST needs gl.py in lib/\n')
+    sys.exit(2)
     
 
 class Gpfdist(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, validation)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
         self.fname = self.tmp_folder + os.sep + 'gpfdist.lineitem.tbl'
         self.dss = self.workload_directory + os.sep + 'dists.dss'
         self.host_name = config.getMasterHostName()
@@ -47,7 +53,10 @@ class Gpfdist(Workload):
             cnx.close()
 
     def replace_sql(self, sql, table_name, num):
-        sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        if gl.suffix:
+            sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
+        else:
+            sql = sql.replace('_TABLESUFFIX', '')
         sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         sql = sql.replace('NUMBER', str(num))
         sql = sql.replace('HOSTNAME', self.host_name)
@@ -103,7 +112,7 @@ class Gpfdist(Workload):
                     beg_time = datetime.now()
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'gpfdist_loading_temp.sql', dbname = self.database_name)
                     end_time = datetime.now()
-                    self.output('RESULT: ' + str(result))
+                    self.output('\n'.join(result))
 
                     if ok and str(result).find('ERROR') == -1: 
                         status = 'SUCCESS'    
