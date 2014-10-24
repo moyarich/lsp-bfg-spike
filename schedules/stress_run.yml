@@ -16,28 +16,28 @@ workloads_content:
           orientation: COLUMN
           compression_type: QuickLZ
           compression_level: 1
-      load_data_flag: true
+      load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 5
-      num_iteration: 2
+      num_concurrency: 2
+      num_iteration: 40
 
     - workload_name: tpch_ao_part
       database_name: gpsqltest_tpch_ao_part
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 1
+          data_volume_size: 100
           append_only: true
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
           partitions: 128
-      load_data_flag: true
+      load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 5
-      num_iteration: 1
+      num_concurrency: 2
+      num_iteration: 20
 
     - workload_name: tpch_parquet_10G
       database_name: gpsqltest_tpch_parquet_10G
@@ -47,66 +47,66 @@ workloads_content:
           data_volume_size: 10
           append_only: true
           orientation: PARQUET
-          compression_type: SNAPPY
           row_group_size: 8388608
           page_size: 1048576
-      load_data_flag: true
+          compression_type: SNAPPY
+      load_data_flag: false
       run_workload_flag: true
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 5
-      num_iteration: 2
+      run_workload_mode: RANDOM
+      num_concurrency: 3
+      num_iteration: 100
 
-    - workload_name: tpch_parquet_10G
-      database_name: gpsqltest_tpch_parquet_10G
+    - workload_name: tpch_parquet_part_10G
+      database_name: gpsqltest_tpch_parquet_part_10G
       user: gpadmin
       table_setting:
           data_volume_type: total
           data_volume_size: 10
           append_only: true
           orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
           compression_type: GZIP
           compression_level: 1
-          row_group_size: 8388608
-          page_size: 1048576
           partitions: 128
-      load_data_flag: true
+      load_data_flag: false
       run_workload_flag: true
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 5
-      num_iteration: 1
+      run_workload_mode: RANDOM
+      num_concurrency: 3
+      num_iteration: 100
 
     - workload_name: tpch_parquet_100G
       database_name: gpsqltest_tpch_parquet_100G
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 10
+          data_volume_size: 100
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
           page_size: 1048576
-      load_data_flag: true
+      load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
       num_concurrency: 2
-      num_iteration: 1
+      num_iteration: 40
 
     - workload_name: tpch_parquet_part_100G
       database_name: gpsqltest_tpch_parquet_part_100G
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 10
+          data_volume_size: 100
           append_only: true
           orientation: PARQUET
           compression_type: SNAPPY
           row_group_size: 8388608
           page_size: 1048576
-      load_data_flag: true
+      load_data_flag: false
       run_workload_flag: true
-      run_workload_mode: SEQUENTIAL
+      run_workload_mode: RANDOM
       num_concurrency: 2
-      num_iteration: 1
+      num_iteration: 20
 
     - workload_name: sri_parquet
       database_name: sri_parquet
@@ -120,7 +120,7 @@ workloads_content:
           page_size: 1048576
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 5000
+      num_iteration: 10000
 
     - workload_name: sri_parquet_part
       database_name: sri_parquet_part
@@ -164,7 +164,7 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 10
+      num_iteration: 5000
 
     - workload_name: copy
       database_name: copy
@@ -178,4 +178,4 @@ workloads_content:
           compression_level: 1
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 10
+      num_iteration: 100
