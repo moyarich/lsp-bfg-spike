@@ -19,8 +19,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: RANDOM
-      num_concurrency: 5
-      num_iteration: 2
+      num_concurrency: 1
+      num_iteration: 1
 
     - workload_name: tpch_ao_part
       database_name: gpsqltest_tpch_ao_part
@@ -36,7 +36,7 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: RANDOM
-      num_concurrency: 5
+      num_concurrency: 1
       num_iteration: 1
 
     - workload_name: tpch_parquet_10G
@@ -53,8 +53,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: RANDOM
-      num_concurrency: 5
-      num_iteration: 2
+      num_concurrency: 1
+      num_iteration: 1
 
     - workload_name: tpch_parquet_part_10G
       database_name: gpsqltest_tpch_parquet_part_10G
@@ -72,7 +72,7 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: RANDOM
-      num_concurrency: 5
+      num_concurrency: 1
       num_iteration: 1
 
     - workload_name: tpch_parquet_100G
@@ -88,7 +88,7 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: RANDOM
-      num_concurrency: 2
+      num_concurrency: 1
       num_iteration: 1
 
     - workload_name: tpch_parquet_part_100G
@@ -102,8 +102,9 @@ workloads_content:
           compression_type: SNAPPY
           row_group_size: 8388608
           page_size: 1048576
+          partitions: 128
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: RANDOM
-      num_concurrency: 2
+      num_concurrency: 1
       num_iteration: 1
