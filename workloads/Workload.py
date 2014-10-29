@@ -1,7 +1,7 @@
 import os
 import sys
 import time
-import commmands
+import commands
 from datetime import datetime
 import random
 import hashlib
