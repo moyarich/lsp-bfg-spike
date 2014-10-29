@@ -104,14 +104,10 @@ if __name__ == '__main__':
     add_database = options.add_option
     gl.check_result = options.check
     gl.suffix = options.suffix
-    print add_database
-    print gl.check_result
-    print gl.suffix
-    sys.exit(2)
 
     cs_id = 0
     if schedules is None:
-        sys.stderr.write('Usage: python -u lsp.py -s schedule_file1[,schedule_file2] [-p] [-c] [-f]\nPlease use python -u lsp.py -h for more info')
+        sys.stderr.write('Usage: python -u lsp.py -s schedule_file1[,schedule_file2] [-a] [-c] [-f]\nPlease use python -u lsp.py -h for more info')
         sys.exit(2)
 
     schedule_list = schedules.split(',')
@@ -133,9 +129,9 @@ if __name__ == '__main__':
                 sys.stderr.write('Invalid cluster name %s!\n' % (cluster_name))
                 continue
 
-        if not start_flag:
-            # add test run information in backend database if lsp not run in standalone mode
+        if not start_flag:            
             start_flag = True
+            # add test run information in backend database if lsp not run in standalone mode,such as build_id, build_url, hawq_version, hdfs_version
             if add_database:
                 output = commands.getoutput('cat ~/qa.sh')
                 try:
@@ -144,7 +140,7 @@ if __name__ == '__main__':
                     build_id = output[output.index('PULSE_ID_INFO'):].split('\n')[0].split('=')[1]
                     build_url = output[output.index('PULSE_PROJECT_INFO'):].split('\n')[0].split('=')[1]
                 except Exception, e:
-                    print('read build_info_file error. ')
+              #      print('read build_info_file error. ')
                     build_id = -1
                     build_url = 'Local'
 
