@@ -1,4 +1,4 @@
-workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10G, tpch_parquet_part_10G, tpch_parquet_100G, tpch_parquet_part_100G, sri_parquet, sri_parquet_part, sri_ao_co, sri_ao_part, copy
+workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10g, tpch_parquet_part_10g, tpch_parquet_100g, tpch_parquet_part_100g, sri_parquet, sri_parquet_part, sri_ao_co, sri_ao_part, copy
 
 workloads_mode: concurrent
 
@@ -39,8 +39,8 @@ workloads_content:
       num_concurrency: 2
       num_iteration: 20
 
-    - workload_name: tpch_parquet_10G
-      database_name: gpsqltest_tpch_parquet_10G
+    - workload_name: tpch_parquet_10g
+      database_name: gpsqltest_tpch_parquet_10g
       user: gpadmin
       table_setting:
           data_volume_type: total
@@ -56,8 +56,8 @@ workloads_content:
       num_concurrency: 3
       num_iteration: 100
 
-    - workload_name: tpch_parquet_part_10G
-      database_name: gpsqltest_tpch_parquet_part_10G
+    - workload_name: tpch_parquet_part_10g
+      database_name: gpsqltest_tpch_parquet_part_10g
       user: gpadmin
       table_setting:
           data_volume_type: total
@@ -75,8 +75,8 @@ workloads_content:
       num_concurrency: 3
       num_iteration: 100
 
-    - workload_name: tpch_parquet_100G
-      database_name: gpsqltest_tpch_parquet_100G
+    - workload_name: tpch_parquet_100g
+      database_name: gpsqltest_tpch_parquet_100g
       user: gpadmin
       table_setting:
           data_volume_type: total
@@ -91,8 +91,8 @@ workloads_content:
       num_concurrency: 2
       num_iteration: 40
 
-    - workload_name: tpch_parquet_part_100G
-      database_name: gpsqltest_tpch_parquet_part_100G
+    - workload_name: tpch_parquet_part_100g
+      database_name: gpsqltest_tpch_parquet_part_100g
       user: gpadmin
       table_setting:
           data_volume_type: total

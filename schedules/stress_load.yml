@@ -1,6 +1,6 @@
-workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10G, tpch_parquet_part_10G, tpch_parquet_100G, tpch_parquet_part_100G
+workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10g, tpch_parquet_part_10g ,tpch_parquet_100g, tpch_parquet_part_100g
 
-workloads_mode: sequential
+workloads_mode: concurrent
 
 cluster_name: HAWQ main performance on Geneva cluster
 
@@ -11,7 +11,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 100
+          data_volume_size: 1
           append_only: true
           orientation: COLUMN
           compression_type: QuickLZ
@@ -27,7 +27,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 100
+          data_volume_size: 1
           append_only: true
           orientation: ROW
           compression_type: QuickLZ
@@ -39,12 +39,12 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_parquet_10G
-      database_name: gpsqltest_tpch_parquet_10G
+    - workload_name: tpch_parquet_10g
+      database_name: gpsqltest_tpch_parquet_10g
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 10
+          data_volume_size: 1
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -56,12 +56,12 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_parquet_part_10G
-      database_name: gpsqltest_tpch_parquet_part_10G
+    - workload_name: tpch_parquet_part_10g
+      database_name: gpsqltest_tpch_parquet_part_10g
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 10
+          data_volume_size: 1
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -75,8 +75,8 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_parquet_100G
-      database_name: gpsqltest_tpch_parquet_100G
+    - workload_name: tpch_parquet_100g
+      database_name: gpsqltest_tpch_parquet_100g
       user: gpadmin
       table_setting:
           data_volume_type: total
@@ -91,8 +91,8 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_parquet_part_100G
-      database_name: gpsqltest_tpch_parquet_part_100G
+    - workload_name: tpch_parquet_part_100g
+      database_name: gpsqltest_tpch_parquet_part_100g
       user: gpadmin
       table_setting:
           data_volume_type: total
