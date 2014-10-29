@@ -71,7 +71,11 @@ class Xmarq(Workload):
         else:
             sql = sql.replace('_TABLESUFFIX', '')
         
-        sql = sql.replace('SQLSUFFIX', self.sql_suffix)
+        if self.sql_suffix != '':
+            sql = sql.replace('SQLSUFFIX', self.sql_suffix)
+        else:
+            sql = sql.replace('WITH (SQLSUFFIX)', self.sql_suffix)
+
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
         if self.partitions == 0 or self.partitions is None:
