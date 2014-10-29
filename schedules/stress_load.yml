@@ -1,6 +1,6 @@
 workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10G, tpch_parquet_part_10G, tpch_parquet_100G, tpch_parquet_part_100G
 
-workloads_mode: concurrent
+workloads_mode: sequential
 
 cluster_name: HAWQ main performance on Geneva cluster
 
