@@ -81,7 +81,7 @@ class Tpch(Workload):
         else:
             sql = sql.replace('_TABLESUFFIX', '')
 
-        if sql_suffix != '':
+        if self.sql_suffix != '':
             sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         else:
             sql = sql.replace('WITH (SQLSUFFIX)', self.sql_suffix)
