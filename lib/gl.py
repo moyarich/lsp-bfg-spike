@@ -1,3 +1,3 @@
 # add global variable
-validation = False
+check_result = False
 suffix = False

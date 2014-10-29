@@ -95,19 +95,23 @@ import gl
 if __name__ == '__main__':
     # parse user options
     parser = OptionParser()
-    parser.add_option('-a', '--standalone', dest='mode', action='store_true', default=False, help='Standalone mode')
     parser.add_option('-s', '--schedule', dest='schedule', action='store', help='Schedule for test execution')
-    parser.add_option('-v', '--validation', dest='validation', action='store_true', default=False, help='Validation')
-    parser.add_option('-f', '--suffix', dest='suffix', action='store_true', default=False, help='Suffix')
+    parser.add_option('-a', '--add', dest='add_option', action='store_true', default=False, help='Add result in backend database')
+    parser.add_option('-c', '--check', dest='check', action='store_true', default=False, help='Check query result')
+    parser.add_option('-f', '--suffix', dest='suffix', action='store_true', default=False, help='Add table suffix')
     (options, args) = parser.parse_args()
-    standalone_mode = options.mode
     schedules = options.schedule
-    gl.validation = options.validation
+    add_database = options.add_option
+    gl.check_result = options.check
     gl.suffix = options.suffix
+    print add_database
+    print gl.check_result
+    print gl.suffix
+    sys.exit(2)
 
     cs_id = 0
     if schedules is None:
-        sys.stderr.write('Usage: python -u lsp.py -a -s schedule_file1[,schedule_file2]\npython -u lsp.py -s schedule_file1[,schedule_file2]\nPlease use python -u lsp.py -h for more info')
+        sys.stderr.write('Usage: python -u lsp.py -s schedule_file1[,schedule_file2] [-p] [-c] [-f]\nPlease use python -u lsp.py -h for more info')
         sys.exit(2)
 
     schedule_list = schedules.split(',')
@@ -121,7 +125,7 @@ if __name__ == '__main__':
             schedule_parser = yaml.load(fschedule)
 
         # check cluster information if lsp not run in standalone mode
-        if standalone_mode is False:
+        if add_database:
             cluster_name = schedule_parser['cluster_name']
             # check if specified cluster exists 
             cs_id = check.check_id(result_id = 'cs_id', table_name = 'hst.cluster_settings', search_condition = "cs_name = '%s'" % (cluster_name))
@@ -132,7 +136,7 @@ if __name__ == '__main__':
         if not start_flag:
             # add test run information in backend database if lsp not run in standalone mode
             start_flag = True
-            if standalone_mode is False:
+            if add_database:
                 output = commands.getoutput('cat ~/qa.sh')
                 try:
                     wd = output[output.index('wd='):].split('"')[1]
@@ -197,7 +201,7 @@ if __name__ == '__main__':
     duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
 
     # update backend database to log execution time
-    if standalone_mode is False and start_flag:
+    if add_database and start_flag:
         check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration), search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
 
         # add detailed execution information of test cases into backend database

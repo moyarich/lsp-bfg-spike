@@ -1,11 +1,11 @@
 # workloads_list: xmarq_ao_parquet,tpch_ao_row
 # workloads_list: tpch_ao_row,tpch_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_co
-workloads_list: xmarq_ao_row,tpch_ao_row,tpch_ao_parquet
-#workloads_list: tpch_ao_row
+#workloads_list: xmarq_ao_row,tpch_ao_row,tpch_ao_parquet
+workloads_list: tpch_ao_row
 
 #workloads_mode: sequential
-workloads_mode: CONCURRENT
+workloads_mode: concurrent
 
 cluster_name: HAWQ main performance on Geneva cluster
 
@@ -22,10 +22,10 @@ workloads_content:
           compression_type: QuickLZ
           compression_level: 1
       load_data_flag: true
-      run_workload_flag: true
+      run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 2
-      num_iteration: 2
+      num_concurrency: 1
+      num_iteration: 1
 
     - workload_name: tpch_ao_co
       database_name: gpsqltest_tpch_ao_co
