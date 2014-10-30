@@ -12,7 +12,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 1
+          data_volume_size: 100
           append_only: true
           orientation: COLUMN
           compression_type: QuickLZ
@@ -28,7 +28,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 1
+          data_volume_size: 100
           append_only: true
           orientation: ROW
           compression_type: QuickLZ
@@ -45,7 +45,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -62,7 +62,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
