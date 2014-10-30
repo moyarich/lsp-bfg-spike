@@ -1,6 +1,7 @@
 workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10g, tpch_parquet_part_10g ,tpch_parquet_100g, tpch_parquet_part_100g
 
-workloads_mode: concurrent
+workloads_mode: sequential
+#concurrent
 
 cluster_name: HAWQ main performance on Geneva cluster
 
@@ -18,7 +19,7 @@ workloads_content:
           compression_level: 1
       load_data_flag: true
       run_workload_flag: false
-      run_workload_mode: RANDOM
+      run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
 
@@ -35,7 +36,7 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_flag: false
-      run_workload_mode: RANDOM
+      run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
 
@@ -52,7 +53,7 @@ workloads_content:
           compression_type: SNAPPY
       load_data_flag: true
       run_workload_flag: false
-      run_workload_mode: RANDOM
+      run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
 
@@ -71,7 +72,7 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_flag: false
-      run_workload_mode: RANDOM
+      run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
 
@@ -105,6 +106,6 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_flag: false
-      run_workload_mode: RANDOM
+      run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
