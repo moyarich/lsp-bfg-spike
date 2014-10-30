@@ -19,7 +19,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 2
+      num_concurrency: 3
       num_iteration: 40
 
     - workload_name: tpch_ao_part
@@ -36,7 +36,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 2
+      num_concurrency: 3
       num_iteration: 20
 
     - workload_name: tpch_parquet_10g
@@ -53,7 +53,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 3
+      num_concurrency: 5
       num_iteration: 100
 
     - workload_name: tpch_parquet_part_10g
@@ -72,7 +72,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 3
+      num_concurrency: 5
       num_iteration: 100
 
     - workload_name: tpch_parquet_100g
@@ -88,7 +88,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 2
+      num_concurrency: 3
       num_iteration: 40
 
     - workload_name: tpch_parquet_part_100g
@@ -106,8 +106,8 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 2
-      num_iteration: 20
+      num_concurrency: 3
+      num_iteration: 40
 
     - workload_name: sri_parquet
       database_name: gpsqltest_sri_parquet
