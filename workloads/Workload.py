@@ -281,12 +281,12 @@ class Workload(object):
                 self.check_condition += " and wl_row_group_size = %d, and wl_page_size = %d" % (self.row_group_size, self.page_size)
                 self.wl_values += ", %d, %d" % (self.row_group_size, self.page_size)
 
-                if self.compression_level == 'SNAPPY':
+                if self.compression_type == 'SNAPPY':
                     tbl_suffix = tbl_suffix + '_' + self.compression_type
-                    sql_suffix = sql_suffix + ',' + 'compresstype = ' + self.compression_type
+                    sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type
                     self.check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
                     self.wl_values += ", '%s',  NULL" % (self.compression_type)
-                elif self.compression_level == 'GZIP':
+                elif self.compression_type == 'GZIP':
                     if (self.compression_level is None) or (self.compression_level < 1) or (self.compression_level > 9):
                         self.compression_level = 1
                     tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
@@ -335,7 +335,6 @@ class Workload(object):
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
         
-
     def setup(self):
         '''Setup prerequisites for workload'''
         pass
