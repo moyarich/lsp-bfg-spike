@@ -296,19 +296,19 @@ class Workload(object):
                 else:
                     tbl_suffix = tbl_suffix + '_nocomp'
                     self.wl_values += ", NULL, NULL"
+
+            if self.partitions > 0:
+                tbl_suffix += '_part'
+            else:
+                tbl_suffix += '_nopart'
+            self.check_condition += " and wl_partitions = %d" % (self.partitions)
+            self.wl_values += ', %d' % (self.partitions)
+        
         else:
             tbl_suffix = tbl_suffix + 'heap'
             sql_suffix = ''
-            self.check_condition += " and wl_appendonly = %s" % ('FALSE')
-            self.wl_values += ", '%s', NULL, NULL, NULL, NULL, NULL" % ('FALSE')
-
-        if self.partitions > 0:
-            tbl_suffix += '_part'
-        else:
-            tbl_suffix += '_nopart'
-        self.check_condition += " and wl_partitions = %d" % (self.partitions)
-        self.wl_values += ', %d' % (self.partitions)
-
+            self.check_condition += " and wl_appendonly = %s and wl_partitions = 0" % ('FALSE')
+            self.wl_values += ", '%s', NULL, NULL, NULL, NULL, NULL, 0" % ('FALSE')
         
         self.check_condition += " and wl_iteration = %d and wl_concurrency = %d and wl_query_order = '%s'" % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
         self.wl_values += ", %d, %d, '%s'"  % (self.num_iteration, self.num_concurrency, self.run_workload_mode)

@@ -57,7 +57,7 @@ class Check:
             sql = "Insert into %s values (%s);" % (table_name, values)
         else:
             sql = "Insert into %s (%s) values (%s);" % (table_name, col_list, values)
-        print sql
+      #  print sql
         remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
     def update_record(self, table_name, set_content = '', search_condition = ''):
