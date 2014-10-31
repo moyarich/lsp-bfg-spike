@@ -59,12 +59,15 @@ class Tpch(Workload):
             part = '''PARTITION BY RANGE(l_shipdate)\n    (\n'''
         elif table_name == 'orders':
             part = '''PARTITION BY RANGE(o_orderdate)\n    (\n'''
+
+        if gl.suffix:
+            table_name = table_name + '_' + self.tbl_suffix
                 
         for i in range(1, num_partitions+1):
             beg_cur = beg_date + timedelta(days = (i-1)*duration_days)
             end_cur = beg_date + timedelta(days = i*duration_days)
 
-            part += '''        PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )''' % (i, beg_cur, end_cur, duration_days, table_name + '_' + self.tbl_suffix, i, self.sql_suffix)
+            part += '''        PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )''' % (i, beg_cur, end_cur, duration_days, table_name, i, self.sql_suffix)
             
             if i != num_partitions:
                 part += ''',\n'''
