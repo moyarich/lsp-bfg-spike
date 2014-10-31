@@ -1,4 +1,4 @@
-workloads_list: tpch_co_comp_200g, tpch_row_comp_part_200g, tpch_parquet_comp_10g, tpch_parquet_comp_part_10g ,tpch_parquet_200g, tpch_parquet_comp_part_200g, sri_parquet, sri_parquet_part, sri_ao_co, sri_ao_part, copy
+workloads_list: tpch_parquet_comp_part_100g, tpch_row_comp_part_200g, tpch_co_comp_200g, tpch_parquet_200g, tpch_parquet_comp_part_10g, tpch_parquet_comp_10g, sri_parquet, sri_parquet_part, sri_ao_co, sri_ao_part, copy
 
 workloads_mode: concurrent
 
@@ -91,12 +91,12 @@ workloads_content:
       num_concurrency: 3
       num_iteration: 40
 
-    - workload_name: tpch_parquet_comp_part_200g
-      database_name: gpsqltest_tpch_parquet_comp_part_200g
+    - workload_name: tpch_parquet_comp_part_100g
+      database_name: gpsqltest_tpch_parquet_comp_part_100g
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 200
+          data_volume_size: 100
           append_only: true
           orientation: PARQUET
           compression_type: SNAPPY
