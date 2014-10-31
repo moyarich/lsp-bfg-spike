@@ -17,7 +17,12 @@ def remote_psql_file(sql, user, host, password, local_file = '/tmp/temp.sql', re
     remotecmd.scp_command(from_user = '', from_host = '', from_file = local_file,
         to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':' + remote_file, password = 'changeme')
     cmd = 'source psql.sh && psql -d hawq_cov -t -q -f %s' % (remote_file)
-    return remotecmd.ssh_command(user = user, host = host, password = password, command = cmd)
+    result = remotecmd.ssh_command(user = user, host = host, password = password, command = cmd)
+    if str(result).find('ERROR') != -1 or str(result).find('FATAL') != -1:
+        print(sql)
+        print(str(result))
+        sys.exit(2)
+    return result
 
 
 class Check:
@@ -31,9 +36,6 @@ class Check:
        # print sql
         result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         result = str(result).strip()
-        if result.find('ERROR') != -1 or result.find('FATAL') != -1:
-            print 'remote sql file wrong: \n' + result + '\n the sql is:' + sql 
-            sys.exit(2)
         if result.isdigit():
             return int(result)
         else:
@@ -44,9 +46,6 @@ class Check:
         #print sql
         result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         result = str(result).strip()
-        if result.find('ERROR') != -1 or result.find('FATAL') != -1:
-            print 'remote sql file wrong: \n' + result
-            sys.exit(2)
         if result.isdigit():
             return int(result)
         else:
