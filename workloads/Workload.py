@@ -234,8 +234,8 @@ class Workload(object):
         self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
         self.wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
 
-        self.check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.scale_factor)
-        self.wl_values += ", '%s', %d" % (self.data_volume_type, self.scale_factor)
+        self.check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.data_volume_size)
+        self.wl_values += ", '%s', %d" % (self.data_volume_type, self.data_volume_size)
 
         if self.append_only in [None, True]:
             tbl_suffix = tbl_suffix + 'ao'

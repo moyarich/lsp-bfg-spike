@@ -28,7 +28,7 @@ class Check:
 
     def check_id(self, result_id, table_name, search_condition):
         sql = 'select %s from %s where %s;' % (result_id, table_name, search_condition)
-        print sql
+       # print sql
         result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         result = str(result).strip()
         if result.find('ERROR') != -1 or result.find('FATAL') != -1:
@@ -41,7 +41,7 @@ class Check:
 
     def get_max_id(self, result_id, table_name):
         sql = 'select max(%s) from %s ;' % (result_id, table_name)
-        print sql
+        #print sql
         result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         result = str(result).strip()
         if result.find('ERROR') != -1 or result.find('FATAL') != -1:
@@ -62,16 +62,16 @@ class Check:
 
     def update_record(self, table_name, set_content = '', search_condition = ''):
         sql = "update %s set %s where %s;" % (table_name, set_content, search_condition)
-        print sql
+      #  print sql
         remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         
     def get_result(self, col_list = '',table_list = '', search_condition = ''):
         sql = "select %s from %s %s;" % (col_list, table_list, search_condition)
-        print sql
+       # print sql
         return remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
     def get_result_by_sql(self, sql = ''):
-        print sql
+      #  print sql
         return remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
 check = Check()
