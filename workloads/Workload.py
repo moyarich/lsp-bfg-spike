@@ -55,19 +55,66 @@ except ImportError:
 
 class Workload(object):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
-        # initialize common propertities for workload
+        # initialize common variables
         self.cs_id = cs_id
         self.us_id = 0
         self.tr_id = 0
         self.s_id = 0
         self.continue_flag = True
-
-        self.workload_name = workload_specification['workload_name'].strip()
-        self.database_name = workload_specification['database_name'].strip()
-
+        # should always run the workload by default
+        self.should_stop = False
         # set workload source directory
         self.workload_directory = workload_directory
+         
+        # required fields, workload_name, database_name, user
+        try:
+            self.workload_name = workload_specification['workload_name'].strip()
+            self.database_name = workload_specification['database_name'].strip()
+            self.user = workload_specification['user'].strip()
+            # check us_id if exist in backend database
+            if self.cs_id != 0:
+                self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
+                if self.us_id is None:
+                    sys.stderr.write('The db user name is wrong!\n')
+                    sys.exit(2)
+        except Exception, e:
+            print('Please add %s option in schedule file.' % (str(e)) )
+            sys.exit(2)
+        # prepare folders and files,
+        self.__prep_folders_and_files(workload_directory, report_directory, report_sql_file)
 
+        # table settings
+        self.data_volume_type = None
+        self.data_volume_size = None
+        self.append_only = None
+        self.orientation = None
+        self.row_group_size = None
+        self.page_size = None
+        self.compression_type = None
+        self.compression_level = None
+        self.partitions = 0
+
+        self.scale_factor = None
+        self.ans_directory = ''
+        self.__get_table_settings(workload_specification)
+
+        # get table suffix, sql suffix, check_condition, wl_values from table_settings
+        self.tbl_suffix = ''
+        self.sql_suffix = ''      
+        self.check_condition = ''
+        self.wl_values = ''
+
+        # get how to run a workload
+        self.load_data_flag = None
+        self.run_workload_flag = None
+        self.run_workload_mode = None
+        self.num_concurrency = None
+        self.num_iteration = None
+        self.__get_run_mode(workload_specification)
+
+        self.__set_info()
+
+    def __prep_folders_and_files(self, workload_directory, report_directory, report_sql_file):
         # prepare report directory for workload
         if report_directory != '':
             self.report_directory = os.path.join(report_directory, self.workload_name)
@@ -78,59 +125,97 @@ class Workload(object):
         # set output log and report
         self.output_file = os.path.join(self.report_directory, 'output.csv')
 
-        # prepare result directory for workload
+        # prepare query result directory for workload
         self.result_directory = self.report_directory + os.sep + 'queries_result'
         os.system('mkdir -p %s' % (self.result_directory))
         os.system('rm -rf %s/*' % (self.result_directory))
 
-        # set report.sql file and tmp folder
+        # get report.sql file and tmp folder
         self.report_sql_file = report_sql_file
         self.tmp_folder = report_sql_file.replace('report.sql', 'tmp')
         self.tmp_folder = self.tmp_folder + os.sep + self.workload_name
         os.system('mkdir -p %s' % (self.tmp_folder))
         
-        self.user = workload_specification['user'].strip()
-        # check us_id if exist
-        if self.cs_id != 0:
-            self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
-            if self.us_id is None:
-                sys.stderr.write('The db user name is wrong!\n')
-                sys.exit(2)
-        
-        try:
-            self.load_data_flag = str(workload_specification['load_data_flag']).strip().upper()
-        except Exception, e:
-            self.load_data_flag = 'FALSE'
-        # check flag for data loading
-        if self.load_data_flag == 'TRUE':
-            self.load_data_flag = True
-        elif self.load_data_flag == 'FALSE':
-            self.load_data_flag = False
-        else:
-            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.load_data_flag))
-            exit(-1)
-        
-        try:
-            self.run_workload_flag = str(workload_specification['run_workload_flag']).strip().upper()
-        except Exception, e:
-            self.run_workload_flag = 'FALSE'
-        # check flag for workload execution
-        if self.run_workload_flag == 'TRUE':
-            self.run_workload_flag = True
-        elif self.run_workload_flag == 'FALSE':
-            self.run_workload_flag = False
-        else:
-            self.output('ERROR: Invalid value for data loading flag in workload %s: %s. Must be TRUE/FALSE.' % (self.workload_name, self.run_workload_flag))
-            exit(-1)
-        
-        # get table setting and set table suffix, sql suffix, check_condition, and wl_values
-        self.get_table_setting(workload_specification)
+    def __get_table_settings(self, workload_specification):
+        ts = workload_specification['table_setting']
 
+        # Calculate scale factor for workload
+        try:
+            self.data_volume_type = ts['data_volume_type'].upper()
+            self.data_volume_size = ts['data_volume_size']
+        except Exception, e:
+            print('Please add %s option in schedule file.' % (str(e)) )
+            sys.exit(2)
+        
+        # Need to make it univerally applicable instead of hard-code number of segments
+        self.nsegs =  config.getNPrimarySegments()
+        
+        if self.data_volume_type == 'TOTAL':
+            self.scale_factor = self.data_volume_size
+        elif self.data_volume_type == 'PER_NODE':
+            nnodes = len(config.getSegHostNames())
+            self.scale_factor = self.data_volume_size * nnodes
+        elif self.data_volume_type == 'PER_SEGMENT':
+            self.scale_factor = self.data_volume_size * self.nsegs
+        else:
+            self.output('Error in calculating data volumn for workloads %s: data_volume_type=%s, data_volume_size=%s' % (self.workload_name, self.data_volume_type, self.data_volume_size))
+            sys.exit(2)
+
+        # get ans directory base on self.scale_factor
         self.ans_directory = self.workload_directory + os.sep + 'queries_ans_%dg' % (self.scale_factor)
         if not os.path.exists(self.ans_directory):
             self.output('%s ans_directory:%s does not exists' % (self.workload_name, self.ans_directory))
 
-        self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
+        # Parse table setting
+        ts_keys = ts.keys()
+
+        if 'append_only' in ts_keys:
+            self.append_only = ts['append_only']
+            assert self.append_only in [True, False]
+        
+        self.orientation = 'ROW'
+        if 'orientation' in ts_keys:
+            self.orientation = ts['orientation'].upper()
+            assert self.orientation in ['PARQUET', 'ROW', 'COLUMN']
+        
+        if 'row_group_size' in ts_keys: # and ts['row_group_size'].isdigit():
+            self.row_group_size = int(ts['row_group_size'])
+            
+        if 'page_size' in ts_keys:
+            self.page_size = int(ts['page_size'])
+            
+        if 'compression_type' in ts_keys:
+            self.compression_type = ts['compression_type'].upper()
+            assert self.compression_type in ['QUICKLZ', 'SNAPPY', 'GZIP', 'ZLIB']
+            
+        if 'compression_level' in ts_keys: # and ts['compression_level'].isdigit():
+            self.compression_level = int(ts['compression_level'])
+            
+        if 'partitions' in ts_keys: # and ts['partitions'].isdigit():
+            self.partitions = int(ts['partitions'])
+       
+    def __get_run_mode(self, workload_specification):
+        
+        try:
+            self.load_data_flag = workload_specification['load_data_flag']
+        except Exception, e:
+            self.load_data_flag = False
+        assert self.load_data_flag in [True, False]
+        
+        try:
+            self.run_workload_flag = workload_specification['run_workload_flag']
+        except Exception, e:
+            self.run_workload_flag = False
+        assert self.run_workload_flag in [True, False]
+        
+        try:
+            self.run_workload_mode = workload_specification['run_workload_mode'].strip().upper()
+            if self.run_workload_mode not in ['SEQUENTIAL', 'RANDOM']:
+                print('ERROR: Invalid value for mode of workload execution in workload %s: %s. Mast be SEQUENTIAL/RANDOM.' % (self.workload_name, self.run_workload_mode))
+                sys.exit(2)
+        except Exception, e:
+            self.run_workload_mode = 'SEQUENTIAL'
+        
         
         try:
             self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
@@ -141,22 +226,93 @@ class Workload(object):
             self.num_iteration = int(str(workload_specification['num_iteration']).strip())
         except Exception, e:
             self.num_iteration = 1
-        
-        self.check_condition += ' and wl_iteration = %d and wl_concurrency = %d' % (self.num_iteration, self.num_concurrency)
-        self.wl_values += ', %d, %d' % (self.num_iteration, self.num_concurrency)
+    
+    def __set_info(self):
+        tbl_suffix = ''
+        sql_suffix = ''
+        # init tpch specific configuration such as tpch table_settings
+        self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
+        self.wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
 
-        # check mode for workload execution
-        if self.run_workload_mode == 'SEQUENTIAL':
-            pass
-        elif self.run_workload_mode == 'RANDOM':
-            pass
+        self.check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.scale_factor)
+        self.wl_values += ", '%s', %d" % (self.data_volume_type, self.scale_factor)
+
+        if self.append_only in [None, True]:
+            tbl_suffix = tbl_suffix + 'ao'
+            sql_suffix = sql_suffix + 'appendonly = true'
+            self.check_condition += " and wl_appendonly = %s" % (str(self.append_only).upper())
+            self.wl_values += ", '%s'" % (str(self.append_only).upper())
+
+            tbl_suffix = tbl_suffix + '_' + self.orientation
+            sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
+            self.check_condition += " and wl_orientation = '%s'" % (self.orientation)
+            self.wl_values += ", '%s'" % (self.orientation)
+
+            if self.orientation in ['ROW', 'COLUMN']:
+                self.wl_values += ", NULL, NULL"
+
+                if self.compression_type is None:
+                    tbl_suffix = tbl_suffix + '_nocomp'
+                    self.wl_values += ", NULL, NULL"
+
+                elif self.compression_type == 'QUICKLZ':
+                    self.compression_level = 1
+                    tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
+                    sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
+                    self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
+                    self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
+                elif self.compression_type == 'ZLIB':
+                    if (self.compression_level is None) or (self.compression_level < 1) or (self.compression_level > 9):
+                        self.compression_level = 1
+                    tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
+                    sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
+                    self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
+                    self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
+                else:
+                    tbl_suffix = tbl_suffix + '_nocomp'
+                    self.wl_values += ", NULL, NULL"
+            else:
+                # PARQUET
+                if self.row_group_size is None or self.page_size is None:
+                    self.row_group_size = 8388608
+                    self.page_size = 1048576
+
+                sql_suffix = sql_suffix + ', ' + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
+                self.check_condition += " and wl_row_group_size = %d, and wl_page_size = %d" % (self.row_group_size, self.page_size)
+                self.wl_values += ", %d, %d" % (self.row_group_size, self.page_size)
+
+                if self.compression_level == 'SNAPPY':
+                    tbl_suffix = tbl_suffix + '_' + self.compression_type
+                    sql_suffix = sql_suffix + ',' + 'compresstype = ' + self.compression_type
+                    self.check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
+                    self.wl_values += ", '%s',  NULL" % (self.compression_type)
+                elif self.compression_level == 'GZIP':
+                    if (self.compression_level is None) or (self.compression_level < 1) or (self.compression_level > 9):
+                        self.compression_level = 1
+                    tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
+                    sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
+                    self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
+                    self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
+                else:
+                    tbl_suffix = tbl_suffix + '_nocomp'
+                    self.wl_values += ", NULL, NULL"
         else:
-            self.output('ERROR: Invalid value for mode of workload execution in workload %s: %s. Mast be SEQUENTIAL/RANDOM.' % (self.workload_name, self.run_workload_mode))
-            exit(-1)
-        self.check_condition += " and wl_query_order = '%s'" % (self.run_workload_mode)
-        self.wl_values += ", '%s'" % (self.run_workload_mode)
+            tbl_suffix = tbl_suffix + 'heap'
+            sql_suffix = ''
+            self.check_condition += " and wl_appendonly = %s" % ('FALSE')
+            self.wl_values += ", '%s', NULL, NULL, NULL, NULL, NULL" % ('FALSE')
+
+        if self.partitions > 0:
+            tbl_suffix += '_part'
+        else:
+            tbl_suffix += '_nopart'
+        self.check_condition += " and wl_partitions = %d" % (self.partitions)
+        self.wl_values += ', %d' % (self.partitions)
 
         
+        self.check_condition += " and wl_iteration = %d and wl_concurrency = %d and wl_query_order = '%s'" % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
+        self.wl_values += ", %d, %d, '%s'"  % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
+
         if self.cs_id != 0:
             # check wl_id if exist
             self.wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
@@ -165,6 +321,7 @@ class Workload(object):
                                         col_list = 'wl_name, wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order',
                                         values = self.wl_values)
                 self.wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
+                
             # check s_id if exist
             self.s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
                                        search_condition = 'cs_id = %d and wl_id = %d and us_id = %d' % (self.cs_id, self.wl_id, self.us_id))
@@ -175,132 +332,9 @@ class Workload(object):
             #get tr_id
             self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
 
-        # should always run the workload by default
-        self.should_stop = False
-
-    def get_table_setting(self, workload_specification):
-        # init tpch specific configuration such as tpch table_settings
-        self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
-        
-        self.wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
-        
-        ts = workload_specification['table_setting']
-
-        # Calculate scale factor for workload
-        self.data_volume_type = ts['data_volume_type'].upper()
-        self.check_condition += " and wl_data_volume_type = '%s'" % (self.data_volume_type)
-        self.wl_values += ", '%s'" % (self.data_volume_type)
-        
-        
-        self.data_volume_size = ts['data_volume_size']
-        self.check_condition += " and wl_data_volume_size = %d" % (self.data_volume_size)
-        self.wl_values += ", %d" % (self.data_volume_size)
-        
-        # Need to make it univerally applicable instead of hard-code number of segments
-        self.nsegs =  config.getNPrimarySegments()
-
-        self.scale_factor = 1
-        if self.data_volume_type == 'TOTAL':
-            self.scale_factor = self.data_volume_size
-        elif self.data_volume_type == 'PER_NODE':
-            nnodes = len(config.getSegHostNames())
-            self.scale_factor = self.data_volume_size * nnodes
-        elif self.data_volume_type == 'PER_SEGMENT':
-            self.scale_factor = self.data_volume_size * self.nsegs
-        else:
-            self.output('Error in calculating data volumn for workloads %s: data_volume_type=%s, data_volume_size=%s' % (self.workload_name, self.data_volume_type, self.data_volume_size))
-            exit(-1)
-
-        # Parse table setting
-        ts_keys = ts.keys()
-
-        self.append_only = True
-        if 'append_only' in ts_keys:
-            self.append_only = ts['append_only']
-            assert self.append_only in [True, False]
-        self.check_condition += " and wl_appendonly = %s" % (str(self.append_only).upper())
-        self.wl_values += ", '%s'" % (str(self.append_only).upper())
-
-        self.orientation = 'ROW'
-        if 'orientation' in ts_keys:
-            self.orientation = ts['orientation'].upper()
-            assert self.orientation in ['PARQUET', 'ROW', 'COLUMN']
-        self.check_condition += " and wl_orientation = '%s'" % (self.orientation)
-        self.wl_values += ", '%s'" % (self.orientation)
-
-        self.row_group_size = None
-        if 'row_group_size' in ts_keys:
-            self.row_group_size = int(ts['row_group_size'])
-            self.check_condition += ' and wl_row_group_size = %d' % (self.row_group_size) 
-            self.wl_values += ', %d' % (self.row_group_size)
-        else:
-            self.wl_values += ', NULL'
-
-        self.page_size = None
-        if 'page_size' in ts_keys:
-            self.page_size = int(ts['page_size'])
-            self.check_condition += ' and wl_page_size = %d' % (self.page_size)
-            self.wl_values += ', %d' % (self.page_size)
-        else:
-            self.wl_values += ', NULL'
-
-        self.compression_type = None
-        if 'compression_type' in ts_keys:
-            self.compression_type = ts['compression_type'].upper()
-            self.check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
-            self.wl_values += ", '%s'" % (self.compression_type)
-        else:
-            self.wl_values += ", ''"
-        
-        self.compression_level = None
-        if 'compression_level' in ts_keys:
-            self.compression_level = int(ts['compression_level'])
-            self.check_condition += ' and wl_compression_level = %d' % (self.compression_level)
-            self.wl_values += ', %d' % (self.compression_level)
-        else:
-            self.wl_values += ', NULL'
-
-        self.partitions = 0
-        if 'partitions' in ts_keys:
-            self.partitions = int(ts['partitions'])
-        self.check_condition += ' and wl_partitions = %d' % (self.partitions)
-        self.wl_values += ', %d' % (self.partitions)
-
-        # prepare name with suffix for table and corresponding sql statement to create it
-        tbl_suffix = ''
-        sql_suffix = ''
-
-        if self.append_only in [None, True]:
-            tbl_suffix = tbl_suffix + 'ao'
-            sql_suffix = sql_suffix + 'appendonly = true'
-        else:
-            tbl_suffix = tbl_suffix + 'heap'
-            sql_suffix = sql_suffix + 'appendonly = false'
-
-        tbl_suffix = tbl_suffix + '_' + self.orientation
-        sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
-
-        if self.orientation == 'PARQUET':
-            sql_suffix = sql_suffix + ', ' + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
-
-        if self.compression_type is not None:
-            if self.compression_level is not None:
-                tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
-                sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type 
-                sql_suffix = sql_suffix + ', ' + 'compresslevel = ' + str(self.compression_level)
-            else:
-                tbl_suffix = tbl_suffix + '_' + self.compression_type
-                sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type
-        else:
-            tbl_suffix = tbl_suffix + '_nocomp'
-
-        if self.partitions > 0:
-            tbl_suffix += '_part'
-        else:
-            tbl_suffix += '_nopart'
-
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
+        
 
     def setup(self):
         '''Setup prerequisites for workload'''
@@ -398,8 +432,7 @@ class Workload(object):
             self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
             self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
                 % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration))
-                
-                
+                              
     def run_workload(self):
         niteration = 1
         while niteration <= self.num_iteration:
