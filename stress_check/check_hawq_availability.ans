@@ -1,0 +1,12 @@
+CREATE TABLE hawq_test ( cid INT, cdate TIMESTAMP) DISTRIBUTED BY (cid);
+CREATE TABLE
+INSERT INTO hawq_test SELECT generate_series(1, 100000), CURRENT_TIMESTAMP;
+INSERT 0 100000
+SELECT COUNT(*) FROM hawq_test;
+ count  
+--------
+ 100000
+(1 row)
+
+DROP TABLE IF EXISTS hawq_test;
+DROP TABLE
