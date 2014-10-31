@@ -1,4 +1,4 @@
-workloads_list: tpch_ao_co, tpch_ao_part, tpch_parquet_10g, tpch_parquet_part_10g, tpch_parquet_100g, tpch_parquet_part_100g, sri_parquet, sri_parquet_part, sri_ao_co, sri_ao_part, copy
+workloads_list: tpch_co_comp_200g, tpch_row_comp_part_200g, tpch_parquet_comp_10g, tpch_parquet_comp_part_10g ,tpch_parquet_200g, tpch_parquet_comp_part_200g, sri_parquet, sri_parquet_part, sri_ao_co, sri_ao_part, copy
 
 workloads_mode: concurrent
 
@@ -6,12 +6,12 @@ cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
 
-    - workload_name: tpch_ao_co
-      database_name: gpsqltest_tpch_ao_co
+    - workload_name: tpch_co_comp_200g
+      database_name: gpsqltest_tpch_co_comp_200g
       user: gpadmin
       table_setting:
-          data_volume_type: total
-          data_volume_size: 100
+          data_volume_type: PER_NODE
+          data_volume_size: 200
           append_only: true
           orientation: COLUMN
           compression_type: QuickLZ
@@ -22,12 +22,12 @@ workloads_content:
       num_concurrency: 3
       num_iteration: 40
 
-    - workload_name: tpch_ao_part
-      database_name: gpsqltest_tpch_ao_part
+    - workload_name: tpch_row_comp_part_200g
+      database_name: gpsqltest_tpch_row_comp_part_200g
       user: gpadmin
       table_setting:
-          data_volume_type: total
-          data_volume_size: 100
+          data_volume_type: PER_NODE
+          data_volume_size: 200
           append_only: true
           orientation: ROW
           compression_type: QuickLZ
@@ -39,11 +39,11 @@ workloads_content:
       num_concurrency: 3
       num_iteration: 20
 
-    - workload_name: tpch_parquet_10g
-      database_name: gpsqltest_tpch_parquet_10g
+    - workload_name: tpch_parquet_comp_10g
+      database_name: gpsqltest_tpch_parquet_comp_10g
       user: gpadmin
       table_setting:
-          data_volume_type: total
+          data_volume_type: PER_NODE
           data_volume_size: 10
           append_only: true
           orientation: PARQUET
@@ -56,11 +56,11 @@ workloads_content:
       num_concurrency: 5
       num_iteration: 100
 
-    - workload_name: tpch_parquet_part_10g
-      database_name: gpsqltest_tpch_parquet_part_10g
+    - workload_name: tpch_parquet_comp_part_10g
+      database_name: gpsqltest_tpch_parquet_comp_part_10g
       user: gpadmin
       table_setting:
-          data_volume_type: total
+          data_volume_type: PER_NODE
           data_volume_size: 10
           append_only: true
           orientation: PARQUET
@@ -75,12 +75,12 @@ workloads_content:
       num_concurrency: 5
       num_iteration: 100
 
-    - workload_name: tpch_parquet_100g
-      database_name: gpsqltest_tpch_parquet_100g
+    - workload_name: tpch_parquet_200g
+      database_name: gpsqltest_tpch_parquet_200g
       user: gpadmin
       table_setting:
-          data_volume_type: total
-          data_volume_size: 100
+          data_volume_type: PER_NODE
+          data_volume_size: 200
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -91,12 +91,12 @@ workloads_content:
       num_concurrency: 3
       num_iteration: 40
 
-    - workload_name: tpch_parquet_part_100g
-      database_name: gpsqltest_tpch_parquet_part_100g
+    - workload_name: tpch_parquet_comp_part_200g
+      database_name: gpsqltest_tpch_parquet_comp_part_200g
       user: gpadmin
       table_setting:
-          data_volume_type: total
-          data_volume_size: 100
+          data_volume_type: PER_NODE
+          data_volume_size: 200
           append_only: true
           orientation: PARQUET
           compression_type: SNAPPY
