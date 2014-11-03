@@ -1,4 +1,5 @@
-workloads_list: tpch_parquet_comp_part_100g, tpch_row_comp_part_200g, tpch_co_comp_200g, tpch_parquet_200g, tpch_parquet_comp_part_10g, tpch_parquet_comp_10g
+workloads_list: tpch_parquet_comp_part_200g
+#, tpch_row_comp_part_200g, tpch_co_comp_200g, tpch_parquet_200g, tpch_parquet_comp_part_10g, tpch_parquet_comp_10g
 
 workloads_mode: sequential
 #concurrent
@@ -92,12 +93,12 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpch_parquet_comp_part_100g
-      database_name: gpsqltest_tpch_parquet_comp_part_100g
+    - workload_name: tpch_parquet_comp_part_200g
+      database_name: gpsqltest_tpch_parquet_comp_part_200g
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 100
+          data_volume_size: 200
           append_only: true
           orientation: PARQUET
           compression_type: SNAPPY
