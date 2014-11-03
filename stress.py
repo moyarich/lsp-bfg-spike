@@ -13,6 +13,28 @@ except ImportError:
     sys.stderr.write('Stress needs pyyaml. You can get it from http://pyyaml.org.\n') 
     sys.exit(2)
 
+LSP_HOME = os.path.abspath(os.path.dirname(__file__))
+os.environ['LSP_HOME'] = LSP_HOME
+
+if LSP_HOME not in sys.path:
+    sys.path.append(LSP_HOME)
+
+LIB_DIR = LSP_HOME + os.sep + 'lib'
+if LIB_DIR not in sys.path:
+    sys.path.append(LIB_DIR)
+
+try:
+    from lib.PSQL import psql
+except ImportError:
+    sys.stderr.write('Stress needs psql in lib/PSQL.py in Workload.py\n')
+    sys.exit(2)
+
+try:
+    from lib.Config import config
+except ImportError:
+    sys.stderr.write('Stress needs config in lib/Config.py\n')
+    sys.exit(2)
+
 class Check_hawq_stress():
     def __init__(self):
         self.pwd = os.path.abspath(os.path.dirname(__file__))
@@ -31,6 +53,7 @@ class Check_hawq_stress():
     def __fetch_hawq_configuration(self):
         '''Fetch master hostname, segments hostname, data directory of HAWQ.'''
         self.hawq_master = []
+        self.hawq_master.append(config.getMasterHostName())
         self.hawq_segments = []
         self.hawq_paths = []
         self.hawq_config = []
