@@ -1,6 +1,5 @@
-[HDFS]
-path=/usr/lib/gphd/hadoop/logs/
+path: /usr/lib/gphd/hadoop/logs/
 #path=/usr/lib/gphd/hadoop-2.0.5_alpha_gphd_2_0_3_0/
-namenode=smdw
-second_namenode=mdw
-datanode=sdw1,sdw2,sdw3,sdw4,sdw5,sdw6,sdw7,sdw8,sdw9,sdw10,sdw11,sdw12,sdw13,sdw14,sdw15,sdw16
+namenode: bcn-mst1
+second_namenode: bcn-mst2
+datanode: bcn-w1,bcn-w2,bcn-w3,bcn-w4,bcn-w5,bcn-w6,bcn-w7,bcn-w8,bcn-w9,bcn-w10,bcn-w11,bcn-w12,bcn-w13,bcn-w14,bcn-w15,bcn-w16
