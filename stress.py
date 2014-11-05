@@ -150,7 +150,7 @@ class Check_hawq_stress():
         cmd = "psql -a -d %s -f %s" % ('postgres', sqlFile)
         (s, o) = commands.getstatusoutput(cmd)
         if s != 0:
-            print('test_01_check_hawq_availability is error. ')
+            print('test_01_check_hawq_availability is error.\n ')
             print o
         else:
             fo = open(outFile, 'w')
@@ -172,10 +172,10 @@ class Check_hawq_stress():
             cmd = "diff -rq %s %s" % ( outFile, ansFile )
             (status, output) = commands.getstatusoutput(cmd)
             if status != 0 or output != '':
-                print('test_01_check_hawq_availability is failed. ')
+                print('test_01_check_hawq_availability is failed.\n ')
                 print output
             else:
-                print('test_01_check_hawq_availability is success. ')
+                print('test_01_check_hawq_availability is success.\n ')
 
     def test_02_check_out_of_disk(self):
         '''Test case 01: Check out-of-disk by examing available disk capacity'''
@@ -189,7 +189,7 @@ class Check_hawq_stress():
                     cmd = "ssh %s 'df -h %s'" % (host, path)
                     (status, output) = commands.getstatusoutput(cmd)
                     if status != 0:
-                        print('test_02_check_out_of_disk is error. ')
+                        print('test_02_check_out_of_disk is error.\n ')
                         print output
                     else:
                         capacity_list = re.findall(r'[0-9]+%', output)
@@ -200,17 +200,10 @@ class Check_hawq_stress():
                             else:
                                 print host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
 
-                
-                #    capacity = re.match(r"^.*[ \t]([0-9]+)%[ \t].*$", out[-1].strip()).group(1)
-                    # If used capacity is larger than 80%, out-of-disk will be reportd
-                 #   if int( capacity ) >80:
-                  #      print host + ": " + path + ": " + capacity + "%" + " used" + ' threshold : 80%'
-                   #     ood = True
-                  #  else:
-                   #     print host + ": " + path + ": " + capacity + "%" + " used" + ' threshold : 80%'
-
-       # if ood:
-            #self.fail()
+        if ood:
+            print('test_02_check_out_of_disk is failed.\n ')
+        else:
+            print('test_02_check_out_of_disk is success.\n ')
 
 
     def test(self):
