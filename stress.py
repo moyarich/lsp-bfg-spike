@@ -205,10 +205,23 @@ class Check_hawq_stress():
         else:
             print('test_02_check_out_of_disk is success.\n ')
 
+    def test_03_check_hawq_health(self):
+        '''Test case 04: Check health including: segment down'''
+        # Potential improvement: further investigation on root cause using gpcheckperf
+        sql = "SELECT count(*) FROM pg_catalog.gp_segment_configuration WHERE mode<>'s'"
+        (ok, out) = psql.runcmd( dbname = 'postgres', cmd = sql , ofile = '-', flag = '-q -t' )
+        if not ok:
+            print('test_03_check_hawq_health is error.\n ')
+            print out
+        if int(out[0]) == 0:
+            print('test_03_check_hawq_health is success.\n ')
+        else:
+            print('test_03_check_hawq_health is failed: %d segments is failed\n ' % (int(out[0])) )
 
     def test(self):
-        self.test_01_check_hawq_availability()
-        self.test_02_check_out_of_disk()
+        #self.test_01_check_hawq_availability()
+        #self.test_02_check_out_of_disk()
+        self.test_03_check_hawq_health()
 
 
 if __name__ == '__main__':
