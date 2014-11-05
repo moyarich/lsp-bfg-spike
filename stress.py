@@ -37,17 +37,19 @@ except ImportError:
 
 class Check_hawq_stress():
     def __init__(self):
-        self.pwd = os.path.abspath(os.path.dirname(__file__))
+        self.check_stress = LSP_HOME + '/validator/check_stress'
+        self.__fetch_hdfs_configuration()
+        self.__fetch_hawq_configuration()
 
     def __fetch_hdfs_configuration(self):
         '''Fetch namenode, datanode info and logs dir of hdfs.'''
-        hdfs_conf_file = self.pwd + os.sep + 'validator/check_stress/hdfs_stress.yml'
+        hdfs_conf_file = LSP_HOME + os.sep + 'validator/check_stress/hdfs_stress.yml'
         with open(hdfs_conf_file, 'r') as fhdfs_conf:
             hdfs_conf_parser = yaml.load(fhdfs_conf)
 
         self.log_path = hdfs_conf_parser['path'].strip()
-        self.namenode = hdfs_conf_parser['namenode'].strip()
-        self.second_namenode = hdfs_conf_parser['second_namenode'].strip()
+        self.namenode = [ hdfs_conf_parser['namenode'].strip() ]
+        self.second_namenode = [ hdfs_conf_parser['second_namenode'].strip() ]
         self.datanode = [ dn.strip() for dn in hdfs_conf_parser['datanode'].split(',') ]
 
     def __fetch_hawq_configuration(self):
@@ -55,11 +57,10 @@ class Check_hawq_stress():
         self.hawq_master = config.getMasterHostName()
         self.hawq_segments = config.getSegHostNames()
         self.hawq_paths = []
-        self.hawq_config = []
+        self.hawq_config = {}
 
         sql = "SELECT gsc.hostname, pfe.fselocation FROM gp_segment_configuration gsc, pg_filespace_entry pfe WHERE gsc.dbid = pfe.fsedbid AND pfe.fselocation NOT LIKE 'hdfs%' ORDER BY pfe.fselocation;"
-        (ok, out) = psql.runcmd( dbname='postgres', cmd=sql , ofile='-', flag='-q -t' )
-        print out
+        (ok, out) = psql.runcmd( dbname = 'postgres', cmd = sql , ofile = '-', flag = '-q -t' )
 
         if not ok:
             print out
@@ -69,13 +70,152 @@ class Check_hawq_stress():
                 line = line.strip()
                 if line:
                     (host, path) = line.split( '|' )
-                    self.hawq_config.append( (host.strip(), path.strip()) )
+                    if not self.hawq_config.has_key(host.strip()):
+                        self.hawq_config[host.strip()] = []
+                    self.hawq_config[host.strip()].append(path.strip())
+                        
+                   # self.hawq_config.append( (host.strip(), path.strip()) )
                     self.hawq_paths.append( path.strip() ) 
 
-    def test(self):
-        self.__fetch_hdfs_configuration()
-        self.__fetch_hawq_configuration()
+    def __search_key_in_log(self, host, key, path):
+        '''Search key in logs using grep'''
+        cmd = "gpssh -h %s -e 'grep -i %s %s'" % (host, key, path)
+        (status, output) = commands.getstatusoutput(cmd)
+        return (status, output)
 
+    def __escape_search_key(self, key):
+        '''Escape the search key in case of special characters'''
+        searchKeyEscaped = ''
+        for i in range(0, len(key)):
+            if key[i] in [',', '\\', '{', '}', '[', ']']:
+                searchKeyEscaped += '\\' + key[i]
+            else:
+                searchKeyEscaped += key[i]
+        return searchKeyEscaped
+
+    def __analyze_hdfs_logs(self, searchKeyArray = ['error', 'exception'], hosts = ['localhost'], path = '/usr/local/gphd/hadoop-2.2.0-gphd-3.0.0.0'):
+        '''Search keys in hdfs logs, including: error, exception, etc.''' 
+        find_any = False
+        for key in searchKeyArray:
+            print "Searching for %s" % key
+            find_one = False
+            for host in hosts:
+                (status, output) = self.__search_key_in_log( host = host, key = key, path = path+"/logs/*.log",)
+                print "Logs for '%s' on %s in %s:" % (key, host, path+"/logs/*.log")
+                #print out
+                #find_one = True
+                print 
+            if find_one:
+                print "\nFound %s" % ( key )
+                find_any = True
+            else:
+                print "\nNo %s found" % ( key )
+
+        if find_any:
+            pass
+            #print find
+
+
+    # ????????????
+    def __produce_wildcard_for_seg_paths(self, strlist):
+        length = min(len(strlist[0]), len(strlist[1]))
+        print length
+        num = len(strlist)
+        print num
+        wild_card = ''
+        for i in range(0, length):
+            flag = False 
+            for j in range(0, num-1):
+                if strlist[j][i] == strlist[j+1][i]:
+                    if j == num - 2:
+                        flag = True 
+                        continue
+                    else:
+                        break
+            if flag:
+                wild_card += strlist[0][i]
+            else:
+                wild_card += '*'
+        print wild_card
+      
+        return wild_card
+
+
+    def test_01_check_hawq_availability(self):
+        '''Test case 03: Check availability including: utility mode, panic, cannot access, and hawq sanity test with INSERT/DROP/SELECT queries'''
+        sqlFile = self.check_stress + "/check_hawq_availability.sql"
+        ansFile = self.check_stress + "/check_hawq_availability.ans"
+        outFile = self.check_stress + "/check_hawq_availability.out"
+
+        cmd = "psql -a -d %s -f %s" % ('postgres', sqlFile)
+        (s, o) = commands.getstatusoutput(cmd)
+        if s != 0:
+            print('test_01_check_hawq_availability is error. ')
+            print o
+        else:
+            fo = open(outFile, 'w')
+            ignore = False
+            for line in o.split('\n'):
+                if '-- start_ignore' in line.strip():
+                    ignore = True
+                    continue
+
+                if ignore == True:
+                    if '-- end_ignore' in line.strip():
+                        ignore = False
+                    continue
+                else:
+                    fo.write( line + '\n')
+
+            fo.close()
+
+            cmd = "diff -rq %s %s" % ( outFile, ansFile )
+            (status, output) = commands.getstatusoutput(cmd)
+            if status != 0 or output != '':
+                print('test_01_check_hawq_availability is failed. ')
+                print output
+            else:
+                print('test_01_check_hawq_availability is success. ')
+
+    def test_02_check_out_of_disk(self):
+        '''Test case 01: Check out-of-disk by examing available disk capacity'''
+        ood = False
+        if len(self.hawq_config) == 0:
+            ood = True
+        else:
+            for host in self.hawq_config.keys():
+                for path in self.hawq_config[host]:
+                  #  cmd = "ssh %s 'df -h %s'" % (host, ' '.join(self.hawq_config[host]))
+                    cmd = "ssh %s 'df -h %s'" % (host, path)
+                    (status, output) = commands.getstatusoutput(cmd)
+                    if status != 0:
+                        print('test_02_check_out_of_disk is error. ')
+                        print output
+                    else:
+                        capacity_list = re.findall(r'[0-9]+%', output)
+                        for capacity in capacity_list:
+                            if int(capacity.replace('%', '')) > 80:
+                                print host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
+                                ood = True
+                            else:
+                                print host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
+
+                
+                #    capacity = re.match(r"^.*[ \t]([0-9]+)%[ \t].*$", out[-1].strip()).group(1)
+                    # If used capacity is larger than 80%, out-of-disk will be reportd
+                 #   if int( capacity ) >80:
+                  #      print host + ": " + path + ": " + capacity + "%" + " used" + ' threshold : 80%'
+                   #     ood = True
+                  #  else:
+                   #     print host + ": " + path + ": " + capacity + "%" + " used" + ' threshold : 80%'
+
+       # if ood:
+            #self.fail()
+
+
+    def test(self):
+        self.test_01_check_hawq_availability()
+        self.test_02_check_out_of_disk()
 
 
 if __name__ == '__main__':
