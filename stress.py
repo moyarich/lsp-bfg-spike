@@ -79,7 +79,7 @@ class Check_hawq_stress():
 
     def __search_key_in_log(self, host, key, path):
         '''Search key in logs using grep'''
-        cmd = "gpssh -h %s -e 'grep -i %s %s'" % (host, key, path)
+        cmd = ''' gpssh -h %s -e "grep -i '%s' %s" ''' % (host, key, path)
         (status, output) = commands.getstatusoutput(cmd)
         return (status, output)
 
@@ -93,28 +93,66 @@ class Check_hawq_stress():
                 searchKeyEscaped += key[i]
         return searchKeyEscaped
 
-    def __analyze_hdfs_logs(self, searchKeyArray = ['error', 'exception'], hosts = ['localhost'], path = '/usr/local/gphd/hadoop-2.2.0-gphd-3.0.0.0'):
+    def __analyze_hdfs_logs(self, searchKeyArray = ['error'], hosts = ['localhost'], path = '/usr/local/gphd/hadoop-2.2.0-gphd-3.0.0.0'):
         '''Search keys in hdfs logs, including: error, exception, etc.''' 
         find_any = False
         for key in searchKeyArray:
-            print "Searching for %s" % key
+            print "Searching for '%s'" % key
             find_one = False
             for host in hosts:
-                (status, output) = self.__search_key_in_log( host = host, key = key, path = path+"/logs/*.log",)
-                print "Logs for '%s' on %s in %s:" % (key, host, path+"/logs/*.log")
-                #print out
-                #find_one = True
-                print 
-            if find_one:
-                print "\nFound %s" % ( key )
-                find_any = True
-            else:
-                print "\nNo %s found" % ( key )
+                (status, output) = self.__search_key_in_log( host = host, key = key, path = path + "/logs/*.log")
+                result = output.split('\n', 1)
+                if len(result) == 2 :
+                    print "Logs for '%s' on %s in %s:" % (key, host, path + "/logs/*.log")
+                    print result[1].split('\n', 1)[0]
+                    find_one = True
+                    find_any = True
+            if not find_one:
+                print "No '%s' found" % ( key )
+        return find_any
+
+
+    def __analyze_hawq_logs(self, searchKeyArray):
+        '''Analyze HAWQ logs using gplogfilter'''
+        find_any = False
+        find_one = False
+        bt = datetime.fromtimestamp(int(START_STAMP)).strftime('%Y-%m-%d %H:%M:%S')
+        et = datetime.fromtimestamp(int(END_STAMP)).strftime('%Y-%m-%d %H:%M:%S')
+
+        searchKeyRegrex = self.__escape_search_key(searchKeyArray[0])
+        for i in range(1, len(searchKeyArray)):
+            searchKeyEscaped = self.__escape_search_key(searchKeyArray[i])
+            searchKeyRegrex += '|%s' % (searchKeyEscaped)
+
+        cmd = "gplogfilter -b %s -e %s -m \'%s\'" % (bt, et, searchKeyRegrex)
+        status, output = commands.getstatusoutput(cmd)
+        matchLines = re.findall('match:       [^0]+', output)
+        
+        if (len(matchLines)):
+            find_one = True
+            print "Logs for \'%s\' on master:" % (searchKeyRegrex)
+            print output
+
+        segs_hosts = ''
+        for host in self.hawq_segments:
+            segs_hosts += '-h %s' % (host)
+        segs_path = self.__produce_wildcard_for_seg_paths(self.hawq_paths)
+        cmd = "gpssh %s -e \"gplogfilter -b \'%s\' -e \'%s\' -m \'%s\' %s\"" % (segs_hosts, bt, et, searchKeyRegrex, segs_path)
+        status, output = commands.getstatusoutput(cmd)
+        matchLines = re.findall('match:       [^0]+', output)
+        
+        if (len(matchLines)):
+            find_one = True
+            print "Logs for \'%s\' on segments:" % (searchKeyRegrex)
+            print output
+
+        if find_one:
+            find_any = True
+        else:
+            print "\nNo %s found" % (searchKeyRegrex)
 
         if find_any:
-            pass
-            #print find
-
+            self.fail()
 
     # ????????????
     def __produce_wildcard_for_seg_paths(self, strlist):
@@ -150,8 +188,8 @@ class Check_hawq_stress():
         cmd = "psql -a -d %s -f %s" % ('postgres', sqlFile)
         (s, o) = commands.getstatusoutput(cmd)
         if s != 0:
-            print('test_01_check_hawq_availability: Error ')
-            print str(o) + '\n'
+            print str(o)
+            print('test_01_check_hawq_availability: error ')
         else:
             fo = open(outFile, 'w')
             ignore = False
@@ -172,10 +210,10 @@ class Check_hawq_stress():
             cmd = "diff -rq %s %s" % ( outFile, ansFile )
             (status, output) = commands.getstatusoutput(cmd)
             if status != 0 or output != '':
-                print('test_01_check_hawq_availability: Failed ')
-                print str(output) + '\n'
+                print str(output)
+                print('test_01_check_hawq_availability: failed ')
             else:
-                print('test_01_check_hawq_availability: Success\n ')
+                print('test_01_check_hawq_availability: success ')
 
 
     def test_02_check_hawq_health(self):
@@ -184,18 +222,17 @@ class Check_hawq_stress():
         sql = "SELECT count(*) FROM pg_catalog.gp_segment_configuration WHERE mode<>'s'"
         (ok, out) = psql.runcmd( dbname = 'postgres', cmd = sql , ofile = '-', flag = '-q -t' )
         if not ok:
-            print('test_02_check_hawq_health: Error ')
-            print str(out) + '\n'
+            print str(out) 
+            print('test_02_check_hawq_health: error ')
         if int(out[0]) == 0:
-            print('test_02_check_hawq_health: Success\n ')
+            print('test_02_check_hawq_health: success ')
         else:
-            print('test_02_check_hawq_health: %d segments is failed.\n ' % (int(out[0])))
+            print('test_02_check_hawq_health: %d segments is failed. ' % (int(out[0])))
 
 
     def test_03_check_out_of_disk_hawq(self):
         '''Test case 01: Check out-of-disk by examing available disk capacity'''
         ood = False
-        result = ''
         if len(self.hawq_config) == 0:
             ood = True
         else:
@@ -205,39 +242,68 @@ class Check_hawq_stress():
                     cmd = "ssh %s 'df -h %s'" % (host, path)
                     (status, output) = commands.getstatusoutput(cmd)
                     if status != 0:
-                        print('test_03_check_out_of_disk_hawq: Error ')
-                        print str(output) + '\n'
+                        print('test_03_check_out_of_disk_hawq: error ')
+                        print str(output)
                     else:
                         capacity_list = re.findall(r'[0-9]+%', output)
                         for capacity in capacity_list:
                             if int(capacity.replace('%', '')) > 80:
-                                print host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
                                 ood = True
-                            else:
-                                print  host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
+                            print host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
 
         if ood:
-            print('test_03_check_out_of_disk_hawq: Failed\n ')
+            print('test_03_check_out_of_disk_hawq: failed ')
         else:
-            print('test_03_check_out_of_disk_hawq: Success\n ')
+            print('test_03_check_out_of_disk_hawq: success ')
 
     
     def test_04_check_out_of_disk_hdfs(self):
         (status, output) = commands.getstatusoutput('hadoop dfsadmin -report')
         start_index = output.find('DFS Used%')
         end_index = output.find('\n', start_index)
-        print output[start_index:end_index] + " used" + ' threshold : 80%'
-        if float( output[start_index:end_index].split(':')[1].replace('%', '') ) > 80:
-            print('test_04_check_out_of_disk_hdfs: Failed\n ')
+        if start_index !=-1 and end_index != -1:
+            print output[start_index:end_index] + " used" + ' threshold : 80%'
+            if float( output[start_index:end_index].split(':')[1].replace('%', '') ) > 80:
+                print('test_04_check_out_of_disk_hdfs: failed ')
+            else:
+                print('test_04_check_out_of_disk_hdfs: success ')
         else:
-            print('test_04_check_out_of_disk_hdfs: Success\n ')
+            print output
+            print('test_04_check_out_of_disk_hdfs: error ')
+    
+
+    def test_05_check_hdfs_logs_namenode(self):
+        '''Test case 10: Check errors and warnings in HDFS namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        print self.__analyze_hdfs_logs(searchKeyArray = ['Input/output error'])#, hosts = self.namenode, path = self.hdfs_path)
+
+    def test_06_check_hdfs_logs_secondary_namenode(self):
+        '''Test case 11: Check errors and warnings in HDFS secondary namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error']
+
+        hosts_paths = []
+        for host in [self.snn]:
+            hosts_paths.append( (host, self.hdfs_path) )
+
+        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
+
+    def test_07_check_hdfs_logs_datanodes(self):
+        '''Test case 12: Check errors and warnings in HDFS datanodes logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error']
+
+        hosts_paths = []
+        for host in self.dn:
+            hosts_paths.append( (host, self.hdfs_path) )
+
+        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)      
         
 
     def test(self):
-        self.test_01_check_hawq_availability()
-        self.test_02_check_hawq_health()
-        self.test_03_check_out_of_disk_hawq()
-        self.test_04_check_out_of_disk_hdfs()
+       # self.test_01_check_hawq_availability()
+       # self.test_02_check_hawq_health()
+       # self.test_03_check_out_of_disk_hawq()
+       # self.test_04_check_out_of_disk_hdfs()
+       # self.__analyze_hdfs_logs(searchKeyArray = ['liuq', 'error'], hosts = ['localhost', 'localhost'])
+        self.test_05_check_hdfs_logs_namenode()
 
 
 if __name__ == '__main__':
