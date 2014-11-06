@@ -13,7 +13,7 @@ CREATE EXTERNAL WEB TABLE e_nation_TABLESUFFIX (
     N_NAME       CHAR(25),
     N_REGIONKEY  INTEGER,
     N_COMMENT    VARCHAR(152) )
-EXECUTE 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s SCALEFACTOR\"' 
+EXECUTE E'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T n -s SCALEFACTOR\"' 
 ON 1 FORMAT 'TEXT' (DELIMITER'|');
 
 INSERT INTO nation_TABLESUFFIX SELECT * FROM e_nation_TABLESUFFIX;

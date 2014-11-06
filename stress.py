@@ -150,8 +150,8 @@ class Check_hawq_stress():
         cmd = "psql -a -d %s -f %s" % ('postgres', sqlFile)
         (s, o) = commands.getstatusoutput(cmd)
         if s != 0:
-            print('test_01_check_hawq_availability is error.\n ')
-            print o
+            print('test_01_check_hawq_availability: Error ')
+            print str(o) + '\n'
         else:
             fo = open(outFile, 'w')
             ignore = False
@@ -172,14 +172,30 @@ class Check_hawq_stress():
             cmd = "diff -rq %s %s" % ( outFile, ansFile )
             (status, output) = commands.getstatusoutput(cmd)
             if status != 0 or output != '':
-                print('test_01_check_hawq_availability is failed.\n ')
-                print output
+                print('test_01_check_hawq_availability: Failed ')
+                print str(output) + '\n'
             else:
-                print('test_01_check_hawq_availability is success.\n ')
+                print('test_01_check_hawq_availability: Success\n ')
 
-    def test_02_check_out_of_disk(self):
+
+    def test_02_check_hawq_health(self):
+        '''Test case 04: Check health including: segment down'''
+        # Potential improvement: further investigation on root cause using gpcheckperf
+        sql = "SELECT count(*) FROM pg_catalog.gp_segment_configuration WHERE mode<>'s'"
+        (ok, out) = psql.runcmd( dbname = 'postgres', cmd = sql , ofile = '-', flag = '-q -t' )
+        if not ok:
+            print('test_02_check_hawq_health: Error ')
+            print str(out) + '\n'
+        if int(out[0]) == 0:
+            print('test_02_check_hawq_health: Success\n ')
+        else:
+            print('test_02_check_hawq_health: %d segments is failed.\n ' % (int(out[0])))
+
+
+    def test_03_check_out_of_disk_hawq(self):
         '''Test case 01: Check out-of-disk by examing available disk capacity'''
         ood = False
+        result = ''
         if len(self.hawq_config) == 0:
             ood = True
         else:
@@ -189,8 +205,8 @@ class Check_hawq_stress():
                     cmd = "ssh %s 'df -h %s'" % (host, path)
                     (status, output) = commands.getstatusoutput(cmd)
                     if status != 0:
-                        print('test_02_check_out_of_disk is error.\n ')
-                        print output
+                        print('test_03_check_out_of_disk_hawq: Error ')
+                        print str(output) + '\n'
                     else:
                         capacity_list = re.findall(r'[0-9]+%', output)
                         for capacity in capacity_list:
@@ -198,30 +214,30 @@ class Check_hawq_stress():
                                 print host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
                                 ood = True
                             else:
-                                print host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
+                                print  host + ": " + path + ": " + capacity + " used" + ' threshold : 80%'
 
         if ood:
-            print('test_02_check_out_of_disk is failed.\n ')
+            print('test_03_check_out_of_disk_hawq: Failed\n ')
         else:
-            print('test_02_check_out_of_disk is success.\n ')
+            print('test_03_check_out_of_disk_hawq: Success\n ')
 
-    def test_03_check_hawq_health(self):
-        '''Test case 04: Check health including: segment down'''
-        # Potential improvement: further investigation on root cause using gpcheckperf
-        sql = "SELECT count(*) FROM pg_catalog.gp_segment_configuration WHERE mode<>'s'"
-        (ok, out) = psql.runcmd( dbname = 'postgres', cmd = sql , ofile = '-', flag = '-q -t' )
-        if not ok:
-            print('test_03_check_hawq_health is error.\n ')
-            print out
-        if int(out[0]) == 0:
-            print('test_03_check_hawq_health is success.\n ')
+    
+    def test_04_check_out_of_disk_hdfs(self):
+        (status, output) = commands.getstatusoutput('hadoop dfsadmin -report')
+        start_index = output.find('DFS Used%')
+        end_index = output.find('\n', start_index)
+        print output[start_index:end_index] + " used" + ' threshold : 80%'
+        if float( output[start_index:end_index].split(':')[1].replace('%', '') ) > 80:
+            print('test_04_check_out_of_disk_hdfs: Failed\n ')
         else:
-            print('test_03_check_hawq_health is failed: %d segments is failed\n ' % (int(out[0])) )
+            print('test_04_check_out_of_disk_hdfs: Success\n ')
+        
 
     def test(self):
-        #self.test_01_check_hawq_availability()
-        #self.test_02_check_out_of_disk()
-        self.test_03_check_hawq_health()
+        self.test_01_check_hawq_availability()
+        self.test_02_check_hawq_health()
+        self.test_03_check_out_of_disk_hawq()
+        self.test_04_check_out_of_disk_hdfs()
 
 
 if __name__ == '__main__':

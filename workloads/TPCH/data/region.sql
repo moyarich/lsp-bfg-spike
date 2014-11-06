@@ -11,7 +11,7 @@ CREATE EXTERNAL WEB TABLE e_region_TABLESUFFIX (
     R_REGIONKEY  INTEGER,
     R_NAME       CHAR(25),
     R_COMMENT    VARCHAR(152) )
-EXECUTE 'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T r -s SCALEFACTOR\"'
+EXECUTE E'bash -c \"$GPHOME/bin/dbgen -b $GPHOME/bin/dists.dss -T r -s SCALEFACTOR\"'
 ON 1 FORMAT 'TEXT' (DELIMITER '|');
 
 INSERT INTO region_TABLESUFFIX SELECT * FROM e_region_TABLESUFFIX;
