@@ -120,59 +120,6 @@ class check_hawq_stress(gptest.GPTestCase):
         self.rrdtool = config.get('RRDTOOL', 'bin_path').rstrip(os.sep)
         self.resolution = config.get('RRDTOOL', 'resolution')
 
-    def __fetch_hdfs_configuration(self, config_file):
-        '''Fetch namenode, datanode info and logs dir of hdfs.'''
-        config = ConfigParser.ConfigParser()
-        config.read(config_file)
-        self.hdfs_path = config.get('HDFS','path')
-        self.nn = config.get('HDFS','namenode')
-        self.snn = config.get('HDFS','second_namenode')
-        dns = config.get('HDFS','datanode')
-        self.dn = [ chunk.strip() for chunk in dns.split(',')]
-
-    def __fetch_hawq_configuration(self):
-        '''Fetch master hostname, segments hostname, data directory of HAWQ.'''
-        self.hawq_master = []
-        self.hawq_segments = []
-        self.hawq_paths = []
-        self.hawq_config = []
-        
-        sql = "SELECT hostname from gp_segment_configuration where content=-1 and role='p';"
-        (ok, out) = psql.runcmd( dbname=GPDTBS, cmd=sql , ofile='-', pFlags='-q -t' ) 
-        if not ok:
-            print out
-            raise Exception("Failed to get HAWQ master hostname.")
-        else:
-            for line in out:
-                line = line.strip()
-                if line:
-                    self.hawq_master.append(line)  
-
-        sql = "SELECT hostname from gp_segment_configuration where content>=0;"
-        (ok, out) = psql.runcmd( dbname=GPDTBS, cmd=sql , ofile='-', pFlags='-q -t' ) 
-        if not ok:
-            print out
-            raise Exception("Failed to get HAWQ segments hostname.")
-        else:
-            for line in out:
-                line = line.strip()
-                if line:
-                    self.hawq_segments.append(line)  
-
-        sql = "SELECT gsc.hostname, pfe.fselocation FROM gp_segment_configuration gsc, pg_filespace_entry pfe WHERE gsc.dbid = pfe.fsedbid AND pfe.fselocation NOT LIKE 'hdfs%' ORDER BY pfe.fselocation;"
-        (ok, out) = psql.runcmd( dbname=GPDTBS, cmd=sql , ofile='-', pFlags='-q -t' )
-
-        if not ok:
-            print out
-            raise Exception("Failed to get HAWQ configuration paths.")
-        else:
-            for line in out:
-                line = line.strip()
-                if line:
-                    (host, path) = line.split( '|' )
-                    self.hawq_config.append( (host.strip(), path.strip()) )
-                    self.hawq_paths.append( path.strip() ) 
-
 
     def __search_key_in_log(self, host, path, key):
         '''Search key in logs using grep'''
@@ -273,6 +220,91 @@ class check_hawq_stress(gptest.GPTestCase):
 
         if find_any:
             self.fail()
+
+
+    def test_02_check_disk_failure(self):
+        '''Test case 02: Check disck failure by examing disck I/O with gpcheckperf'''
+        df = False
+        if len(self.hawq_config) == 0:
+            ood = True
+        else:
+            for (host, path) in self.hawq_config:
+                # cmd = "%s/bin/gpcheckperf -h %s -d '%s' -r d -D" % (GPHOME, host, path)
+                # (ok, out) = shell.run( cmd )
+                ok = True
+                if ok:
+                    # diskio_w = re.match(r"^.*disk write bandwidth \(MB\/s\): ([0-9]+\.[0-9]+)[ \t].*$", "".join(o[:-1] for o in out).strip()).group(1)
+                    # diskio_r = re.match(r"^.*disk read bandwidth \(MB\/s\): ([0-9]+\.[0-9]+)[ \t].*$", "".join(o[:-1] for o in out).strip()).group(1)
+                    diskio_w = 1200
+                    diskio_r = 1600
+                    # If detected disk I/O is less than 80% maximum disk I/O (1200Mb/s, 1600Mb/s), disk failure will be reportd
+                    if ( diskio_w < 960 and diskio_w != 0 ) or ( diskio_r < 1280 and diskio_r != 0 ):
+                        print  host + ":" + path + ":" + "Disc Write = " + diskio_w + " MB/s, Disk Read = " + diskio_r + " MB/s" + " threshold : disc_write = 96 MB/s , disk_read = 128MB/s"
+                        df = True
+                    else:
+                        print  host + ":" + path + ":" + "Disc Write = " + str(diskio_w) + " MB/s, Disk Read = " + str(diskio_r) + " MB/s" + " threshold : disc_write = 96 MB/s , disk_read = 128MB/s"
+              
+
+        if df:
+            self.fail()
+
+
+    def test_06_check_hawq_logs_coredump(self):
+        '''Test case 06: Check core dump in HAWQ logs'''
+        # Potential improvement: check core dump file and extract call stack
+        searchKeyArray = ['PANIC']
+        self.__analyze_hawq_logs( searchKeyArray )
+
+    def test_07_check_hawq_logs_fatal_errors_exceptions(self):
+        '''Test case 07: Check fatal/errors/exceptions in HAWQ logs'''
+        searchKeyArray = ['FATAL', 'ERROR', 'EXCEPTION']
+        self.__analyze_hawq_logs( searchKeyArray )
+
+    def test_08_check_hawq_logs_failures(self):
+        '''Test case 08: Check failures in HAWQ logs'''
+        searchKeyArray = ['FAIL']
+        self.__analyze_hawq_logs( searchKeyArray )
+
+    def test_09_check_hawq_logs_warnings(self):
+        '''Test case 09: Check warnings in HAWQ logs'''
+        searchKeyArray = ['WARNING']
+        self.__analyze_hawq_logs( searchKeyArray )
+
+    def test_10_check_hdfs_logs_namenode(self):
+        '''Test case 10: Check errors and warnings in HDFS namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error']
+
+        hosts_paths = []
+        for host in [self.nn]:
+            hosts_paths.append( (host, self.hdfs_path) )
+
+        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
+
+    def test_11_check_hdfs_logs_secondary_namenode(self):
+        '''Test case 11: Check errors and warnings in HDFS secondary namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error']
+
+        hosts_paths = []
+        for host in [self.snn]:
+            hosts_paths.append( (host, self.hdfs_path) )
+
+        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
+
+    def test_12_check_hdfs_logs_datanodes(self):
+        '''Test case 12: Check errors and warnings in HDFS datanodes logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error']
+
+        hosts_paths = []
+        for host in self.dn:
+            hosts_paths.append( (host, self.hdfs_path) )
+
+        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
+
+    
+
+
+
+
 
     def __compute_cpu_usage(self, hosts):
         '''Compute cpu usage using rrdtools'''
@@ -448,158 +480,6 @@ class check_hawq_stress(gptest.GPTestCase):
             slope = int ( math.degrees( math.atan( ( avg_xy - avg_x * avg_y ) / ( avg_x2 - avg_x * avg_x ) ) ) )
         return slope
 
-    def test_01_check_out_of_disk(self):
-        '''Test case 01: Check out-of-disk by examing available disk capacity'''
-        ood = False
-        if len(self.hawq_config) == 0:
-            ood = True
-        else:
-            for (host, path) in self.hawq_config:
-                cmd = "ssh %s  'df -h %s'" % ( host, path)
-                (ok, out) = shell.run( cmd )
-                if ok:
-                    capacity = re.match(r"^.*[ \t]([0-9]+)%[ \t].*$", out[-1].strip()).group(1)
-                    # If used capacity is larger than 80%, out-of-disk will be reportd
-                    if int( capacity ) >80:
-                        print host + ": " + path + ": " + capacity + "%" + " used" + ' threshold : 80%'
-                        ood = True
-                    else:
-                        print host + ": " + path + ": " + capacity + "%" + " used" + ' threshold : 80%'
-                    
-
-        if ood:
-            self.fail()
-
-    def test_02_check_disk_failure(self):
-        '''Test case 02: Check disck failure by examing disck I/O with gpcheckperf'''
-        df = False
-        if len(self.hawq_config) == 0:
-            ood = True
-        else:
-            for (host, path) in self.hawq_config:
-                # cmd = "%s/bin/gpcheckperf -h %s -d '%s' -r d -D" % (GPHOME, host, path)
-                # (ok, out) = shell.run( cmd )
-                ok = True
-                if ok:
-                    # diskio_w = re.match(r"^.*disk write bandwidth \(MB\/s\): ([0-9]+\.[0-9]+)[ \t].*$", "".join(o[:-1] for o in out).strip()).group(1)
-                    # diskio_r = re.match(r"^.*disk read bandwidth \(MB\/s\): ([0-9]+\.[0-9]+)[ \t].*$", "".join(o[:-1] for o in out).strip()).group(1)
-                    diskio_w = 1200
-                    diskio_r = 1600
-                    # If detected disk I/O is less than 80% maximum disk I/O (1200Mb/s, 1600Mb/s), disk failure will be reportd
-                    if ( diskio_w < 960 and diskio_w != 0 ) or ( diskio_r < 1280 and diskio_r != 0 ):
-                        print  host + ":" + path + ":" + "Disc Write = " + diskio_w + " MB/s, Disk Read = " + diskio_r + " MB/s" + " threshold : disc_write = 96 MB/s , disk_read = 128MB/s"
-                        df = True
-                    else:
-                        print  host + ":" + path + ":" + "Disc Write = " + str(diskio_w) + " MB/s, Disk Read = " + str(diskio_r) + " MB/s" + " threshold : disc_write = 96 MB/s , disk_read = 128MB/s"
-              
-
-        if df:
-            self.fail()
-
-    def test_03_check_hawq_availability(self):
-        '''Test case 03: Check availability including: utility mode, panic, cannot access, and hawq sanity test with INSERT/DROP/SELECT queries'''
-        sqlFile = MYD + "/../check_hawq_availability.sql"
-        ansFile = MYD + "/../check_hawq_availability.ans"
-        outFile = MYD + "/../check_hawq_availability.out"
-        tmpFile = MYD + "/../check_hawq_availability.tmp"
-
-        cmd = "psql -a -d %s -f %s > %s 2>&1" % (GPDTBS, sqlFile, tmpFile )
-        (ok, out) = shell.run( cmd )
-        if not ok:
-            print out
-            self.fail()
-        else:
-            fo = open(outFile, 'w')
-            ft = open(tmpFile, 'r')
-            ignore = False
-            for line in ft:
-                if '-- start_ignore' in line.strip():
-                    ignore = True
-                    continue
-
-                if ignore == True:
-                    if '-- end_ignore' in line.strip():
-                        ignore = False
-
-                    continue
-
-                if ignore == False:
-                    fo.write( line )
-
-            ft.close()
-            fo.close()
-            cmd = "rm -rf %s" % ( tmpFile )
-            shell.run( cmd )
-
-            cmd = "diff -rq %s %s" % ( outFile, ansFile )
-            (ok, out) = shell.run( cmd )
-            if not ok:
-                self.fail()
-
-    def test_04_check_hawq_health(self):
-        '''Test case 04: Check health including: segment down'''
-        # Potential improvement: further investigation on root cause using gpcheckperf
-        sql = "SELECT count(*) FROM pg_catalog.gp_segment_configuration WHERE mode<>'s'"
-        (ok, out) = psql.runcmd( sql )
-        seg_cnt = int(out[0].strip())
-        self.failUnless( seg_cnt==0 )
-
-    def test_05_check_catalog_consistency(self):
-        '''Test case 05: Check consistency of catalog'''
-        # Not supported in HAWQ yet
-        self.skipTest()
-
-    def test_06_check_hawq_logs_coredump(self):
-        '''Test case 06: Check core dump in HAWQ logs'''
-        # Potential improvement: check core dump file and extract call stack
-        searchKeyArray = ['PANIC']
-        self.__analyze_hawq_logs( searchKeyArray )
-
-    def test_07_check_hawq_logs_fatal_errors_exceptions(self):
-        '''Test case 07: Check fatal/errors/exceptions in HAWQ logs'''
-        searchKeyArray = ['FATAL', 'ERROR', 'EXCEPTION']
-        self.__analyze_hawq_logs( searchKeyArray )
-
-    def test_08_check_hawq_logs_failures(self):
-        '''Test case 08: Check failures in HAWQ logs'''
-        searchKeyArray = ['FAIL']
-        self.__analyze_hawq_logs( searchKeyArray )
-
-    def test_09_check_hawq_logs_warnings(self):
-        '''Test case 09: Check warnings in HAWQ logs'''
-        searchKeyArray = ['WARNING']
-        self.__analyze_hawq_logs( searchKeyArray )
-
-    def test_10_check_hdfs_logs_namenode(self):
-        '''Test case 10: Check errors and warnings in HDFS namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
-        searchKeyArray = ['Input\/output error']
-
-        hosts_paths = []
-        for host in [self.nn]:
-            hosts_paths.append( (host, self.hdfs_path) )
-
-        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
-
-    def test_11_check_hdfs_logs_secondary_namenode(self):
-        '''Test case 11: Check errors and warnings in HDFS secondary namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
-        searchKeyArray = ['Input\/output error']
-
-        hosts_paths = []
-        for host in [self.snn]:
-            hosts_paths.append( (host, self.hdfs_path) )
-
-        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
-
-    def test_12_check_hdfs_logs_datanodes(self):
-        '''Test case 12: Check errors and warnings in HDFS datanodes logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
-        searchKeyArray = ['Input\/output error']
-
-        hosts_paths = []
-        for host in self.dn:
-            hosts_paths.append( (host, self.hdfs_path) )
-
-        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
-
     def test_13_check_master_max_cpu_usage(self):
         '''Test case 13: Check the maximum CPU usage of HAWQ master'''
         hosts = self.hawq_master
@@ -673,7 +553,6 @@ class check_hawq_stress(gptest.GPTestCase):
             self.fail()
         else:
             print "Accumulated Disk I/O on HAWQ segments is: Write = %d%%, Read = %d%%" % ( acc_dsk_write, acc_dsk_read )
-
 
     def test_19_check_master_max_network_io(self):
         '''Test case 19: Check the maximum network I/O of HAWQ master'''
