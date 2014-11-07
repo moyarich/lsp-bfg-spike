@@ -47,7 +47,7 @@ class Check_hawq_stress():
         with open(hdfs_conf_file, 'r') as fhdfs_conf:
             hdfs_conf_parser = yaml.load(fhdfs_conf)
 
-        self.log_path = hdfs_conf_parser['path'].strip()
+        self.hdfs_path = hdfs_conf_parser['path'].strip()
         self.namenode = [ hdfs_conf_parser['namenode'].strip() ]
         self.second_namenode = [ hdfs_conf_parser['second_namenode'].strip() ]
         self.datanode = [ dn.strip() for dn in hdfs_conf_parser['datanode'].split(',') ]
@@ -257,7 +257,7 @@ class Check_hawq_stress():
 
     
     def test_04_check_out_of_disk_hdfs(self):
-        (status, output) = commands.getstatusoutput('hadoop dfsadmin -report')
+        (status, output) = commands.getstatusoutput('kinit -k -t /home/gpadmin/hawq-krb5.keytab hdfs/bcn-mst1@HAWQ.PIVOTAL.COM; hadoop dfsadmin -report')
         start_index = output.find('DFS Used%')
         end_index = output.find('\n', start_index)
         if start_index !=-1 and end_index != -1:
@@ -275,7 +275,7 @@ class Check_hawq_stress():
         '''Test case 05: Check errors and warnings in HDFS namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
         searchKeyArray = ['Input\/output error', 'error']
 
-        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray)#, hosts = self.namenode, path = self.hdfs_path)
+        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray, hosts = self.namenode, path = self.hdfs_path)
         if status:
             print('test_05_check_hdfs_logs_namenode: failed ')
         else:
@@ -285,7 +285,7 @@ class Check_hawq_stress():
         '''Test case 06: Check errors and warnings in HDFS secondary namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
         searchKeyArray = ['Input\/output error', 'error']
 
-        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray)#, hosts = self.second_namenode, path = self.hdfs_path)
+        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray, hosts = self.second_namenode, path = self.hdfs_path)
         if status:
             print('test_06_check_hdfs_logs_secondary_namenode: failed ')
         else:
@@ -295,7 +295,7 @@ class Check_hawq_stress():
         '''Test case 07: Check errors and warnings in HDFS datanodes logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
         searchKeyArray = ['Input\/output error', 'error']
 
-        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray)#, hosts = self.datanode, path = self.hdfs_path)
+        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray, hosts = self.datanode, path = self.hdfs_path)
         if status:
             print('test_07_check_hdfs_logs_datanodes: failed ')
         else:
@@ -308,6 +308,7 @@ class Check_hawq_stress():
         # Potential improvement: check core dump file and extract call stack
         
         searchKeyArray = ['PANIC']
+        
         if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
             print('test_08_check_hawq_logs_coredump: failed ')
         else:
@@ -317,6 +318,7 @@ class Check_hawq_stress():
         '''Test case 09: Check fatal/errors/exceptions in HAWQ logs'''
         
         searchKeyArray = ['FATAL', 'ERROR', 'EXCEPTION']
+        
         if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
             print('test_09_check_hawq_logs_fatal_errors_exceptions: failed ')
         else:
@@ -326,6 +328,7 @@ class Check_hawq_stress():
         '''Test case 10: Check failures in HAWQ logs'''
         
         searchKeyArray = ['FAIL']
+        
         if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
             print('test_10_check_hawq_logs_failures: failed')
         else:
@@ -335,6 +338,7 @@ class Check_hawq_stress():
         '''Test case 11: Check warnings in HAWQ logs'''
         
         searchKeyArray = ['WARNING']
+        
         if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
             print('test_11_check_hawq_logs_warnings: failed ')
         else:
