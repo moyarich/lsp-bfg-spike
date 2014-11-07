@@ -96,7 +96,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 100
+          data_volume_size: 200
           append_only: true
           orientation: PARQUET
           compression_type: SNAPPY
