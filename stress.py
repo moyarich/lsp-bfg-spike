@@ -113,47 +113,45 @@ class Check_hawq_stress():
         return find_any
 
 
-    def __analyze_hawq_logs(self, searchKeyArray):
+    def __analyze_hawq_logs(self, searchKeyArray = ['error']):
         '''Analyze HAWQ logs using gplogfilter'''
         find_any = False
-        find_one = False
-        bt = datetime.fromtimestamp(int(START_STAMP)).strftime('%Y-%m-%d %H:%M:%S')
-        et = datetime.fromtimestamp(int(END_STAMP)).strftime('%Y-%m-%d %H:%M:%S')
+        now_time = time.time()
+        bt = datetime.fromtimestamp(int(now_time - 3600*2)).strftime('%Y-%m-%d %H:%M:%S')
+        et = datetime.fromtimestamp(int(now_time)).strftime('%Y-%m-%d %H:%M:%S')
 
         searchKeyRegrex = self.__escape_search_key(searchKeyArray[0])
         for i in range(1, len(searchKeyArray)):
             searchKeyEscaped = self.__escape_search_key(searchKeyArray[i])
             searchKeyRegrex += '|%s' % (searchKeyEscaped)
 
-        cmd = "gplogfilter -b %s -e %s -m \'%s\'" % (bt, et, searchKeyRegrex)
-        status, output = commands.getstatusoutput(cmd)
+        cmd = "gplogfilter -b '%s' -e '%s' -m '%s'" % (bt, et, searchKeyRegrex)
+        #print cmd
+        (status, output) = commands.getstatusoutput(cmd)
         matchLines = re.findall('match:       [^0]+', output)
+        #print '\n'.join(matchLines)
         
         if (len(matchLines)):
-            find_one = True
-            print "Logs for \'%s\' on master:" % (searchKeyRegrex)
-            print output
-
-        segs_hosts = ''
-        for host in self.hawq_segments:
-            segs_hosts += '-h %s' % (host)
-        segs_path = self.__produce_wildcard_for_seg_paths(self.hawq_paths)
-        cmd = "gpssh %s -e \"gplogfilter -b \'%s\' -e \'%s\' -m \'%s\' %s\"" % (segs_hosts, bt, et, searchKeyRegrex, segs_path)
-        status, output = commands.getstatusoutput(cmd)
-        matchLines = re.findall('match:       [^0]+', output)
-        
-        if (len(matchLines)):
-            find_one = True
-            print "Logs for \'%s\' on segments:" % (searchKeyRegrex)
-            print output
-
-        if find_one:
             find_any = True
+            print "Logs for '%s' on master: " % (searchKeyRegrex)
+            print output
         else:
-            print "\nNo %s found" % (searchKeyRegrex)
+            print "No '%s' found on master" % (searchKeyRegrex)
 
-        if find_any:
-            self.fail()
+        for host in self.hawq_segments:
+            cmd = ''' gpssh -h %s -e "gplogfilter -b '%s' -e '%s' -m '%s'" ''' % (host, bt, et, searchKeyRegrex)
+           # print cmd
+            (status, output) = commands.getstatusoutput(cmd)
+            matchLines = re.findall('match:       [^0]+', output)
+            
+            if (len(matchLines)):
+                find_any = True
+                print "Logs for '%s' on segments %s: " % (searchKeyRegrex, host)
+                print output
+            else:
+                print "No '%s' found on segments %s" % (searchKeyRegrex, host)
+
+        return find_any
 
     # ????????????
     def __produce_wildcard_for_seg_paths(self, strlist):
@@ -283,7 +281,6 @@ class Check_hawq_stress():
         else:
             print('test_05_check_hdfs_logs_namenode: success ')
 
-
     def test_06_check_hdfs_logs_secondary_namenode(self):
         '''Test case 06: Check errors and warnings in HDFS secondary namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
         searchKeyArray = ['Input\/output error', 'error']
@@ -294,7 +291,6 @@ class Check_hawq_stress():
         else:
             print('test_06_check_hdfs_logs_secondary_namenode: success ')
 
-
     def test_07_check_hdfs_logs_datanodes(self):
         '''Test case 07: Check errors and warnings in HDFS datanodes logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
         searchKeyArray = ['Input\/output error', 'error']
@@ -304,17 +300,61 @@ class Check_hawq_stress():
             print('test_07_check_hdfs_logs_datanodes: failed ')
         else:
             print('test_07_check_hdfs_logs_datanodes: success ')      
+
+
+
+    def test_08_check_hawq_logs_coredump(self):
+        '''Test case 08: Check core dump in HAWQ logs'''
+        # Potential improvement: check core dump file and extract call stack
+        
+        searchKeyArray = ['PANIC']
+        if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
+            print('test_08_check_hawq_logs_coredump: failed ')
+        else:
+            print('test_08_check_hawq_logs_coredump: success')
+
+    def test_09_check_hawq_logs_fatal_errors_exceptions(self):
+        '''Test case 09: Check fatal/errors/exceptions in HAWQ logs'''
+        
+        searchKeyArray = ['FATAL', 'ERROR', 'EXCEPTION']
+        if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
+            print('test_09_check_hawq_logs_fatal_errors_exceptions: failed ')
+        else:
+            print('test_09_check_hawq_logs_fatal_errors_exceptions: success ')
+
+    def test_10_check_hawq_logs_failures(self):
+        '''Test case 10: Check failures in HAWQ logs'''
+        
+        searchKeyArray = ['FAIL']
+        if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
+            print('test_10_check_hawq_logs_failures: failed')
+        else:
+            print('test_10_check_hawq_logs_failures: success')
+
+    def test_11_check_hawq_logs_warnings(self):
+        '''Test case 11: Check warnings in HAWQ logs'''
+        
+        searchKeyArray = ['WARNING']
+        if self.__analyze_hawq_logs( searchKeyArray = searchKeyArray ):
+            print('test_11_check_hawq_logs_warnings: failed ')
+        else:
+            print('test_11_check_hawq_logs_warnings: success ')
         
 
     def test(self):
-       # self.test_01_check_hawq_availability()
-       # self.test_02_check_hawq_health()
-       # self.test_03_check_out_of_disk_hawq()
-       # self.test_04_check_out_of_disk_hdfs()
+        self.test_01_check_hawq_availability()
+        self.test_02_check_hawq_health()
+        self.test_03_check_out_of_disk_hawq()
+        self.test_04_check_out_of_disk_hdfs()
        # self.__analyze_hdfs_logs(searchKeyArray = ['liuq', 'error'], hosts = ['localhost', 'localhost'])
         self.test_05_check_hdfs_logs_namenode()
         self.test_06_check_hdfs_logs_secondary_namenode()
         self.test_07_check_hdfs_logs_datanodes()
+       # self.__analyze_hawq_logs()
+        self.test_08_check_hawq_logs_coredump()
+        self.test_09_check_hawq_logs_fatal_errors_exceptions()
+        self.test_10_check_hawq_logs_failures()
+        self.test_11_check_hawq_logs_warnings()
 
 
 if __name__ == '__main__':
