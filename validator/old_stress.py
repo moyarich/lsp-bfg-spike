@@ -208,6 +208,7 @@ class check_hawq_stress(gptest.GPTestCase):
             find_one = False
             for (host, path) in hosts_paths:
                 (find, out) = self.__search_key_in_log( host, path+"/logs/*.log", key)
+                
                 if find:
                     print "Logs for \'%s\' on %s in %s:" % (key, host, path)
                     print out

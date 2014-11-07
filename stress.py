@@ -104,7 +104,8 @@ class Check_hawq_stress():
                 result = output.split('\n', 1)
                 if len(result) == 2 :
                     print "Logs for '%s' on %s in %s:" % (key, host, path + "/logs/*.log")
-                    print result[1].split('\n', 1)[0]
+                  #  print result[1].split('\n', 1)[0]
+                    print result[1]
                     find_one = True
                     find_any = True
             if not find_one:
@@ -273,28 +274,36 @@ class Check_hawq_stress():
     
 
     def test_05_check_hdfs_logs_namenode(self):
-        '''Test case 10: Check errors and warnings in HDFS namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
-        print self.__analyze_hdfs_logs(searchKeyArray = ['Input/output error'])#, hosts = self.namenode, path = self.hdfs_path)
+        '''Test case 05: Check errors and warnings in HDFS namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error', 'error']
+
+        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray)#, hosts = self.namenode, path = self.hdfs_path)
+        if status:
+            print('test_05_check_hdfs_logs_namenode: failed ')
+        else:
+            print('test_05_check_hdfs_logs_namenode: success ')
+
 
     def test_06_check_hdfs_logs_secondary_namenode(self):
-        '''Test case 11: Check errors and warnings in HDFS secondary namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
-        searchKeyArray = ['Input\/output error']
+        '''Test case 06: Check errors and warnings in HDFS secondary namenode logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error', 'error']
 
-        hosts_paths = []
-        for host in [self.snn]:
-            hosts_paths.append( (host, self.hdfs_path) )
+        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray)#, hosts = self.second_namenode, path = self.hdfs_path)
+        if status:
+            print('test_06_check_hdfs_logs_secondary_namenode: failed ')
+        else:
+            print('test_06_check_hdfs_logs_secondary_namenode: success ')
 
-        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)
 
     def test_07_check_hdfs_logs_datanodes(self):
-        '''Test case 12: Check errors and warnings in HDFS datanodes logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
-        searchKeyArray = ['Input\/output error']
+        '''Test case 07: Check errors and warnings in HDFS datanodes logs including: Read Error, Write Error, Replica Error, Time Out, Warning'''
+        searchKeyArray = ['Input\/output error', 'error']
 
-        hosts_paths = []
-        for host in self.dn:
-            hosts_paths.append( (host, self.hdfs_path) )
-
-        self.__analyze_hdfs_logs( searchKeyArray, hosts_paths)      
+        status = self.__analyze_hdfs_logs(searchKeyArray = searchKeyArray)#, hosts = self.datanode, path = self.hdfs_path)
+        if status:
+            print('test_07_check_hdfs_logs_datanodes: failed ')
+        else:
+            print('test_07_check_hdfs_logs_datanodes: success ')      
         
 
     def test(self):
@@ -304,6 +313,8 @@ class Check_hawq_stress():
        # self.test_04_check_out_of_disk_hdfs()
        # self.__analyze_hdfs_logs(searchKeyArray = ['liuq', 'error'], hosts = ['localhost', 'localhost'])
         self.test_05_check_hdfs_logs_namenode()
+        self.test_06_check_hdfs_logs_secondary_namenode()
+        self.test_07_check_hdfs_logs_datanodes()
 
 
 if __name__ == '__main__':
