@@ -138,18 +138,21 @@ class Check_hawq_stress():
         else:
             print "No '%s' found on master" % (searchKeyRegrex)
 
+
+        gphome = os.getenv('GPHOME')
         for host in self.hawq_segments:
-            cmd = ''' gpssh -h %s -e "gplogfilter -b '%s' -e '%s' -m '%s'" ''' % (host, bt, et, searchKeyRegrex)
-           # print cmd
-            (status, output) = commands.getstatusoutput(cmd)
-            matchLines = re.findall('match:       [^0]+', output)
-            
-            if (len(matchLines)):
-                find_any = True
-                print "Logs for '%s' on segments %s: " % (searchKeyRegrex, host)
-                print output
-            else:
-                print "No '%s' found on segments %s" % (searchKeyRegrex, host)
+            for log_path in self.hawq_config[host]:
+                cmd = ''' gpssh -h %s -e "cd %s; source greenplum_path.sh; gplogfilter -b '%s' -e '%s' -m '%s'" %s''' % (host, gphome, bt, et, searchKeyRegrex, log_path)
+                print cmd
+                (status, output) = commands.getstatusoutput(cmd)
+                matchLines = re.findall('match:       [^0]+', output)
+                
+                if (len(matchLines)):
+                    find_any = True
+                    print "Logs for '%s' on segments %s: " % (searchKeyRegrex, host)
+                    print output
+                else:
+                    print "No '%s' found on segments %s" % (searchKeyRegrex, host)
 
         return find_any
 
