@@ -142,7 +142,7 @@ class Check_hawq_stress():
         gphome = os.getenv('GPHOME')
         for host in self.hawq_segments:
             for log_path in self.hawq_config[host]:
-                cmd = ''' gpssh -h %s -e "cd %s; source greenplum_path.sh; gplogfilter -b '%s' -e '%s' -m '%s'" %s''' % (host, gphome, bt, et, searchKeyRegrex, log_path + '/pg_log/*.csv')
+                cmd = ''' gpssh -h %s -e "cd %s; source greenplum_path.sh; gplogfilter -b '%s' -e '%s' -m '%s' %s "''' % (host, gphome, bt, et, searchKeyRegrex, log_path + '/pg_log/*.csv')
                 print cmd
                 (status, output) = commands.getstatusoutput(cmd)
                 matchLines = re.findall('match:       [^0]+', output)
