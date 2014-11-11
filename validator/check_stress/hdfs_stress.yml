@@ -1,4 +1,4 @@
-path: /usr/lib/gphd/hadoop/logs/
+path: /usr/lib/gphd/hadoop
 #path=/usr/lib/gphd/hadoop-2.0.5_alpha_gphd_2_0_3_0/
 namenode: bcn-mst1
 second_namenode: bcn-mst2

@@ -125,24 +125,24 @@ class Check_hawq_stress():
             searchKeyEscaped = self.__escape_search_key(searchKeyArray[i])
             searchKeyRegrex += '|%s' % (searchKeyEscaped)
 
-        cmd = "gplogfilter -b '%s' -e '%s' -m '%s'" % (bt, et, searchKeyRegrex)
+        #cmd = "gplogfilter -b '%s' -e '%s' -m '%s'" % (bt, et, searchKeyRegrex)
         #print cmd
-        (status, output) = commands.getstatusoutput(cmd)
-        matchLines = re.findall('match:       [^0]+', output)
+        #(status, output) = commands.getstatusoutput(cmd)
+        #matchLines = re.findall('match:       [^0]+', output)
         #print '\n'.join(matchLines)
         
-        if (len(matchLines)):
-            find_any = True
-            print "Logs for '%s' on master: " % (searchKeyRegrex)
-            print output
-        else:
-            print "No '%s' found on master" % (searchKeyRegrex)
+        #if (len(matchLines)):
+         #   find_any = True
+          #  print "Logs for '%s' on master: " % (searchKeyRegrex)
+           # print output
+        #else:
+         #   print "No '%s' found on master" % (searchKeyRegrex)
 
 
         gphome = os.getenv('GPHOME')
         for host in self.hawq_segments:
             for log_path in self.hawq_config[host]:
-                cmd = ''' gpssh -h %s -e "cd %s; source greenplum_path.sh; gplogfilter -b '%s' -e '%s' -m '%s'" %s''' % (host, gphome, bt, et, searchKeyRegrex, log_path)
+                cmd = ''' gpssh -h %s -e "cd %s; source greenplum_path.sh; gplogfilter -b '%s' -e '%s' -m '%s'" %s''' % (host, gphome, bt, et, searchKeyRegrex, log_path + '/pg_log/*.csv')
                 print cmd
                 (status, output) = commands.getstatusoutput(cmd)
                 matchLines = re.findall('match:       [^0]+', output)
@@ -354,9 +354,9 @@ class Check_hawq_stress():
         self.test_03_check_out_of_disk_hawq()
         self.test_04_check_out_of_disk_hdfs()
        # self.__analyze_hdfs_logs(searchKeyArray = ['liuq', 'error'], hosts = ['localhost', 'localhost'])
-        self.test_05_check_hdfs_logs_namenode()
-        self.test_06_check_hdfs_logs_secondary_namenode()
-        self.test_07_check_hdfs_logs_datanodes()
+       # self.test_05_check_hdfs_logs_namenode()
+       # self.test_06_check_hdfs_logs_secondary_namenode()
+       # self.test_07_check_hdfs_logs_datanodes()
        # self.__analyze_hawq_logs()
         self.test_08_check_hawq_logs_coredump()
         self.test_09_check_hawq_logs_fatal_errors_exceptions()
