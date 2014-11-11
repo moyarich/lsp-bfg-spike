@@ -52,6 +52,11 @@ class Check_hawq_stress():
         self.second_namenode = [ hdfs_conf_parser['second_namenode'].strip() ]
         self.datanode = [ dn.strip() for dn in hdfs_conf_parser['datanode'].split(',') ]
 
+        print self.hdfs_path
+        print self.namenode
+        print self.second_namenode
+        print self.datanode
+
     def __fetch_hawq_configuration(self):
         '''Fetch master hostname, segments hostname, data directory of HAWQ.'''
         self.hawq_master = config.getMasterHostName()
@@ -76,6 +81,11 @@ class Check_hawq_stress():
                         
                    # self.hawq_config.append( (host.strip(), path.strip()) )
                     self.hawq_paths.append( path.strip() ) 
+
+        print self.hawq_master
+        print self.hawq_segments
+        print self.hawq_config
+
 
     def __search_key_in_log(self, host, key, path):
         '''Search key in logs using grep'''
@@ -125,18 +135,18 @@ class Check_hawq_stress():
             searchKeyEscaped = self.__escape_search_key(searchKeyArray[i])
             searchKeyRegrex += '|%s' % (searchKeyEscaped)
 
-        #cmd = "gplogfilter -b '%s' -e '%s' -m '%s'" % (bt, et, searchKeyRegrex)
+        cmd = "gplogfilter -b '%s' -e '%s' -m '%s'" % (bt, et, searchKeyRegrex)
         #print cmd
-        #(status, output) = commands.getstatusoutput(cmd)
-        #matchLines = re.findall('match:       [^0]+', output)
+        (status, output) = commands.getstatusoutput(cmd)
+        matchLines = re.findall('match:       [^0]+', output)
         #print '\n'.join(matchLines)
         
-        #if (len(matchLines)):
-         #   find_any = True
-          #  print "Logs for '%s' on master: " % (searchKeyRegrex)
-           # print output
-        #else:
-         #   print "No '%s' found on master" % (searchKeyRegrex)
+        if (len(matchLines)):
+            find_any = True
+            print "Logs for '%s' on master: " % (searchKeyRegrex)
+            print output
+        else:
+            print "No '%s' found on master" % (searchKeyRegrex)
 
 
         gphome = os.getenv('GPHOME')
@@ -145,14 +155,19 @@ class Check_hawq_stress():
                 cmd = ''' gpssh -h %s -e "cd %s; source greenplum_path.sh; gplogfilter -b '%s' -e '%s' -m '%s' %s "''' % (host, gphome, bt, et, searchKeyRegrex, log_path + '/pg_log/*.csv')
                 print cmd
                 (status, output) = commands.getstatusoutput(cmd)
-                matchLines = re.findall('match:       [^0]+', output)
                 
-                if (len(matchLines)):
-                    find_any = True
-                    print "Logs for '%s' on segments %s: " % (searchKeyRegrex, host)
+                if status != 0:
+                    print cmd
                     print output
                 else:
-                    print "No '%s' found on segments %s" % (searchKeyRegrex, host)
+                    matchLines = re.findall('match:       [^0]+', output)
+                    
+                    if (len(matchLines)):
+                        find_any = True
+                        print "Logs for '%s' on segments %s: " % (searchKeyRegrex, host)
+                        print output
+                    else:
+                        print "No '%s' found on segments %s" % (searchKeyRegrex, host)
 
         return find_any
 
@@ -353,11 +368,11 @@ class Check_hawq_stress():
         self.test_02_check_hawq_health()
         self.test_03_check_out_of_disk_hawq()
         self.test_04_check_out_of_disk_hdfs()
-       # self.__analyze_hdfs_logs(searchKeyArray = ['liuq', 'error'], hosts = ['localhost', 'localhost'])
-       # self.test_05_check_hdfs_logs_namenode()
-       # self.test_06_check_hdfs_logs_secondary_namenode()
-       # self.test_07_check_hdfs_logs_datanodes()
-       # self.__analyze_hawq_logs()
+     #   self.__analyze_hdfs_logs(searchKeyArray = ['liuq', 'error'], hosts = ['localhost', 'localhost'])
+        self.test_05_check_hdfs_logs_namenode()
+        self.test_06_check_hdfs_logs_secondary_namenode()
+        self.test_07_check_hdfs_logs_datanodes()
+      #  self.__analyze_hawq_logs()
         self.test_08_check_hawq_logs_coredump()
         self.test_09_check_hawq_logs_fatal_errors_exceptions()
         self.test_10_check_hawq_logs_failures()
