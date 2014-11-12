@@ -68,6 +68,7 @@ class Executor(object):
                 if workload_specs['workload_name'] == workload_name:
                     workload_name_exist = True
                     workload_specification = workload_specs
+                    user_list = [ user.strip() for user in workload_specification['user'].strip().split(',') ]
             
             if not workload_name_exist:
                 print 'Detaled definition of workload %s no found in schedule file' % (workload_name)
@@ -83,9 +84,12 @@ class Executor(object):
             if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAIL'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
-                wl_instance = workload_category.lower().capitalize() + \
-                '(workload_specification, workload_directory, self.report_directory, self.report_sql_file, self.cs_id)'
-                self.workloads_instance.append(eval(wl_instance))
+                for user in user_list:
+                    print user
+                    wl_instance = workload_category.lower().capitalize() + \
+                    '(workload_specification, workload_directory, self.report_directory, self.report_sql_file, self.cs_id, user)'
+                    #self.workloads_instance.append(eval(wl_instance))
+            sys.exit(2)
                 
 
     def cleanup(self):

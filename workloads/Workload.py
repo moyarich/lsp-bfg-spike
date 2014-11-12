@@ -54,12 +54,21 @@ except ImportError:
     sys.exit(2)
 
 class Workload(object):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id):
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user):
         # initialize common variables
         self.cs_id = cs_id
         self.us_id = 0
         self.tr_id = 0
         self.s_id = 0
+
+        self.user = user
+        # check us_id if exist in backend database
+        if self.cs_id != 0:
+            self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
+            if self.us_id is None:
+                sys.stderr.write('The db user name is wrong!\n')
+                sys.exit(2)
+
         self.continue_flag = True
         # should always run the workload by default
         self.should_stop = False
@@ -69,14 +78,7 @@ class Workload(object):
         # required fields, workload_name, database_name, user
         try:
             self.workload_name = workload_specification['workload_name'].strip()
-            self.database_name = workload_specification['database_name'].strip()
-            self.user = workload_specification['user'].strip()
-            # check us_id if exist in backend database
-            if self.cs_id != 0:
-                self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
-                if self.us_id is None:
-                    sys.stderr.write('The db user name is wrong!\n')
-                    sys.exit(2)
+            self.database_name = workload_specification['database_name'].strip() 
         except Exception, e:
             print('Please add %s option in schedule file.' % (str(e)) )
             sys.exit(2)
