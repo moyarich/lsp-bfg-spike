@@ -41,7 +41,7 @@ def sed(string1,string2,filename):
     os.system(test)
 
 
-class Retail(Workload):
+class Retaildw(Workload):
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)

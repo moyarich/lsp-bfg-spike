@@ -39,7 +39,7 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from workloads.RETAIL.Retail import Retail
+    from workloads.RETAILDW.Retaildw import Retaildw
 except ImportError:
     sys.stderr.write('Executor needs Retail Workload in workloads/RETAIL/Retail.py\n')
     sys.exit(2)
@@ -81,7 +81,7 @@ class Executor(object):
                 continue
 
             # add one workload into the workloads_instance list
-            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAIL'):
+            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 for user in user_list:
