@@ -97,6 +97,7 @@ class Workload(object):
         self.compression_type = None
         self.compression_level = None
         self.partitions = 0
+        self.distributed_randomly = None
 
         self.scale_factor = None
         self.ans_directory = ''
@@ -137,7 +138,7 @@ class Workload(object):
         # get report.sql file and tmp folder
         self.report_sql_file = report_sql_file
         self.tmp_folder = report_sql_file.replace('report.sql', 'tmp')
-        self.tmp_folder = self.tmp_folder + os.sep + self.workload_name
+        self.tmp_folder = self.tmp_folder + os.sep + self.workload_name + '_' + self.user
         os.system('mkdir -p %s' % (self.tmp_folder))
         
     def __get_table_settings(self, workload_specification):
@@ -197,6 +198,12 @@ class Workload(object):
             
         if 'partitions' in ts_keys: # and ts['partitions'].isdigit():
             self.partitions = int(ts['partitions'])
+
+        self.distributed_randomly = False
+        if 'distributed_randomly' in ts_keys:
+            self.distributed_randomly = ts['distributed_randomly']
+            assert self.distributed_randomly in [True, False]
+
        
     def __get_run_mode(self, workload_specification):
         

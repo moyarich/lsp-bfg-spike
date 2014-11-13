@@ -91,12 +91,20 @@ class Tpch(Workload):
 
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
+
+        if self.distributed_randomly and table_name != 'revenue':
+            import re
+            old_string = re.search(r'DISTRIBUTED BY\(\w+\)', sql).group()
+            sql = sql.replace(old_string, 'DISTRIBUTED RANDOMLY')
+
         if self.partitions == 0 or self.partitions is None:
             sql = sql.replace('PARTITIONS', '')
         else:
             part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
             sql = sql.replace('PARTITIONS', part_suffix)
+        
         return sql
+
 
     def load_data(self):
         self.output('-- Start loading data')
