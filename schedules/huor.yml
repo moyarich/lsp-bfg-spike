@@ -1,8 +1,8 @@
-# workloads_list: xmarq_ao_parquet,tpch_ao_row
+workloads_list: xmarq_ao_row,tpch_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_co
 #workloads_list: xmarq_ao_row,tpch_ao_row,tpch_ao_parquet
-workloads_list: tpch_ao_row
+#workloads_list: tpch_ao_row
 
 workloads_mode: sequential
 #workloads_mode: concurrent
@@ -13,7 +13,7 @@ workloads_content:
 
     - workload_name: tpch_ao_row
       database_name: gpsqltest_tpch_ao_row
-      user:    gpadmin1,  gpadmin2 
+      user: gpadmin
       table_setting:
           data_volume_type: total
           data_volume_size: 1
@@ -21,6 +21,8 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
+          partitions: 128
+          distributed_randomly: true
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
@@ -68,12 +70,13 @@ workloads_content:
           orientation: PARQUET
           row_group_size: 8388608
           page_size: 1048576
-          partitions: 0
+          compression_type: SNAPPY
+          partitions: 128
       load_data_flag: true
-      run_workload_flag: true
+      run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 2
-      num_iteration: 3
+      num_concurrency: 1
+      num_iteration: 1
 
     - workload_name: xmarq_ao_parquet
       database_name: gpsqltest_xmarq_ao_parquet
@@ -93,7 +96,7 @@ workloads_content:
 
     - workload_name: xmarq_ao_row
       database_name: xmarq
-      user: gpadmin
+      user: gpadmin,liuq
       table_setting:
           data_volume_type: total
           data_volume_size: 1
@@ -101,8 +104,9 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
+          distributed_randomly: true
       load_data_flag: true
       run_workload_flag: true
-      run_workload_mode: RANDOM
+      run_workload_mode: SEQUENTIAL
       num_concurrency: 1
-      num_iteration: 3
+      num_iteration: 1

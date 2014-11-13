@@ -71,7 +71,7 @@ class Xmarq(Workload):
             sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
         else:
             sql = sql.replace('_TABLESUFFIX', '')
-        
+
         if self.sql_suffix != '':
             sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         else:
@@ -79,12 +79,20 @@ class Xmarq(Workload):
 
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
+
+        if self.distributed_randomly and table_name != 'revenue':
+            import re
+            old_string = re.search(r'DISTRIBUTED BY\(\w+\)', sql).group()
+            sql = sql.replace(old_string, 'DISTRIBUTED RANDOMLY')
+
         if self.partitions == 0 or self.partitions is None:
             sql = sql.replace('PARTITIONS', '')
         else:
             part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
             sql = sql.replace('PARTITIONS', part_suffix)
+        
         return sql
+
 
     def load_data(self):
         # check if the database exist
@@ -101,7 +109,7 @@ class Xmarq(Workload):
         # get the data dir
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
-            self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
+            self.output('ERROR: Cannot find DDL to create tables for XMARQ: %s does not exists' % (data_directory))
             sys.exit(2)
 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem']
