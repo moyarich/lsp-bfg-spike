@@ -81,9 +81,9 @@ with open('dat_files.txt','w') as f:
 """
 
 class Tpcds(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
         self.hostfile_master = os.path.join(self.tmp_folder, 'hostfile_master')
         self.hostfile_seg = os.path.join(self.tmp_folder, 'hostfile_seg')
         self.seg_hostname_list = None
@@ -92,7 +92,7 @@ class Tpcds(Workload):
         self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
 
     def setup(self):
-        # check if the database exist
+        # check if the database exist  ****************************************  modify
         try: 
             cnx = pg.connect(dbname = self.database_name)
         except Exception, e:

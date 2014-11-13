@@ -62,6 +62,7 @@ class Workload(object):
         self.s_id = 0
 
         self.user = user
+        
         # check us_id if exist in backend database
         if self.cs_id != 0:
             self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
@@ -78,7 +79,8 @@ class Workload(object):
         # required fields, workload_name, database_name, user
         try:
             self.workload_name = workload_specification['workload_name'].strip()
-            self.database_name = workload_specification['database_name'].strip() 
+            self.database_name = workload_specification['database_name'].strip()
+            self.database_name = self.database_name + '_' + self.user
         except Exception, e:
             print('Please add %s option in schedule file.' % (str(e)) )
             sys.exit(2)
@@ -119,7 +121,7 @@ class Workload(object):
     def __prep_folders_and_files(self, workload_directory, report_directory, report_sql_file):
         # prepare report directory for workload
         if report_directory != '':
-            self.report_directory = os.path.join(report_directory, self.workload_name)
+            self.report_directory = os.path.join(report_directory, self.workload_name + '_' + self.user)
         else:
             print 'Test report directory is not available before preparing report directory for workload %s' % (self.workload_name)
             exit(2)

@@ -34,9 +34,10 @@ except ImportError:
 
 
 class Xmarq(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
+
     
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)

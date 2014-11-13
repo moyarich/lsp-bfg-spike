@@ -85,12 +85,9 @@ class Executor(object):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 for user in user_list:
-                    print user
                     wl_instance = workload_category.lower().capitalize() + \
                     '(workload_specification, workload_directory, self.report_directory, self.report_sql_file, self.cs_id, user)'
-                    #self.workloads_instance.append(eval(wl_instance))
-            sys.exit(2)
+                    self.workloads_instance.append(eval(wl_instance))
                 
-
     def cleanup(self):
         pass
