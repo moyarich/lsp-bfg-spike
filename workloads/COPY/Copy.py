@@ -59,6 +59,12 @@ class Copy(Workload):
             
         sql = sql.replace('NUMBER', str(num))
         sql = sql.replace('FNAME', self.fname)
+
+        if self.distributed_randomly:
+            import re
+            old_string = re.search(r'DISTRIBUTED BY\(\S+\)', sql).group()
+            sql = sql.replace(old_string, 'DISTRIBUTED RANDOMLY')
+
         return sql
 
     def load_data(self):

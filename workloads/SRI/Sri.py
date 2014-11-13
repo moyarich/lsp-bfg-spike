@@ -53,7 +53,10 @@ class Sri(Workload):
 
         self.output('-- Start loading data')
 
-        cmd = 'drop table if exists %s;\n' % (table_name) + 'create table %s (tid int, bdate date, aid int, delta int, mtime timestamp) with (%s) distributed by (tid)' % (table_name, self.sql_suffix)
+        if self.distributed_randomly:
+            cmd = 'drop table if exists %s;\n' % (table_name) + 'create table %s (tid int, bdate date, aid int, delta int, mtime timestamp) with (%s) distributed randomly' % (table_name, self.sql_suffix)
+        else:
+            cmd = 'drop table if exists %s;\n' % (table_name) + 'create table %s (tid int, bdate date, aid int, delta int, mtime timestamp) with (%s) distributed by (tid)' % (table_name, self.sql_suffix)
         
         if self.partitions == 0 or self.partitions is None:
             partition_query = ''
