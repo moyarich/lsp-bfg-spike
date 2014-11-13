@@ -23,7 +23,7 @@ create table store_returns_TABLESUFFIX
     sr_reversed_charge        decimal(7,2)                  ,
     sr_store_credit           decimal(7,2)                  ,
     sr_net_loss               decimal(7,2)                  
-) WITH (SQLSUFFIX) distributed by (sr_item_sk, sr_ticket_number)
+) WITH (SQLSUFFIX) DISTRIBUTED BY(sr_item_sk,sr_ticket_number)
 PARTITION BY range(sr_returned_date_sk)
 (
 partition p1 start(2450815) INCLUSIVE end(2451179) INCLUSIVE, 

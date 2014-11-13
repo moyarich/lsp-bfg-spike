@@ -29,7 +29,7 @@ create table web_site_TABLESUFFIX
     web_country               varchar(20)                   ,
     web_gmt_offset            decimal(5,2)                  ,
     web_tax_percentage        decimal(5,2)                  
-) WITH (SQLSUFFIX) distributed by (web_site_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(web_site_sk);
 
 CREATE EXTERNAL TABLE e_web_site_TABLESUFFIX
 (

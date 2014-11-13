@@ -34,7 +34,7 @@ create table call_center_TABLESUFFIX
     cc_country                varchar(20)                   ,
     cc_gmt_offset             decimal(5,2)                  ,
     cc_tax_percentage         decimal(5,2)                  
-) WITH (SQLSUFFIX) distributed by (cc_call_center_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(cc_call_center_sk);
 
 CREATE EXTERNAL TABLE e_call_center_TABLESUFFIX
 (

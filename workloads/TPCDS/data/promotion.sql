@@ -22,7 +22,7 @@ create table promotion_TABLESUFFIX
     p_channel_details         varchar(100)                  ,
     p_purpose                 char(15)                      ,
     p_discount_active         char(1)                       
-) WITH (SQLSUFFIX) distributed by (p_promo_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(p_promo_sk);
 
 CREATE EXTERNAL TABLE e_promotion_TABLESUFFIX
 (

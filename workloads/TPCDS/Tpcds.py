@@ -428,12 +428,19 @@ class Tpcds(Workload):
             
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
+
+        if self.distributed_randomly:
+            import re
+            old_string = re.search(r'DISTRIBUTED BY\(\S+\)', sql).group()
+            sql = sql.replace(old_string, 'DISTRIBUTED RANDOMLY')
+
         tables = [ 'catalog_returns', 'catalog_sales', 'date_dim',  'inventory', 'store_returns', 'store_sales', 'web_returns', 'web_sales']
         if (self.partitions == 0 or self.partitions is None) and (table_name in tables):
             beg_index = sql.index('PARTITION BY')
             end_index = sql.index(';', beg_index, )
             partitions_string = sql[beg_index:end_index]
             sql = sql.replace(partitions_string, '') 
+
         return sql
     
     def execute(self):

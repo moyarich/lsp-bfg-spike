@@ -9,7 +9,7 @@ create table ship_mode_TABLESUFFIX
     sm_code                   char(10)                      ,
     sm_carrier                char(20)                      ,
     sm_contract               char(20)                      
-) WITH (SQLSUFFIX) distributed by (sm_ship_mode_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(sm_ship_mode_sk);
 
 CREATE EXTERNAL TABLE e_ship_mode_TABLESUFFIX
 (

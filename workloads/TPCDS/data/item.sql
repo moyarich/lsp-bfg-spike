@@ -25,7 +25,7 @@ create table item_TABLESUFFIX
     i_container               char(10)                      ,
     i_manager_id              integer                       ,
     i_product_name            char(50)                      
-) WITH (SQLSUFFIX) distributed by (i_item_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(i_item_sk);
 
 CREATE EXTERNAL TABLE e_item_TABLESUFFIX
 (

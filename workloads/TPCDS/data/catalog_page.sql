@@ -12,7 +12,7 @@ create table catalog_page_TABLESUFFIX
     cp_catalog_page_number    integer                       ,
     cp_description            varchar(100)                  ,
     cp_type                   varchar(100)                  
-) WITH (SQLSUFFIX) distributed by (cp_catalog_page_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(cp_catalog_page_sk);
 
 CREATE EXTERNAL TABLE e_catalog_page_TABLESUFFIX
 (

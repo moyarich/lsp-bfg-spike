@@ -37,7 +37,7 @@ create table catalog_sales_TABLESUFFIX
     cs_net_paid_inc_ship      decimal(7,2)                  ,
     cs_net_paid_inc_ship_tax  decimal(7,2)                  ,
     cs_net_profit             decimal(7,2)                 
-) WITH (SQLSUFFIX) distributed by (cs_item_sk, cs_order_number)
+) WITH (SQLSUFFIX) DISTRIBUTED BY(cs_item_sk,cs_order_number)
 PARTITION BY range(cs_sold_date_sk)
 (
 partition p1 start(2450815) INCLUSIVE end(2451179) INCLUSIVE, 

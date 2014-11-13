@@ -26,7 +26,7 @@ create table store_sales_TABLESUFFIX
     ss_net_paid               decimal(7,2)                  ,
     ss_net_paid_inc_tax       decimal(7,2)                  ,
     ss_net_profit             decimal(7,2)                  
-) WITH (SQLSUFFIX) distributed by (ss_item_sk, ss_ticket_number)
+) WITH (SQLSUFFIX) DISTRIBUTED BY(ss_item_sk,ss_ticket_number)
 PARTITION BY range(ss_sold_date_sk)
 (
 partition p1 start(2450815) INCLUSIVE end(2451179) INCLUSIVE, 

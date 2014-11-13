@@ -8,7 +8,7 @@ create table household_demographics_TABLESUFFIX
     hd_buy_potential          char(15)                      ,
     hd_dep_count              integer                       ,
     hd_vehicle_count          integer                       
-) WITH (SQLSUFFIX) distributed by (hd_demo_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(hd_demo_sk);
 
 CREATE EXTERNAL TABLE e_household_demographics_TABLESUFFIX
 (

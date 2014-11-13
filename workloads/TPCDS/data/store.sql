@@ -32,7 +32,7 @@ create table store_TABLESUFFIX
     s_country                 varchar(20)                   ,
     s_gmt_offset              decimal(5,2)                  ,
     s_tax_precentage          decimal(5,2)                  
-) WITH (SQLSUFFIX) distributed by (s_store_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(s_store_sk);
 
 CREATE EXTERNAL TABLE e_store_TABLESUFFIX
 (

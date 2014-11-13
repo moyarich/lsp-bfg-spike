@@ -37,7 +37,7 @@ create table web_sales_TABLESUFFIX
     ws_net_paid_inc_ship      decimal(7,2)                  ,
     ws_net_paid_inc_ship_tax  decimal(7,2)                  ,
     ws_net_profit             decimal(7,2)                  
-) WITH (SQLSUFFIX) distributed by (ws_item_sk, ws_order_number)
+) WITH (SQLSUFFIX) DISTRIBUTED BY(ws_item_sk,ws_order_number)
 PARTITION BY range(ws_sold_date_sk)
 (
 partition p1 start(2450815) INCLUSIVE end(2451179) INCLUSIVE, 

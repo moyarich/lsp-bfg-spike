@@ -30,7 +30,7 @@ create table catalog_returns_TABLESUFFIX
     cr_reversed_charge        decimal(7,2)                  ,
     cr_store_credit           decimal(7,2)                  ,
     cr_net_loss               decimal(7,2)                  
-) WITH (SQLSUFFIX) distributed by (cr_item_sk, cr_order_number)
+) WITH (SQLSUFFIX) DISTRIBUTED BY(cr_item_sk,cr_order_number)
 PARTITION BY range(cr_returned_date_sk)
 (
 partition p1 start(2450815) INCLUSIVE end(2451179) INCLUSIVE, 

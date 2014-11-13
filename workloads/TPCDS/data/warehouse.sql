@@ -17,7 +17,7 @@ create table warehouse_TABLESUFFIX
     w_zip                     char(10)                      ,
     w_country                 varchar(20)                   ,
     w_gmt_offset              decimal(5,2)                  
-) WITH (SQLSUFFIX) distributed by (w_warehouse_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(w_warehouse_sk);
 
 CREATE EXTERNAL TABLE e_warehouse_TABLESUFFIX
 (

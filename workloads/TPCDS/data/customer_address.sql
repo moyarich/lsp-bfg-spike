@@ -16,7 +16,7 @@ create table customer_address_TABLESUFFIX
     ca_country                varchar(20)                   ,
     ca_gmt_offset             decimal(5,2)                  ,
     ca_location_type          char(20)                      
-) WITH (SQLSUFFIX) distributed by (ca_address_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(ca_address_sk);
 
 
 CREATE EXTERNAL TABLE e_customer_address_TABLESUFFIX

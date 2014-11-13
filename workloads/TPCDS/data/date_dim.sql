@@ -31,7 +31,7 @@ create table date_dim_TABLESUFFIX
     d_current_month           char(1)                       ,
     d_current_quarter         char(1)                       ,
     d_current_year            char(1)                       
-) WITH (SQLSUFFIX) distributed by (d_date_sk)
+) WITH (SQLSUFFIX) DISTRIBUTED BY(d_date_sk)
 PARTITION BY Range(d_year) (partition p1 start(1900) end(2100) INCLUSIVE every(1));
 
 CREATE EXTERNAL TABLE e_date_dim_TABLESUFFIX

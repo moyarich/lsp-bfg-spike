@@ -13,7 +13,7 @@ create table time_dim_TABLESUFFIX
     t_shift                   char(20)                      ,
     t_sub_shift               char(20)                      ,
     t_meal_time               char(20)                      
-) WITH (SQLSUFFIX) distributed by (t_time_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(t_time_sk);
 
 CREATE EXTERNAL TABLE e_time_dim_TABLESUFFIX
 (

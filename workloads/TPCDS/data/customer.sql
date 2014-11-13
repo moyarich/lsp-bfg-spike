@@ -21,7 +21,7 @@ create table customer_TABLESUFFIX
     c_login                   char(13)                      ,
     c_email_address           char(50)                      ,
     c_last_review_date        char(10)                      
-) WITH (SQLSUFFIX) distributed by (c_customer_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(c_customer_sk);
 
 CREATE EXTERNAL TABLE e_customer_TABLESUFFIX
 (

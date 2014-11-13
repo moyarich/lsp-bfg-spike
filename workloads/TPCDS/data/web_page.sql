@@ -17,7 +17,7 @@ create table web_page_TABLESUFFIX
     wp_link_count             integer                       ,
     wp_image_count            integer                       ,
     wp_max_ad_count           integer                      
-) WITH (SQLSUFFIX) distributed by (wp_web_page_sk);
+) WITH (SQLSUFFIX) DISTRIBUTED BY(wp_web_page_sk);
 
 CREATE EXTERNAL TABLE e_web_page_TABLESUFFIX
 (

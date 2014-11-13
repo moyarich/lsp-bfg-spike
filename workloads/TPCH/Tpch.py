@@ -94,7 +94,7 @@ class Tpch(Workload):
 
         if self.distributed_randomly and table_name != 'revenue':
             import re
-            old_string = re.search(r'DISTRIBUTED BY\(\w+\)', sql).group()
+            old_string = re.search(r'DISTRIBUTED BY\(\S+\)', sql).group()
             sql = sql.replace(old_string, 'DISTRIBUTED RANDOMLY')
 
         if self.partitions == 0 or self.partitions is None:

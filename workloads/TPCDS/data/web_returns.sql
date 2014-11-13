@@ -27,7 +27,7 @@ create table web_returns_TABLESUFFIX
     wr_reversed_charge        decimal(7,2)                  ,
     wr_account_credit         decimal(7,2)                  ,
     wr_net_loss               decimal(7,2)                  
-) WITH (SQLSUFFIX) distributed by (wr_item_sk, wr_order_number)
+) WITH (SQLSUFFIX) DISTRIBUTED BY(wr_item_sk,wr_order_number)
 PARTITION BY range(wr_returned_date_sk)
 (
 partition p1 start(2450815) INCLUSIVE end(2451179) INCLUSIVE, 
