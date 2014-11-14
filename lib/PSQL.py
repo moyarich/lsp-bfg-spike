@@ -137,7 +137,7 @@ class PSQL:
                                  timeout=timeout)
 
 
-    def runcmd(self, cmd, dbname = None, ofile = '-', flag = '-t -q', username = None, password = None,
+    def runcmd(self, cmd, dbname = None, ofile = '-', flag = '', username = None, password = None,
         PGOPTIONS = None, host = None, port = None, background = False):
         '''
         Run command, psql -c cmd

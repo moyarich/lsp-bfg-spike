@@ -102,23 +102,24 @@ class Tpch(Workload):
             self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
             sys.exit(2)
 
-        cmd = 'drop database if exists %s;' % (self.database_name)
-        (ok, output) = psql.runcmd(cmd = cmd)
-        if not ok:
-            print cmd
-            print output
-            sys.exit(2)
-        self.output(cmd)
-        self.output('\n'.join(output))
+        if self.load_data_flag:
+            cmd = 'drop database if exists %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
 
-        cmd = 'create database %s;' % (self.database_name)
-        (ok, output) = psql.runcmd(cmd = cmd)#, username = self.user)
-        if not ok:
-            print cmd
-            print output
-            sys.exit(2)
-        self.output(cmd)
-        self.output('\n'.join(output))
+            cmd = 'create database %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         for table_name in tables:
@@ -132,7 +133,7 @@ class Tpch(Workload):
 
                     self.output(cmd)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)#, username = self.user)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = self.user)
                     end_time = datetime.now()
                     self.output('\n'.join(result))
 

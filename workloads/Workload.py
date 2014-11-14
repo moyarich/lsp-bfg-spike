@@ -399,7 +399,7 @@ class Workload(object):
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
                     end_time = datetime.now()
                     
-                    if ok:
+                    if ok and str(result).find('FATAL') == -1:
                         status = 'SUCCESS'
                         # generate output and md5 file
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
@@ -426,6 +426,7 @@ class Workload(object):
                                 status = 'ERROR'
                     else:
                         status = 'ERROR'
+                        self.output('\n'.join(result))
                 else:
                     status = 'SKIP'
                     beg_time = datetime.now()
@@ -487,7 +488,7 @@ class Workload(object):
                 end_time = datetime.now()
                 self.output('\n'.join(result))
 
-                if ok and str(result).find('ERROR') == -1:
+                if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
                     status = 'SUCCESS'
                 else:
                     status = 'ERROR'
