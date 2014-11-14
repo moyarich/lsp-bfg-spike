@@ -65,12 +65,6 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from lib.QueryFile import QueryFile
-except ImportError:
-    sys.stderr.write('LSP needs QueryFile in lib/QueryFile.py\n')
-    sys.exit(2)
-
-try:
     from lib.utils.Check import check
 except ImportError:
     sys.stderr.write('LSP needs check in lib/utils/Check.py\n')

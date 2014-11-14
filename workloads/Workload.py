@@ -396,7 +396,7 @@ class Workload(object):
 
                     self.output(query)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, flag = '-t -A')
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
                     end_time = datetime.now()
                     
                     if ok:
@@ -483,9 +483,9 @@ class Workload(object):
                 sql = 'VACUUM ANALYZE;'
                 self.output(sql)
                 beg_time = datetime.now()
-                (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name)
+                (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name, username = self.user)
                 end_time = datetime.now()
-                self.output('RESULT: ' + str(result))
+                self.output('\n'.join(result))
 
                 if ok and str(result).find('ERROR') == -1:
                     status = 'SUCCESS'

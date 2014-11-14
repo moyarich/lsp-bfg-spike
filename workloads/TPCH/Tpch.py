@@ -21,12 +21,6 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from lib.QueryFile import QueryFile
-except ImportError:
-    sys.stderr.write('TPCH needs QueryFile in lib/QueryFile.py\n')
-    sys.exit(2)
-
-try:
     import gl
 except ImportError:
     sys.stderr.write('TPCH needs gl.py in lsp_home\n')
@@ -39,14 +33,7 @@ class Tpch(Workload):
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
 
     def setup(self):
-        # check if the database exist
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-        finally:
-            cnx.close()
+        pass
 
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
@@ -115,6 +102,24 @@ class Tpch(Workload):
             self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
             sys.exit(2)
 
+        cmd = 'drop database if exists %s;' % (self.database_name)
+        (ok, output) = psql.runcmd(cmd = cmd)
+        if not ok:
+            print cmd
+            print output
+            sys.exit(2)
+        self.output(cmd)
+        self.output('\n'.join(output))
+
+        cmd = 'create database %s;' % (self.database_name)
+        (ok, output) = psql.runcmd(cmd = cmd)#, username = self.user)
+        if not ok:
+            print cmd
+            print output
+            sys.exit(2)
+        self.output(cmd)
+        self.output('\n'.join(output))
+
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         for table_name in tables:
             if self.continue_flag:
@@ -127,7 +132,7 @@ class Tpch(Workload):
 
                     self.output(cmd)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)#, username = self.user)
                     end_time = datetime.now()
                     self.output('\n'.join(result))
 
