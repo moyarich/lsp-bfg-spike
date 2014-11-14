@@ -43,14 +43,7 @@ class Gpfdist(Workload):
         self.host_name = config.getMasterHostName()
 
     def setup(self):
-        # check if the database exist
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-        finally:
-            cnx.close()
+        pass
 
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
@@ -134,6 +127,25 @@ class Gpfdist(Workload):
             print("generate data file %s error. " % (self.fname))
             sys.exit(2)
         self.output('generate data file successed. ')
+
+        if self.load_data_flag:
+            cmd = 'drop database if exists %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
+
+            cmd = 'create database %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
 
         tables = ['lineitem_gpfdist']
         

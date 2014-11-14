@@ -95,14 +95,6 @@ class Xmarq(Workload):
 
 
     def load_data(self):
-        # check if the database exist
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-        finally:
-            cnx.close()
 
         self.output('-- Start loading data')
 
@@ -111,6 +103,25 @@ class Xmarq(Workload):
         if not os.path.exists(data_directory):
             self.output('ERROR: Cannot find DDL to create tables for XMARQ: %s does not exists' % (data_directory))
             sys.exit(2)
+
+        if self.load_data_flag:
+            cmd = 'drop database if exists %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
+
+            cmd = 'create database %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem']
         for table_name in tables:
@@ -124,7 +135,7 @@ class Xmarq(Workload):
 
                     self.output(cmd)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = self.user)
                     end_time = datetime.now()
                     self.output('\n'.join(result))
 

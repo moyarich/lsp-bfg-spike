@@ -399,7 +399,7 @@ class Workload(object):
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
                     end_time = datetime.now()
                     
-                    if ok and str(result).find('FATAL') == -1:
+                    if ok and str(result).find('psql: FATAL:') == -1:
                         status = 'SUCCESS'
                         # generate output and md5 file
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:

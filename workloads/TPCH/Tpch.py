@@ -9,12 +9,6 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from pygresql import pg
-except ImportError:
-    sys.stderr.write('TPCH needs pygresql\n')
-    sys.exit(2)
-
-try:
     from lib.PSQL import psql
 except ImportError:
     sys.stderr.write('TPCH needs psql in lib/PSQL.py\n')

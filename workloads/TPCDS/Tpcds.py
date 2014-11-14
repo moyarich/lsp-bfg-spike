@@ -92,17 +92,29 @@ class Tpcds(Workload):
         self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
 
     def setup(self):
-        # check if the database exist  ****************************************  modify
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-        finally:
-            cnx.close()
-
+        pass
+        
     def load_data(self):
         self.output('\n-- Start loading data')
+
+        if self.load_data_flag:
+            cmd = 'drop database if exists %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
+
+            cmd = 'create database %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
 
         tables = ['call_center', 'catalog_page', 'catalog_returns', 'catalog_sales', 'customer', 'customer_address',
         'customer_demographics', 'date_dim', 'household_demographics', 'income_band', 'inventory', 'item',

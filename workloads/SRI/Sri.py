@@ -36,14 +36,7 @@ class Sri(Workload):
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
 
     def setup(self):
-        # check if the database exist
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-        finally:
-            cnx.close()
+        pass
 
     def load_data(self):
         if gl.suffix:
@@ -52,6 +45,25 @@ class Sri(Workload):
             table_name = 'sri_table'
 
         self.output('-- Start loading data')
+
+        if self.load_data_flag:
+            cmd = 'drop database if exists %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
+
+            cmd = 'create database %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
 
         if self.distributed_randomly:
             cmd = 'drop table if exists %s;\n' % (table_name) + 'create table %s (tid int, bdate date, aid int, delta int, mtime timestamp) with (%s) distributed randomly' % (table_name, self.sql_suffix)

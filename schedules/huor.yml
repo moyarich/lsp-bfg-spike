@@ -1,8 +1,8 @@
-workloads_list: xmarq_ao_row,tpch_ao_parquet
+#workloads_list: xmarq_ao_row,tpch_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_parquet
 # workloads_list: tpch_ao_row,tpch_ao_co
 #workloads_list: xmarq_ao_row,tpch_ao_row,tpch_ao_parquet
-#workloads_list: tpch_ao_row
+workloads_list: tpch_ao_row
 
 workloads_mode: sequential
 #workloads_mode: concurrent
@@ -13,7 +13,7 @@ workloads_content:
 
     - workload_name: tpch_ao_row
       database_name: gpsqltest_tpch_ao_row
-      user: gpadmin
+      user: gpadmin,liuq
       table_setting:
           data_volume_type: total
           data_volume_size: 1
@@ -21,10 +21,10 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
-          partitions: 128
+          partitions: 0
           distributed_randomly: true
-      load_data_flag: true
-      run_workload_flag: false
+      load_data_flag: false
+      run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
