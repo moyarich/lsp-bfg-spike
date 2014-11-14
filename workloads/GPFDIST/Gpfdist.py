@@ -52,6 +52,29 @@ class Gpfdist(Workload):
         finally:
             cnx.close()
 
+    def get_partition_suffix(self, num_partitions = 128, table_name = ''):
+        beg_date = date(1992, 01, 01)
+        end_date = date(1998, 12, 31)
+        duration_days = int(round(float((end_date - beg_date).days) / float(num_partitions)))
+
+        part = '''PARTITION BY RANGE(l_shipdate)\n    (\n'''
+                
+        for i in range(1, num_partitions+1):
+            beg_cur = beg_date + timedelta(days = (i-1)*duration_days)
+            end_cur = beg_date + timedelta(days = i*duration_days)
+
+            part += '''        PARTITION p1_%s START (\'%s\'::date) END (\'%s\'::date) EVERY (\'%s days\'::interval) WITH (tablename=\'%s_part_1_prt_p1_%s\', %s )''' % (i, beg_cur, end_cur, duration_days, table_name + '_' + self.tbl_suffix, i, self.sql_suffix)
+            
+            if i != num_partitions:
+                part += ''',\n'''
+            else:
+                part += '''\n'''
+
+        part += '''    )'''
+                
+        return part 
+
+
     def replace_sql(self, sql, table_name, num):
         if gl.suffix:
             sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
@@ -71,6 +94,12 @@ class Gpfdist(Workload):
             import re
             old_string = re.search(r'DISTRIBUTED BY\(\S+\)', sql).group()
             sql = sql.replace(old_string, 'DISTRIBUTED RANDOMLY')
+
+        if self.partitions == 0 or self.partitions is None:
+            sql = sql.replace('PARTITIONS', '')
+        else:
+            part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name + '_' + str(num))
+            sql = sql.replace('PARTITIONS', part_suffix)
             
         return sql
 
