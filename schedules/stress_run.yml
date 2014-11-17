@@ -20,7 +20,7 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: RANDOM
       num_concurrency: 4
-      num_iteration: 40
+      num_iteration: 60
 
     - workload_name: tpch_row_comp_part_200g
       database_name: gpsqltest_tpch_row_comp_part_200g
@@ -37,7 +37,7 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: RANDOM
       num_concurrency: 4
-      num_iteration: 20
+      num_iteration: 60
 
     - workload_name: tpch_parquet_comp_10g
       database_name: gpsqltest_tpch_parquet_comp_10g
@@ -54,7 +54,7 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: RANDOM
       num_concurrency: 6
-      num_iteration: 100
+      num_iteration: 200
 
     - workload_name: tpch_parquet_comp_part_10g
       database_name: gpsqltest_tpch_parquet_comp_part_10g
@@ -73,7 +73,7 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: RANDOM
       num_concurrency: 6
-      num_iteration: 100
+      num_iteration: 200
 
     - workload_name: tpch_parquet_200g
       database_name: gpsqltest_tpch_parquet_200g
@@ -89,7 +89,7 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: RANDOM
       num_concurrency: 4
-      num_iteration: 40
+      num_iteration: 60
 
     - workload_name: tpch_parquet_comp_part_200g
       database_name: gpsqltest_tpch_parquet_comp_part_200g
@@ -107,7 +107,7 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: RANDOM
       num_concurrency: 4
-      num_iteration: 40
+      num_iteration: 60
 
     - workload_name: sri_parquet
       database_name: gpsqltest_sri_parquet
@@ -121,7 +121,7 @@ workloads_content:
           page_size: 1048576
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 100000
+      num_iteration: 1000000
 
     - workload_name: sri_parquet_part
       database_name: gpsqltest_sri_parquet_part
@@ -136,7 +136,7 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 50000
+      num_iteration: 500000
 
     - workload_name: sri_ao_co
       database_name: gpsqltest_sri_ao_co
@@ -150,7 +150,7 @@ workloads_content:
           compression_level: 1
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 100000
+      num_iteration: 1000000
 
     - workload_name: sri_ao_part
       database_name: gpsqltest_sri_ao_part
@@ -165,7 +165,7 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 50000
+      num_iteration: 500000
 
     - workload_name: copy
       database_name: gpsqltest_copy
@@ -179,4 +179,4 @@ workloads_content:
           compression_level: 1
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 100
+      num_iteration: 1000
