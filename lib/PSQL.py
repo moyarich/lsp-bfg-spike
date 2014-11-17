@@ -81,7 +81,7 @@ class PSQL:
         @poram background: run PSQL command in the background
         '''
         if dbname == None:
-            dbname = os.environ['PGDATABASE']
+            dbname = 'template1'
             
         if username == None:
             try:
