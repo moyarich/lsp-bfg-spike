@@ -89,7 +89,7 @@ class Check_hawq_stress():
 
     def __search_key_in_log(self, host, key, path):
         '''Search key in logs using grep'''
-        cmd = ''' gpssh -h %s -e "grep -i '%s' %s" ''' % (host, key, path)
+        cmd = ''' gpssh -h %s -e "sudo grep -i '%s' %s" ''' % (host, key, path)
         (status, output) = commands.getstatusoutput(cmd)
         return (status, output)
 
