@@ -19,7 +19,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 4
+      num_concurrency: 5
       num_iteration: 60
 
     - workload_name: tpch_row_comp_part_200g
@@ -36,7 +36,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 4
+      num_concurrency: 5
       num_iteration: 60
 
     - workload_name: tpch_parquet_comp_10g
@@ -53,7 +53,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 6
+      num_concurrency: 8
       num_iteration: 200
 
     - workload_name: tpch_parquet_comp_part_10g
@@ -72,7 +72,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 6
+      num_concurrency: 8
       num_iteration: 200
 
     - workload_name: tpch_parquet_200g
@@ -88,7 +88,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 4
+      num_concurrency: 5
       num_iteration: 60
 
     - workload_name: tpch_parquet_comp_part_200g
@@ -106,7 +106,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: RANDOM
-      num_concurrency: 4
+      num_concurrency: 5
       num_iteration: 60
 
     - workload_name: sri_parquet

@@ -118,14 +118,21 @@ class Copy(Workload):
             self.output(cmd)
             self.output('\n'.join(output))
 
-            cmd = 'create database %s;' % (self.database_name)
-            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
-            if not ok:
-                print cmd
-                print '\n'.join(output)
-                sys.exit(2)
-            self.output(cmd)
-            self.output('\n'.join(output))
+            count = 0
+            while(True):
+                cmd = 'create database %s;' % (self.database_name)
+                (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+                if not ok:
+                    count = count + 1
+                    time.sleep(1)
+                else:
+                    self.output(cmd)
+                    self.output('\n'.join(output))
+                    break
+                if count == 10:
+                    print cmd
+                    print '\n'.join(output)
+                    sys.exit(2)
         
         tables = ['lineitem_copy']
         niteration = 1
