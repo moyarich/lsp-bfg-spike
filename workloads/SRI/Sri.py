@@ -1,6 +1,6 @@
 import os
 import sys
-import commands
+import commands,time
 from random import shuffle, randint 
 from datetime import datetime, date, timedelta
 
@@ -56,14 +56,21 @@ class Sri(Workload):
             self.output(cmd)
             self.output('\n'.join(output))
 
-            cmd = 'create database %s;' % (self.database_name)
-            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
-            if not ok:
-                print cmd
-                print '\n'.join(output)
-                sys.exit(2)
-            self.output(cmd)
-            self.output('\n'.join(output))
+            count = 0
+            while(True):
+                cmd = 'create database %s;' % (self.database_name)
+                (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+                if not ok:
+                    count = count + 1
+                    time.sleep(1)
+                else:
+                    self.output(cmd)
+                    self.output('\n'.join(output))
+                    break
+                if count == 10:
+                    print cmd
+                    print '\n'.join(output)
+                    sys.exit(2)
 
         if self.distributed_randomly:
             cmd = 'drop table if exists %s;\n' % (table_name) + 'create table %s (tid int, bdate date, aid int, delta int, mtime timestamp) with (%s) distributed randomly' % (table_name, self.sql_suffix)

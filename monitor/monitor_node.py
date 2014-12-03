@@ -17,16 +17,18 @@ class Monitor_node():
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep'
 		grep_string1 = 'postgres'
 		grep_string2 = 'seg'
-		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,cmd | grep %s | grep %s | grep -vE "%s" ''' % (grep_string1, grep_string2, filter_string)
+		cmd = ''' ps -eo pcpu,vsz,rss,pmem,state,command | grep %s | grep %s | grep -vE "%s" ''' % (grep_string1, grep_string2, filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
-		if status != 0:
-			return 'error: ' + str(status) + ' output: ' + output
-		line_item = output.splitlines()
+		if status != 0 or output == '':
+			return 'error code: ' + str(status) + ' output: ' + output
+		
 		print output
+		line_item = output.splitlines()
 		for line in line_item:
 			temp = line.split()
 			out_string = ''
-			out_string = temp[0]
+			out_string = temp[11] + ' ' + temp[12] + ' ' + str(int(temp[2])/1024) + ' ' + temp[0]
+			print out_string
 		#for line in line_item:
 		#	temp = line.split("postgres")
 		#print line_item[0].split()
@@ -35,4 +37,4 @@ class Monitor_node():
 if __name__ == "__main__" :
 	monitor = Monitor_node()
 
-	print monitor.fetch_qe_mem()
+	monitor.fetch_qe_mem()
