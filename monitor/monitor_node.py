@@ -1,10 +1,18 @@
 #!/usr/bin/env python
-import os,sys,commands
+import os,sys,commands,time
+from datetime import datetime
 
 class Monitor_node():
+
 	def __init__(self):
 		pass
 
+	def report(self, filename, msg):
+	    fp = open(filename, 'a')  
+	    fp.write(msg)
+	    fp.write('\n')
+	    fp.flush()
+	    fp.close()
 	'''
 	%CPU  VSZ  RSS  %MEM CMD          
 	0.0 566612 20840  0.5 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(58558) con279 seg0 cmd2 slice7 MPPEXEC SELECT     
@@ -13,28 +21,40 @@ class Monitor_node():
 	2.5 640936 18776  0.4 postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(36048) con279 seg1 idle
 	'''
 	
-	def fetch_qe_mem(self):
+	def __get_qe_mem(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep'
 		grep_string1 = 'postgres'
 		grep_string2 = 'seg'
 		cmd = ''' ps -eo pcpu,vsz,rss,pmem,state,command | grep %s | grep %s | grep -vE "%s" ''' % (grep_string1, grep_string2, filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			return 'error code: ' + str(status) + ' output: ' + output
+			print 'error code: ' + str(status) + ' output: ' + output
+			return ''
 		
-		print output
 		line_item = output.splitlines()
+		output_string = str(datetime.now())
 		for line in line_item:
 			temp = line.split()
-			out_string = ''
-			out_string = temp[11] + ' ' + temp[12] + ' ' + str(int(temp[2])/1024) + ' ' + temp[0]
-			print out_string
-		#for line in line_item:
-		#	temp = line.split("postgres")
-		#print line_item[0].split()
+			one_item = temp[11] + ' ' + temp[12] + ' ' + temp[13] + ' ' + str(int(temp[2])/1024) + ' ' + temp[0]
+			output_string = output_string + '\n' + one_item
+		return output_string
 	
+
+	def get_qe_mem(self, filename, interval):
+		count = 0
+		while(True):
+			if count == 10:
+				break
+			result = self.__get_qe_mem()
+			if result == '':
+				count = count + 1
+				time.sleep(2)
+				continue
+			else:
+				self.report(filename = filename, msg = result)
+			time.sleep(interval)
 
 if __name__ == "__main__" :
 	monitor = Monitor_node()
-
-	monitor.fetch_qe_mem()
+	monitor.get_qe_mem(filename = 'qe_mem.log', interval = 3)
+	
