@@ -13,12 +13,13 @@ class Monitor_node():
 	    fp.write('\n')
 	    fp.flush()
 	    fp.close()
+	
 	'''
-	%CPU  VSZ  RSS  %MEM CMD          
-	0.0 566612 20840  0.5 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(58558) con279 seg0 cmd2 slice7 MPPEXEC SELECT     
-	0.0 566612 22864  0.5 postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(36042) con279 seg1 cmd2 slice7 MPPEXEC SELECT         
-	2.5 640936 18776  0.4 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(58564) con279 seg0 idle                           
-	2.5 640936 18776  0.4 postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(36048) con279 seg1 idle
+	%CPU  VSZ  RSS  %MEM STATE CMD          
+	0.0 566612 20840  0.5 R postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(58558) con279 seg0 cmd2 slice7 MPPEXEC SELECT     
+	0.0 566612 22864  0.5 R postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(36042) con279 seg1 cmd2 slice7 MPPEXEC SELECT         
+	2.5 640936 18776  0.4 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(58564) con279 seg0 idle                           
+	2.5 640936 18776  0.4 S postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(36048) con279 seg1 idle
 	'''
 	
 	def __get_qe_mem(self):
@@ -39,7 +40,6 @@ class Monitor_node():
 			output_string = output_string + '\n' + one_item
 		return output_string
 	
-
 	def get_qe_mem(self, filename, interval):
 		count = 0
 		while(True):
@@ -56,5 +56,5 @@ class Monitor_node():
 
 if __name__ == "__main__" :
 	monitor = Monitor_node()
-	monitor.get_qe_mem(filename = 'qe_mem.log', interval = 3)
+	monitor.get_qe_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', interval = 3)
 	
