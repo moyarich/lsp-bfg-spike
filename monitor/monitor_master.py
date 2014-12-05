@@ -5,12 +5,12 @@ from datetime import datetime
 class Monitor_master():
 
 	def __init__(self):
-		pass
+		self.max_con_id = -1
+		self.max_time = datetime.now()
 
 	def report(self, filename, msg):
 	    fp = open(filename, 'a')  
 	    fp.write(msg)
-	    fp.write('\n')
 	    fp.flush()
 	    fp.close()
 	
@@ -35,7 +35,7 @@ class Monitor_master():
 		for line in line_item:
 			temp = line.split()
 			try:
-				one_item = now_time + ' ' + temp[11] + ' ' + temp[13] + ' ' + str(int(temp[2])/1024) + ' ' + temp[0]
+				one_item = now_time + '\t' + temp[11] + '\t' + temp[13] + '\t' + str(int(temp[2])/1024) + '\t' + temp[0]
 			except Exception, e:
 				one_item = line
 			finally:
@@ -58,23 +58,40 @@ class Monitor_master():
 
 			time.sleep(interval)
 
-	#def get_qd_info(self, filename = '', interval = 5):
+	def get_qd_info(self, filename = '', interval = 3):
+		count = 0
+		while(True):
+			if count == 10:
+				break
+			result = self.__get_qd_info()
+			if result == 'error':
+				count = count + 1
+				time.sleep(2)
+				continue
+			elif result != '':
+				self.report(filename = filename, msg = result)
 
-	def get_qd_info(self, filename = '', interval = 5):
-		cmd = ''' psql -d postgres -t -c "select sess_id,procpid,usename,datname,query_start from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id;" '''
+			time.sleep(interval)
+
+	def __get_qd_info(self):
+		cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start;" '''
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'error code: ' + str(status) + ' output: ' + output
-			return '' 
+			return 'error' 
 
-		''' sess_id  procpid  usename  datname  query_start '''
+		''' sess_id  query_start  procpid  usename  datname '''
 		line_item = output.splitlines()
 		output_string = ''
 		for line in line_item:
-			print line
-			#line = line.replace('|', '').split()
-			#one_item = line[0] + ' ' + line[1] + ' ' + line[2] + ' ' + line[3] + ' ' + line[4]
-			#output_string = output_string + '\n' + one_item
+			line = line.split('|')
+			con_id = int(line[0].strip())
+			query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+			if con_id > self.max_con_id or (con_id == self.max_con_id and query_start_time > self.max_time):
+				self.max_con_id = con_id
+				self.max_time = query_start_time
+				one_item = str(con_id) + ' ' + str(query_start_time) + ' ' + line[2].strip() + ' ' + line[3].strip() + ' ' + line[4].strip()
+				output_string = one_item + '\n'
 
 		return output_string
 
@@ -82,4 +99,5 @@ class Monitor_master():
 if __name__ == "__main__" :
 	monitor = Monitor_master()
 	#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
-	print monitor.get_qd_info()
+	monitor.get_qd_info(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_info.log', interval = 2)
+	
