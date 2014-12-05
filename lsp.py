@@ -150,7 +150,7 @@ if __name__ == '__main__':
 
                 check.insert_new_record(table_name = 'hst.test_run', 
                     col_list = 'pulse_build_id, pulse_build_url, hdfs_version, hawq_version, start_time', 
-                    values = "'%s', '%s', '%s', '%s', '%s'" % (build_id, build_url, hdfs_version, hawq_version, str(beg_time).split('.')[0]))
+                    values = "'%s', '%s', '%s', '%s', '%s'" % (build_id, build_url, hdfs_version, hawq_version, str(beg_time)))
             
             # prepare report directory with times and the report.sql file
             report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -192,7 +192,7 @@ if __name__ == '__main__':
 
     # update backend database to log execution time
     if add_database and start_flag:
-        check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time).split('.')[0], duration), search_condition = "start_time = '%s'" % (str(beg_time).split('.')[0]))
+        check.update_record(table_name = 'hst.test_run', set_content = "end_time = '%s', duration = %d" % (str(end_time), duration), search_condition = "start_time = '%s'" % (str(beg_time)))
 
         # add detailed execution information of test cases into backend database
         remotecmd.scp_command(from_user = '', from_host = '', from_file = report_sql_file,
