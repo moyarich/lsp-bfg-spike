@@ -33,10 +33,11 @@ class Monitor_node():
 			return ''
 		
 		line_item = output.splitlines()
-		output_string = str(datetime.now())
+		now_time = str(datetime.now())
+		output_string = ''
 		for line in line_item:
 			temp = line.split()
-			one_item = temp[11] + '\t' + temp[12] + '\t' + temp[13] + '\t' + str(int(temp[2])/1024) + '\t' + temp[0]
+			one_item = now_time + '\t' + temp[11][3:] + '\t' + temp[12] + '\t' + temp[13] + '\t' + str(int(temp[2])/1024) + '\t' + temp[0]
 			output_string = output_string + '\n' + one_item
 		return output_string
 	

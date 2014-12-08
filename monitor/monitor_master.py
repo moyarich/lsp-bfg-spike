@@ -2,12 +2,12 @@
 import os,sys,commands,time
 from datetime import datetime
 from multiprocessing import Process
+from pygresql import pg
 
 class Monitor_master():
 
 	def __init__(self):
-		self.max_con_id = -1
-		self.max_time = datetime.now()
+		self.query_list = []
 
 	def report(self, filename, msg):
 	    fp = open(filename, 'a')  
@@ -74,31 +74,29 @@ class Monitor_master():
 			time.sleep(interval)
 
 	def __get_qd_info(self):
-		cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start;" '''
+		# -R '***' set record separator '***' (default: newline)
+		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,procpid,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
 		#cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity order by sess_id,query_start;" '''
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'error code: ' + str(status) + ' output: ' + output
 			return 'error' 
 
-		''' sess_id  query_start  procpid  usename  datname '''
-		line_item = output.splitlines()
+		''' sess_id  query_start  procpid  usename  datname  current_query'''
+		line_item = output.split('***')
 		output_string = ''
 		for line in line_item:
 			line = line.split('|')
-			con_id = int(line[0].strip())
-			#print line[1].split('+')[0].strip()
-			try:
-				query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
-			except Exception, e:
-				print 'time error ' + str(line)
-				continue
-			#query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
-			if con_id > self.max_con_id or (con_id == self.max_con_id and query_start_time > self.max_time):
-				self.max_con_id = con_id
-				self.max_time = query_start_time
-				one_item = str(con_id) + '\t' + str(query_start_time) + '\t' + line[2].strip() + '\t' + line[3].strip() + '\t' + line[4].strip()
+			query_id = line[0] + '-' + line[1]
+			if query_id not in self.query_list:
+				try:
+					query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+				except Exception, e:
+					print 'time error ' + str(line)
+					continue
+				one_item = line[0] + '\t' + str(query_start_time) + '\t' + line[2] + '\t' + line[3] + '\t' + line[4]
 				output_string = output_string + one_item + '\n'
+				self.query_list.append(query_id)
 
 		return output_string
 
@@ -107,10 +105,10 @@ if __name__ == "__main__" :
 	monitor = Monitor_master()
 	#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
 	p1 = Process(target = monitor.get_qd_info, args = (datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_info.log', 1))
-	p2 = Process(target = monitor.get_qd_mem, args = (datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', 3))
+	#p2 = Process(target = monitor.get_qd_mem, args = (datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', 3))
 
 	p1.start()
-	p2.start()
+	#p2.start()
 
 	#monitor.get_qd_info(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_info.log', interval = 2)
 	
