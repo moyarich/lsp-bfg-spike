@@ -13,7 +13,7 @@ workloads_content:
 
     - workload_name: tpch_ao_row
       database_name: gpsqltest_tpch_ao_row
-      user: gpadmin,liuq
+      user: gpadmin
       table_setting:
           data_volume_type: total
           data_volume_size: 1
@@ -26,8 +26,8 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
+      num_concurrency: 3
+      num_iteration: 2
 
     - workload_name: tpch_heap
       database_name: gpsqltest_tpch_heap

@@ -36,7 +36,7 @@ class Monitor_master():
 		for line in line_item:
 			temp = line.split()
 			try:
-				one_item = now_time + '\t' + temp[11] + '\t' + temp[13] + '\t' + str(int(temp[2])/1024) + '\t' + temp[0]
+				one_item = now_time + '\t' + temp[11][3:] + '\t' + temp[13] + '\t' + str(int(temp[2])/1024) + '\t' + temp[3] + '\t' + temp[0]
 			except Exception, e:
 				continue
 			output_string = output_string + one_item + '\n'
@@ -58,20 +58,7 @@ class Monitor_master():
 
 			time.sleep(interval)
 
-	def get_qd_info(self, filename = '', interval = 3):
-		count = 0
-		while(True):
-			if count == 10:
-				break
-			result = self.__get_qd_info()
-			if result == 'error':
-				count = count + 1
-				time.sleep(2)
-				continue
-			elif result != '':
-				self.report(filename = filename, msg = result)
-
-			time.sleep(interval)
+	
 
 	def __get_qd_info(self):
 		# -R '***' set record separator '***' (default: newline)
@@ -99,6 +86,21 @@ class Monitor_master():
 				self.query_list.append(query_id)
 
 		return output_string
+
+	def get_qd_info(self, filename = '', interval = 3):
+		count = 0
+		while(True):
+			if count == 10:
+				break
+			result = self.__get_qd_info()
+			if result == 'error':
+				count = count + 1
+				time.sleep(2)
+				continue
+			elif result != '':
+				self.report(filename = filename, msg = result)
+
+			time.sleep(interval)
 
 
 if __name__ == "__main__" :
