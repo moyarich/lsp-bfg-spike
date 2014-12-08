@@ -3,6 +3,8 @@ import os,sys,commands,time
 from datetime import datetime
 from multiprocessing import Process
 from pygresql import pg
+from monitor_node import Monitor_node
+
 
 class Monitor_master():
 
@@ -107,10 +109,11 @@ if __name__ == "__main__" :
 	monitor = Monitor_master()
 	#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
 	p1 = Process(target = monitor.get_qd_info, args = (datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_info.log', 1))
-	#p2 = Process(target = monitor.get_qd_mem, args = (datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', 3))
-
+	p2 = Process(target = monitor.get_qd_mem, args = (datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', 3))
+	p3 = Process(target = Monitor_node().get_qe_mem, args = (datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', 3))
 	p1.start()
-	#p2.start()
+	p2.start()
+	p3.start()
 
 	#monitor.get_qd_info(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_info.log', interval = 2)
 	

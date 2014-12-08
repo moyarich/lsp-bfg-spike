@@ -55,7 +55,9 @@ class Monitor_node():
 				self.report(filename = filename, msg = result)
 			time.sleep(interval)
 
+monitor_node = Monitor_node()
+
 if __name__ == "__main__" :
-	monitor = Monitor_node()
-	monitor.get_qe_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', interval = 3)
+	mn = Monitor_node()
+	#monitor.get_qe_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', interval = 3)
 	
