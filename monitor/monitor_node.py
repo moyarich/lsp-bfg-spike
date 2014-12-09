@@ -38,6 +38,7 @@ class Monitor_node():
 		for line in line_item:
 			temp = line.split()
 			one_item = now_time + '\t' + temp[11][3:] + '\t' + temp[12] + '\t' + temp[13] + '\t' + str(int(temp[2])/1024) + '\t' + temp[3] + '\t' + temp[0]
+			sql_item = "insert into moni.qe_mem_cpu valuse ('')"
 			output_string = output_string + '\n' + one_item
 		return output_string
 	

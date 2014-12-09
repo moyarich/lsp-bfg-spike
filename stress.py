@@ -52,10 +52,10 @@ class Check_hawq_stress():
         self.second_namenode = [ hdfs_conf_parser['second_namenode'].strip() ]
         self.datanode = [ dn.strip() for dn in hdfs_conf_parser['datanode'].split(',') ]
 
-        print self.hdfs_path
-        print self.namenode
-        print self.second_namenode
-        print self.datanode
+       # print self.hdfs_path
+       # print self.namenode
+       # print self.second_namenode
+       # print self.datanode
 
     def __fetch_hawq_configuration(self):
         '''Fetch master hostname, segments hostname, data directory of HAWQ.'''
