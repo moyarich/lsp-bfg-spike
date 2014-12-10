@@ -1,0 +1,21 @@
+query_list: insert, select 
+
+runworkload_mode: S
+
+user_list: amy
+
+query_content:
+                
+        - query_name: insert 
+          type: INSERT
+          sql: 
+          runnum: 2
+          concurrencynum: 2
+          user: u1
+
+        - query_name: select
+          type: SELECT
+          sql:
+          runnum: 2
+          concurrencynum: 2
+          user: u2
