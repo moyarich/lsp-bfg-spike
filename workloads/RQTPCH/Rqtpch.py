@@ -1,6 +1,7 @@
 import os
 import sys
 from datetime import datetime, date, timedelta
+import yaml
 
 try:
     from workloads.Workload import *
@@ -20,16 +21,41 @@ except ImportError:
     sys.stderr.write('TPCH needs gl.py in lsp_home\n')
     sys.exit(2)
 
+class Query:
+	def __init__(self,querycontent,userlist):
+		self._name = querycontent['query_name']
+		self._sql = querycontent['sql']
+		self._type = querycontent['type']
+		self._runnum = querycontent['runnum']
+		self._concurrencynum = querycontent['concurrencynum']
+		if querycontent['user']!= None :
+			self._user = querycontent['user']
+		else:
+			self._user = userlist[random.randint(0,len(userlist)-1)]
+
 class Rqtpch(Workload):
 
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
-        print workload_specification
-        sys.exit(2)
+	self.queryfile = self.workload_directory + os.sep + 'YML' + os.sep + workload_specification['query_file'] + '.yml'
 
-    def setup(self):
-        pass
+    def parse_yaml(self):
+	self.querylist = []
+
+	
+	with open (self.queryfile,"r")	as yamlfile:
+		yaml_parser = yaml.load(yamlfile)
+	self.runworkload_mode = yaml_parser['runworkload_mode']
+	self.query_list = yaml_parser['query_list'].split(',')
+	self.user_list = yaml_parser['user_list']
+	for queryname in self.query_list:
+		queryname = queryname.strip()
+		for i in range(0,len(yaml_parser['query_content'])):
+			if queryname == yaml_parser['query_content'][i]['query_name']:
+				query = Query(yaml_parser['query_content'][i], self.user_list)
+				self.querylist.append(query)
+				break
 
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
@@ -161,7 +187,8 @@ class Rqtpch(Workload):
     
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
-
+	
+	self.parse_yaml()
         # setup
         self.setup()
 
