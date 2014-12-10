@@ -9,21 +9,9 @@ except ImportError:
     sys.exit(2)
 
 try:
-    from pygresql import pg
-except ImportError:
-    sys.stderr.write('TPCH needs pygresql\n')
-    sys.exit(2)
-
-try:
     from lib.PSQL import psql
 except ImportError:
     sys.stderr.write('TPCH needs psql in lib/PSQL.py\n')
-    sys.exit(2)
-
-try:
-    from lib.QueryFile import QueryFile
-except ImportError:
-    sys.stderr.write('TPCH needs QueryFile in lib/QueryFile.py\n')
     sys.exit(2)
 
 try:
@@ -32,115 +20,16 @@ except ImportError:
     sys.stderr.write('TPCH needs gl.py in lsp_home\n')
     sys.exit(2)
 
-class Query:
-	def __init__(self,id,name,type,sql,runnum,concurrencynum,user):
-		self._id = id
-		slef._name = name
-		self._sql = sql
-		self._type = type
-		self._runnum = runnum
-		self._concurrencynum = concurrencynum
-		self._user = user
-
-
 class Rqtpch(Workload):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id)
-	self.workload_list =  workload_specification['workloads_list'].strip()
-	#to do
-	self.workload_name = 	
-	self.query_file =
-	
-    def parse_yaml(self):
-		self.querylist = []
-                with open(self.query_file) as yamlfile:
-                        yaml_parser = yaml.load(yamlfile)
-		self.query_num = yaml_parser['query_num']
-		self.runworkload_mode = yaml_parser['runworkload_mode']
-                for i in range(0,self.query_num):
-                        id = yaml_parser['query_content'][i]['id']
-			name = yaml_parser['query_content'][i]['name']
-                        type = yaml_parser['query_content'][i]['type']
-                        sql = yaml_parser['query_content'][i]['sql']
-                        runnum = yaml_parser['query_content'][i]['runnum']
-                        concurrencynum = yaml_parser['query_content'][i]['concurrencynum']
-                        user = yaml_parser['query_content'][i]['user']
-                        query = Query(id,name,type,sql,runnum,concurrencynum,user)
-                        self.querylist.append(query)
-		
-    def generate_sql(self):
-	# to do
-	QueryMap = {
-			"SELECT": "SELECT count(*) FROM %s ;"%(TableName),
-            		"COPY": "COPY %s FROM '$TINCREPO/mpp/hawq/tests/transaction/hawq_isolation/setup/tbl_data'; "%(TableName),
-            		"INSERT":"INSERT INTO %s select generate_series(20000,30000),generate_series(20000,30000),generate_series(20000,30000);"%(TableName),
-            		"VACUUM" :"VACUUM %s;"%(TableName),
-            		"ANALYZE" :"ANALYZE %s;"%(TableName),
-            		"ALTER TABLE" :"ALTER TABLE %s  set with ( reorganize='true') distributed randomly;"%(TableName),
-            		"DROP TABLE" :"DROP TABLE %s;"%(TableName),
-            		"TRUNCATE" :"TRUNCATE %s;"%(TableName),
-            		"VACUUM FULL" :"VACUUM FULL %s;"%(TableName)
-            		} 
-
-	for i in range(0,len(self.querylist)):
-		if not querylist[i]._sql : 
-			querylist[i]._sql = QueryMap[querylist[i]._type]
-    
-    def run_query(self,query,puser,pdbname):
-	try:
-		cnx = pg.connect(dbanme=pdbname, user=puser ,port=5432)
-	except Exception e:
-		cnx = pg.connect(dbname = 'postgres')
-		cnx.query('CREATE DATABASE %s;' % (self.database_name))
-	finally:
-		cnx.close()
-	
-	res = self.cnx.query(query._sql).dictresult()
-		if and 'FATAL' and 'PANIC' and 'ERROR' not in res:
-			status = 'SUCCESS'
-			with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
-				f.write(str(result[0]))
-			with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
-				result = f.read()
-				md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
-			with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
-				f.write(md5code)
-			if gl.check_result:
-				ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
-				md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
-				if os.path.exists(ans_file):
-					self.output('Check query result use ans file')
-					if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
-						status = 'ERROR'
-				elif os.path.exists(md5_file):
-					self.output('Check query result use md5 file')
-					if not self.check_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.md5'):
-						status = 'ERROR'
-				else:
-					self.output('No answer file')
-					status = 'ERROR'
-		else:
-			status = ‘ERROR’
-		duration = end_time - beg_time
-		duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
-		beg_time = str(beg_time).split('.')[0]
-		end_time = str(end_time).split('.')[0]
-		self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
-		self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);"% (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration))
-
-
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
+        print workload_specification
+        sys.exit(2)
 
     def setup(self):
-        # check if the database exist
-        try: 
-            cnx = pg.connect(dbname = self.database_name)
-        except Exception, e:
-            cnx = pg.connect(dbname = 'postgres')
-            cnx.query('CREATE DATABASE %s;' % (self.database_name))
-        finally:
-            cnx.close()
+        pass
 
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
@@ -185,12 +74,20 @@ class Rqtpch(Workload):
 
         sql = sql.replace('SCALEFACTOR', str(self.scale_factor))
         sql = sql.replace('NUMSEGMENTS', str(self.nsegs))
+
+        if self.distributed_randomly and table_name != 'revenue':
+            import re
+            old_string = re.search(r'DISTRIBUTED BY\(\S+\)', sql).group()
+            sql = sql.replace(old_string, 'DISTRIBUTED RANDOMLY')
+
         if self.partitions == 0 or self.partitions is None:
             sql = sql.replace('PARTITIONS', '')
         else:
             part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name)
             sql = sql.replace('PARTITIONS', part_suffix)
+        
         return sql
+
 
     def load_data(self):
         self.output('-- Start loading data')
@@ -200,6 +97,25 @@ class Rqtpch(Workload):
         if not os.path.exists(data_directory):
             self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
             sys.exit(2)
+
+        if self.load_data_flag:
+            cmd = 'drop database if exists %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
+
+            cmd = 'create database %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         for table_name in tables:
@@ -213,7 +129,7 @@ class Rqtpch(Workload):
 
                     self.output(cmd)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = self.user)
                     end_time = datetime.now()
                     self.output('\n'.join(result))
 
