@@ -1,0 +1,15 @@
+query_list: 
+
+query_num:
+
+runworkload_mode:
+
+query_content:
+                
+        -query_name: 
+         id:
+         type:
+         sql:
+         runnum:
+         concurrencynum:
+         user:
