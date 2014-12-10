@@ -24,8 +24,8 @@ CREATE TABLE moni.qd_mem_cpu
 	time_point						TIMESTAMP WITH TIME ZONE,
 	con_id							INT,
 	rss								INT,
-	pmem							DECIMAL(3,2),
-	pcpu							DECIMAL(3,2)
+	pmem							DECIMAL(4,1),
+	pcpu							DECIMAL(4,1)
 ) DISTRIBUTED RANDOMLY;
 
 -- 2.3 qe_mem_cpu
@@ -36,6 +36,6 @@ CREATE TABLE moni.qe_mem_cpu
 	seg_id							INT,
 	status							VARCHAR(64),
 	rss								INT,
-	pmem							DECIMAL(3,2),
-	pcpu							DECIMAL(3,2)
+	pmem							DECIMAL(4,1),
+	pcpu							DECIMAL(4,1)
 ) DISTRIBUTED RANDOMLY;
