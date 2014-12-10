@@ -44,6 +44,12 @@ except ImportError:
     sys.stderr.write('Executor needs Retail Workload in workloads/RETAIL/Retail.py\n')
     sys.exit(2)
 
+try:
+    from workloads.RQTPCH.Rqtpch import Rqtpch
+except ImportError:
+    sys.stderr.write('Executor needs Rqtpch Workload in workloads/Rqtpch/Rqtpch.py\n')
+    sys.exit(2)
+
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
@@ -81,7 +87,7 @@ class Executor(object):
                 continue
 
             # add one workload into the workloads_instance list
-            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW'):
+            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 for user in user_list:

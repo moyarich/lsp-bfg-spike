@@ -101,7 +101,7 @@ if __name__ == '__main__':
 
     cs_id = 0
     if schedules is None:
-        sys.stderr.write('Usage: python -u lsp.py -s schedule_file1[,schedule_file2] [-a] [-c] [-f]\nPlease use python -u lsp.py -h for more info')
+        sys.stderr.write('Usage: python -u lsp.py -s schedule_file1[,schedule_file2] [-a] [-c] [-f]\nPlease use python -u lsp.py -h for more info\n')
         sys.exit(2)
 
     schedule_list = schedules.split(',')
