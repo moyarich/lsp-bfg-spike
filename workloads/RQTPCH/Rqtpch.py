@@ -28,7 +28,7 @@ class Query:
 		self._type = querycontent['type']
 		self._runnum = querycontent['runnum']
 		self._concurrencynum = querycontent['concurrencynum']
-		if querycontent['user']!= None :
+		if querycontent['user']!= None:
 			self._user = querycontent['user']
 		else:
 			self._user = userlist[random.randint(0,len(userlist)-1)]
@@ -49,6 +49,7 @@ class Rqtpch(Workload):
 	self.runworkload_mode = yaml_parser['runworkload_mode']
 	self.query_list = yaml_parser['query_list'].split(',')
 	self.user_list = yaml_parser['user_list']
+	self.dbname = yaml_parser['dbname']
 	for queryname in self.query_list:
 		queryname = queryname.strip()
 		for i in range(0,len(yaml_parser['query_content'])):
@@ -56,6 +57,84 @@ class Rqtpch(Workload):
 				query = Query(yaml_parser['query_content'][i], self.user_list)
 				self.querylist.append(query)
 				break
+
+    def generateSql(self):
+	QueryMap = {
+		"SELECT": "SELECT count(*) FROM %s ;"%(TableName),
+            	"COPY": "COPY %s FROM '$TINCREPO/mpp/hawq/tests/transaction/hawq_isolation/setup/tbl_data'; "%(TableName),
+            	"INSERT":"INSERT INTO %s select generate_series(20000,30000),generate_series(20000,30000),generate_series(20000,30000);"%(TableName),
+            	"VACUUM" :"VACUUM %s;"%(TableName),
+            	"ANALYZE" :"ANALYZE %s;"%(TableName),
+            	"ALTER TABLE" :"ALTER TABLE %s  set with ( reorganize='true') distributed randomly;"%(TableName),
+            	"DROP TABLE" :"DROP TABLE %s;"%(TableName),
+            	"TRUNCATE" :"TRUNCATE %s;"%(TableName),
+            	"VACUUM FULL" :"VACUUM FULL %s;"%(TableName)
+            	}
+
+	for query in self.querylist:
+		if query._sql == None:
+			query._sql = QueryMap['query._type']
+
+    
+
+    def run_query(self,query,puser):
+	
+	try:
+		cnx = pg.connect(dbanme=self.database_name, user=puser ,port=2345)
+	except Exception e:
+		cnx = pg.connect(dbname = 'postgres')
+		cnx.query('CREATE DATABASE %s;' % (self.database_name)
+	finally:
+		cnx.close()
+	if self.continue_flag:
+		if self.run_workload_flag:
+			self.output(query)
+			beg_time = datetime.now()	
+			res = self.cnx.query(query._sql).dictresult()
+			end_time = datetime.now()
+			#write sql result to file
+			if 'ERROR' or 'FATAL' or 'PANIC' in res:
+				status = "ERROR"
+				self.output('\n'.join(re))
+			else:
+				status = "SUCCESS"
+				with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
+					f.write(str(res))
+				with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
+					result = f.read()
+					md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
+				with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
+					f.write(md5code)
+				if gl.check_result:
+					ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
+					md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
+					if os.path.exists(ans_file):
+						self.output('Check query result use ans file')
+						if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
+							status = 'ERROR'
+					elif os.path.exists(md5_file):
+						self.output('Check query result use md5 file')
+						if not self.check_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.md5'):
+							status = 'ERROR'
+					else:
+                                		self.output('No answer file')
+                                		status = 'ERROR'
+		else:
+			status ='SKIP'
+			beg_time = datetime.now()
+                    	end_time = beg_time
+	else:
+		status = 'ERROR'
+		beg_time = datetime.now()
+		end_time = beg_time
+	duration = end_time - beg_time
+	duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
+	beg_time = str(beg_time).split('.')[0]
+	end_time = str(end_time).split('.')[0]
+	self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (query._name, query._runnum, query._concurrencynum, status, duration))
+	self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);"% (self.tr_id, self.s_id, query._name, query._runnum,query._concurrencynum, status, beg_time, end_time, duration))
+
+
 
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
@@ -183,7 +262,8 @@ class Rqtpch(Workload):
                
         self.output('-- Complete loading data')
 
-            
+        
+    
     
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
