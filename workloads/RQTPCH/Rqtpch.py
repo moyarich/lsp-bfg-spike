@@ -263,8 +263,46 @@ class Rqtpch(Workload):
         self.output('-- Complete loading data')
 
         
-    
-    
+    def run_queries(self,query,iteration,stream):
+	niteration = 1
+	while niteration <= query._runnum:
+		nconcurrency = 1
+		AllWorkers = []
+		while nconcurrency <= query._concurrencynum:
+			p = Process(target = self.run_query(query, query._user, args = (niteration, nconcurrency))
+			AllWorkers.append(p)
+			nconcurrency += 1
+			p.start()
+
+		self.should_stop = False
+		while True and not should_stop:
+			for p in AllWorkers[:]:
+				p.join(timeout = 0.3)
+                    		if p.is_alive():
+                        		pass
+                    		else:
+                        		AllWorkers.remove(p)
+			if len(AllWorkers) == 0:
+				self.should_stop = True
+				continue
+			if len(AllWorkers) != 0:
+				time.sleep(2)
+		niteration += 1 
+   
+    def run_workload(self):
+	iteration = query._runnum
+	stream = query._concurrencynum
+	if self.runworkload_mode=='S':
+		for query in self.querylist:
+			self.run_queries(query,iteration,stream)
+	elif self.runworkload_mode=='C':
+		i = 0
+		for query in self.querylist:
+			p = Process(target=self.run_queries(query,iteration,stream), args=(i) )
+			p.start()
+			i += 1
+						
+ 
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
 	
