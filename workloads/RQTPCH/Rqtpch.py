@@ -2,6 +2,8 @@ import os
 import sys
 from datetime import datetime, date, timedelta
 import yaml
+from pygresql import pg
+import commands
 
 try:
     from workloads.Workload import *
@@ -39,17 +41,15 @@ class Rqtpch(Workload):
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
 	self.queryfile = self.workload_directory + os.sep + 'YML' + os.sep + workload_specification['query_file'] + '.yml'
-
+	self.database_name = workload_specification['database_name'].strip()
+   
     def parse_yaml(self):
 	self.querylist = []
-
-	
 	with open (self.queryfile,"r")	as yamlfile:
 		yaml_parser = yaml.load(yamlfile)
 	self.runworkload_mode = yaml_parser['runworkload_mode']
 	self.query_list = yaml_parser['query_list'].split(',')
 	self.user_list = yaml_parser['user_list']
-	self.dbname = yaml_parser['dbname']
 	for queryname in self.query_list:
 		queryname = queryname.strip()
 		for i in range(0,len(yaml_parser['query_content'])):
@@ -59,11 +59,13 @@ class Rqtpch(Workload):
 				break
 
     def generateSql(self):
+	Tablename = "customer"
 	QueryMap = {
-		"SELECT": "SELECT count(*) FROM %s ;"%(TableName),
-            	"COPY": "COPY %s FROM '$TINCREPO/mpp/hawq/tests/transaction/hawq_isolation/setup/tbl_data'; "%(TableName),
-            	"INSERT":"INSERT INTO %s select generate_series(20000,30000),generate_series(20000,30000),generate_series(20000,30000);"%(TableName),
-            	"VACUUM" :"VACUUM %s;"%(TableName),
+            	"SELECT": "SELECT COUNT(*) FROM %s;" %(Tablename),
+		"COPY": "COPY %s FROM '$TINCREPO/mpp/hawq/tests/transaction/hawq_isolation/setup/tbl_data'; "%(TableName),
+            	#"INSERT":"INSERT INTO %s select generate_series(20000,30000),generate_series(20000,30000),generate_series(20000,30000);"%(TableName),
+            	"INSERT": "INSERT INTO %s VALUES(1,'b','b',1,'b',1.1,'b','b');"%(TableName),
+		"VACUUM" :"VACUUM %s;"%(TableName),
             	"ANALYZE" :"ANALYZE %s;"%(TableName),
             	"ALTER TABLE" :"ALTER TABLE %s  set with ( reorganize='true') distributed randomly;"%(TableName),
             	"DROP TABLE" :"DROP TABLE %s;"%(TableName),
@@ -73,41 +75,37 @@ class Rqtpch(Workload):
 
 	for query in self.querylist:
 		if query._sql == None:
-			query._sql = QueryMap['query._type']
-
+			query._sql = QueryMap[query._type]
     
 
     def run_query(self,query,puser):
-	
-	try:
-		cnx = pg.connect(dbanme=self.database_name, user=puser ,port=2345)
-	except Exception e:
-		cnx = pg.connect(dbname = 'postgres')
-		cnx.query('CREATE DATABASE %s;' % (self.database_name)
-	finally:
-		cnx.close()
 	if self.continue_flag:
 		if self.run_workload_flag:
-			self.output(query)
+			self.output(query._sql)
 			beg_time = datetime.now()	
-			res = self.cnx.query(query._sql).dictresult()
+			cmd = 'psql -d %s -U %s -c "%s"' % (self.database_name,puser,query._sql)
+			(ok,result) = commands.getstatusoutput(cmd)
 			end_time = datetime.now()
-			#write sql result to file
-			if 'ERROR' or 'FATAL' or 'PANIC' in res:
+	
+			if str(result).find('ERROR')!=-1 or str(result).find('FATAL')!=-1 or str(result).find('PANIC')!=-1:
+				flag = False
+			else:
+				flag = True
+			if ok!=0 or flag==False:
 				status = "ERROR"
-				self.output('\n'.join(re))
+				self.output('\n'.join(result))
 			else:
 				status = "SUCCESS"
-				with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
-					f.write(str(res))
-				with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
+				with open(self.result_directory + os.sep + query._name + '.output', 'w') as f:
+					f.write(str(result))
+				with open(self.result_directory + os.sep + query._name + '.output', 'r') as f:
 					result = f.read()
 					md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
-				with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
+				with open(self.result_directory + os.sep + query._name.split('.')[0] + '.md5', 'w') as f:
 					f.write(md5code)
 				if gl.check_result:
-					ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
-					md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
+					ans_file = self.ans_directory + os.sep + query._name.split('.')[0] + '.ans'
+					md5_file = self.ans_directory + os.sep + query._name.split('.')[0] + '.md5'
 					if os.path.exists(ans_file):
 						self.output('Check query result use ans file')
 						if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
@@ -133,7 +131,6 @@ class Rqtpch(Workload):
 	end_time = str(end_time).split('.')[0]
 	self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (query._name, query._runnum, query._concurrencynum, status, duration))
 	self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);"% (self.tr_id, self.s_id, query._name, query._runnum,query._concurrencynum, status, beg_time, end_time, duration))
-
 
 
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
@@ -266,16 +263,20 @@ class Rqtpch(Workload):
     def run_queries(self,query,iteration,stream):
 	niteration = 1
 	while niteration <= query._runnum:
+		self.output('-- Start iteration %d' % (niteration))
 		nconcurrency = 1
 		AllWorkers = []
 		while nconcurrency <= query._concurrencynum:
-			p = Process(target = self.run_query(query, query._user, args = (niteration, nconcurrency))
+			self.output('-- Start stream %s' % (nconcurrency))
+			p = Process(target = self.run_query, args = (query, query._user))
+			print query._type
+			print nconcurrency
 			AllWorkers.append(p)
 			nconcurrency += 1
 			p.start()
 
 		self.should_stop = False
-		while True and not should_stop:
+		while True and not self.should_stop:
 			for p in AllWorkers[:]:
 				p.join(timeout = 0.3)
                     		if p.is_alive():
@@ -287,21 +288,28 @@ class Rqtpch(Workload):
 				continue
 			if len(AllWorkers) != 0:
 				time.sleep(2)
-		niteration += 1 
+		self.output('-- Complete iteration %d' % (niteration))
+		niteration += 1
    
     def run_workload(self):
-	iteration = query._runnum
-	stream = query._concurrencynum
 	if self.runworkload_mode=='S':
 		for query in self.querylist:
+			iteration = query._runnum
+			stream = query._concurrencynum
+			print iteration
+			print stream
+			print "##############"
 			self.run_queries(query,iteration,stream)
 	elif self.runworkload_mode=='C':
-		i = 0
+		print 'C'
 		for query in self.querylist:
-			p = Process(target=self.run_queries(query,iteration,stream), args=(i) )
+			iteration = query._runnum
+			stream = query._concurrencynum
+			print iteration
+			print stream
+			self.run_queries(query,iteration,stream)
+			p = Process(target = self.run_queries, args = (query,iteration,stream))
 			p.start()
-			i += 1
-						
  
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
@@ -314,6 +322,8 @@ class Rqtpch(Workload):
         self.load_data()
 
         # vacuum_analyze
+	self.generateSql()
+
         self.vacuum_analyze()
 
         # run workload concurrently and loop by iteration
