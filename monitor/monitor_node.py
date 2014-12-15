@@ -16,16 +16,16 @@ class Monitor_node():
 		    fp.close()
 	
 	'''
-	%CPU  VSZ  RSS  %MEM STATE CMD          
-	1.0 656480 16676  0.4 S postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(51217) con649 seg1 idle                           
- 	0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con649 seg0 cmd2 slice1 MPPEXEC SELECT 
+	 pid %CPU  VSZ  RSS  %MEM STATE CMD          
+	1034 1.0 656480 16676  0.4 S postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(51217) con649 seg1 idle                           
+ 	1035 0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con649 seg0 cmd2 slice1 MPPEXEC SELECT 
 	'''
 	
 	def __get_qe_mem(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-'
 		grep_string1 = 'postgres'
 		grep_string2 = 'seg'
-		cmd = ''' ps -eo pcpu,vsz,rss,pmem,state,command | grep %s | grep %s | grep -vE "%s" ''' % (grep_string1, grep_string2, filter_string)
+		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep %s | grep %s | grep -vE "%s" ''' % (grep_string1, grep_string2, filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'error code: ' + str(status) + ' output: ' + output + 'in qe_mem_cpu'
@@ -39,15 +39,15 @@ class Monitor_node():
 			temp = line.split()
 			#time_point, con_id, seg_id, status, rss, pmem, pcpu
 			try:
-				one_item = now_time + '\t' + temp[11][3:] + '\t' + temp[12] + '\t' + temp[13] + '\t' + str(int(temp[2])/1024) + '\t' + temp[3] + '\t' + temp[0]
+				one_item = now_time + '\t' + temp[0] + '\t' + temp[12] + '\t' + temp[13] + '\t' + temp[14] + '\t' + str(int(temp[3])/1024) + 'm' + '\t' + temp[4] + '\t' + temp[1]
 			except Exception, e:
 				continue
 
-			sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, %s, '%s', %s, %s, %s);" \
-				% (now_time, temp[11][3:], temp[12][3:], temp[13], str(int(temp[2])/1024), temp[3], temp[0])
+			#sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, %s, '%s', %s, %s, %s);" \
+			#	% (now_time, temp[11][3:], temp[12][3:], temp[13], str(int(temp[2])/1024), temp[3], temp[0])
 
 			output_string[0] = output_string[0] + '\n' + one_item
-			output_string[1] = output_string[1] + '\n' + sql_item
+			#output_string[1] = output_string[1] + '\n' + sql_item
 
 		return output_string
 	
@@ -61,7 +61,7 @@ class Monitor_node():
 				continue
 			
 			self.report(filename = filename[0], msg = result[0])
-			self.report(filename = filename[1], msg = result[1])
+			#self.report(filename = filename[1], msg = result[1])
 
 			time.sleep(interval)
 

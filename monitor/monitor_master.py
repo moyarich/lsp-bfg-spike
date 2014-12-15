@@ -9,6 +9,8 @@ from monitor_node import Monitor_node
 class Monitor_master():
 	def __init__(self):
 		self.query_record = {}
+		self.current_query_record = []
+		self.count = 0
 
 	def report(self, filename, msg):
 		if msg != '':
@@ -68,7 +70,7 @@ class Monitor_master():
 
 
 
-	def __get_qd_info(self):
+	def __get_qd_info1(self):
 		# -R '***' set record separator '***' (default: newline)
 		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,procpid,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
 		#cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity order by sess_id,query_start;" '''
@@ -101,6 +103,47 @@ class Monitor_master():
 
 		return output_string
 
+	def __get_qd_info(self):
+		now_time = datetime.now()
+		# -R '***' set record separator '***' (default: newline)
+		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
+		#cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity order by sess_id,query_start;" '''
+		(status, output) = commands.getstatusoutput(cmd)
+		if status != 0 or output == '':
+			print 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
+			return None
+
+		'''line_item = sess_id|query_start|procpid|usename|datname '''
+		all_items = output.split('***')
+		output_string = ['', '']
+
+		for current_query in self.current_query_record:
+			if current_query not in all_items:
+				line = current_query.split('|')
+				try:
+					query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+				except Exception, e:
+					print 'time error ' + str(line)
+					continue
+
+				one_item = line[0] + '\t' + str(query_start_time) + '\t' + str(now_time) + '\t' +line[2] + '\t' + line[3]
+				sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
+				% (line[0], str(query_start_time), str(now_time), line[2], line[3])
+				
+				output_string[0] = output_string[0] + one_item + '\n'
+				output_string[1] = output_string[1] + sql_item + '\n'
+
+				self.current_query_record.remove(current_query)
+				print 'del 1'
+
+		for line_item in all_items:
+			if line_item not in self.current_query_record:
+				self.current_query_record.append(line_item)
+				self.count = self.count + 1
+				print 'add: ' + str(self.count)
+
+		return output_string
+
 	def get_qd_info(self, filename = ['', ''], interval = 1):
 		count = 0
 		while(count < 10):
@@ -115,16 +158,39 @@ class Monitor_master():
 
 			time.sleep(interval)
 
+		now_time = datetime.now()
+		if len(self.current_query_record) != 0:
+			print len(self.current_query_record)
+			output_string = ['', '']
+			for current_query in self.current_query_record:
+				line = current_query.split('|')
+				try:
+					query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+				except Exception, e:
+					print 'time error ' + str(line)
+					continue
+
+				one_item = line[0] + '\t' + str(query_start_time) + '\t' + str(now_time) + '\t' +line[2] + '\t' + line[3]
+				sql_item = "insert into moni.qd_info values (%s, '%s', '%s','%s', '%s');" \
+				% (line[0], str(query_start_time), str(now_time), line[2], line[3])
+				
+				output_string[0] = output_string[0] + one_item + '\n'
+				output_string[1] = output_string[1] + sql_item + '\n'
+		
+		self.report(filename = filename[0], msg = output_string[0])
+		self.report(filename = filename[1], msg = output_string[1])
+
+
 
 if __name__ == "__main__" :
 	monitor = Monitor_master()
 	#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
 	prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
-	p1 = Process( target = monitor.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
-	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
+#	p1 = Process( target = monitor.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
+#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
 	p3 = Process( target = Monitor_node().get_qe_mem, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
-	p1.start()
-	p2.start()
+#	p1.start()
+#	p2.start()
 	p3.start()
 
 	#monitor.get_qd_info(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_info.log', interval = 2)
