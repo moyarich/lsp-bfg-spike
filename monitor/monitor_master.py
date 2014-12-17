@@ -134,13 +134,13 @@ class Monitor_master():
 				output_string[1] = output_string[1] + sql_item + '\n'
 
 				self.current_query_record.remove(current_query)
-				print 'del 1'
+				#print 'del 1'
 
 		for line_item in all_items:
 			if line_item not in self.current_query_record:
 				self.current_query_record.append(line_item)
 				self.count = self.count + 1
-				print 'add: ' + str(self.count)
+				#print 'add: ' + str(self.count)
 
 		return output_string
 
@@ -160,7 +160,7 @@ class Monitor_master():
 
 		now_time = datetime.now()
 		if len(self.current_query_record) != 0:
-			print len(self.current_query_record)
+			#print len(self.current_query_record)
 			output_string = ['', '']
 			for current_query in self.current_query_record:
 				line = current_query.split('|')
@@ -171,7 +171,7 @@ class Monitor_master():
 					continue
 
 				one_item = line[0] + '\t' + str(query_start_time) + '\t' + str(now_time) + '\t' +line[2] + '\t' + line[3]
-				sql_item = "insert into moni.qd_info values (%s, '%s', '%s','%s', '%s');" \
+				sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
 				% (line[0], str(query_start_time), str(now_time), line[2], line[3])
 				
 				output_string[0] = output_string[0] + one_item + '\n'
@@ -186,10 +186,10 @@ if __name__ == "__main__" :
 	monitor = Monitor_master()
 	#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
 	prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
-#	p1 = Process( target = monitor.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
+	p1 = Process( target = monitor.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
 #	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
 	p3 = Process( target = Monitor_node().get_qe_mem, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
-#	p1.start()
+	p1.start()
 #	p2.start()
 	p3.start()
 

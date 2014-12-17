@@ -13,7 +13,8 @@ CREATE TABLE moni.qd_info
 (
 	con_id							INT,
 	query_start_time				TIMESTAMP WITH TIME ZONE,
-	pid								INT,
+	query_end_time					TIMESTAMP WITH TIME ZONE,
+--	pid								INT,
 	user_name						VARCHAR(128),
 	db_name							VARCHAR(256)
 ) DISTRIBUTED RANDOMLY;
@@ -31,9 +32,14 @@ CREATE TABLE moni.qd_mem_cpu
 -- 2.3 qe_mem_cpu
 CREATE TABLE moni.qe_mem_cpu
 (
+	hostname						VARCHAR(32),
+	count							INT,
 	time_point						TIMESTAMP WITH TIME ZONE,
+	pid								INT,
 	con_id							INT,
-	seg_id							INT,
+	seg_id							VARCHAR(16),
+	cmd								VARCHAR(16),
+	slice							VARCHAR(16),
 	status							VARCHAR(64),
 	rss								INT,
 	pmem							DECIMAL(4,1),

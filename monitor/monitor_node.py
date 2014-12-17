@@ -5,7 +5,9 @@ from datetime import datetime
 class Monitor_node():
 
 	def __init__(self):
-		pass
+		self.count = 1
+		(s,o) = commands.getstatusoutput('hostname')
+		self.hostname = o.strip()
 
 	def report(self, filename, msg):
 		if msg != '':
@@ -14,15 +16,19 @@ class Monitor_node():
 		    fp.write('\n')
 		    fp.flush()
 		    fp.close()
-	
+
+
 	'''
-	 pid %CPU  VSZ  RSS  %MEM STATE CMD          
-	1034 1.0 656480 16676  0.4 S postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(51217) con649 seg1 idle                           
- 	1035 0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con649 seg0 cmd2 slice1 MPPEXEC SELECT 
+	   pid %CPU  VSZ  RSS  %MEM STATE CMD          
+	  1034  1.0 656480 16676  0.4 S postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(51217) con64 seg1 idle
+	  1676  0.0 538684 12280  0.3 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(37854) con81 seg0 cmd6 MPPEXEC INSERT             
+	  1675  0.0 538692 12380  0.3 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(37855) con81 seg0 cmd6 slice1 MPPEXEC INSERT                          
+ 	  1035  0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con82 seg0 cmd2 slice1 MPPEXEC SELECT
+index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
 	
 	def __get_qe_mem(self):
-		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-'
+		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		grep_string1 = 'postgres'
 		grep_string2 = 'seg'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep %s | grep %s | grep -vE "%s" ''' % (grep_string1, grep_string2, filter_string)
@@ -37,17 +43,25 @@ class Monitor_node():
 		
 		for line in line_item:
 			temp = line.split()
-			#time_point, con_id, seg_id, status, rss, pmem, pcpu
-			try:
-				one_item = now_time + '\t' + temp[0] + '\t' + temp[12] + '\t' + temp[13] + '\t' + temp[14] + '\t' + str(int(temp[3])/1024) + 'm' + '\t' + temp[4] + '\t' + temp[1]
-			except Exception, e:
+			if len(temp) < 15:
 				continue
 
-			#sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, %s, '%s', %s, %s, %s);" \
-			#	% (now_time, temp[11][3:], temp[12][3:], temp[13], str(int(temp[2])/1024), temp[3], temp[0])
+			# hostname, count, time_point, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
+			if temp[14] == 'idle':
+				one_item = self.hostname + '\t' + str(self.count) + '\t' + now_time + '\t' + temp[0] + '\t' + temp[12] + '\t' + temp[13] + '\t' + 'NUll' + '\t' + 'NULL' + '\t' + temp[14] + '\t' + str(int(temp[3])/1024) + '\t' + temp[4] + '\t' + temp[1]
+			elif temp[15].find('slice') != -1:
+				one_item = self.hostname + '\t' + str(self.count) + '\t' + now_time + '\t' + temp[0] + '\t' + temp[12] + '\t' + temp[13] + '\t' + temp[14] + '\t' + temp[15] + '\t' + temp[17] + '\t' + str(int(temp[3])/1024) + '\t' + temp[4] + '\t' + temp[1]
+			else:
+				one_item = self.hostname + '\t' + str(self.count) + '\t' + now_time + '\t' + temp[0] + '\t' + temp[12] + '\t' + temp[13] + '\t' + temp[14] + '\t' + 'NULL' + '\t' + temp[16] + '\t' + str(int(temp[3])/1024) + '\t' + temp[4] + '\t' + temp[1]
+
+			col_item = one_item.split('\t')
+
+			sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, '%s', %s, %s, '%s', '%s', '%s', '%s', %s, %s, %s);" \
+				% (col_item[0], col_item[1], col_item[2], col_item[3], col_item[4][3:], col_item[5], col_item[6], col_item[7], col_item[8], col_item[9], col_item[10], col_item[11])
 
 			output_string[0] = output_string[0] + '\n' + one_item
-			#output_string[1] = output_string[1] + '\n' + sql_item
+			output_string[1] = output_string[1] + '\n' + sql_item
+		self.count = self.count + 1
 
 		return output_string
 	
@@ -61,7 +75,7 @@ class Monitor_node():
 				continue
 			
 			self.report(filename = filename[0], msg = result[0])
-			#self.report(filename = filename[1], msg = result[1])
+			self.report(filename = filename[1], msg = result[1])
 
 			time.sleep(interval)
 
