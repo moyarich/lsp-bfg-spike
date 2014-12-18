@@ -126,7 +126,7 @@ class Monitor_master():
 					print 'time error ' + str(line)
 					continue
 
-				one_item = line[0] + '\t' + str(query_start_time) + '\t' + str(now_time) + '\t' +line[2] + '\t' + line[3]
+				one_item = line[0] + '\t|' + str(query_start_time) + '\t|' + str(now_time) + '\t|' +line[2] + '\t|' + line[3]
 				sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
 				% (line[0], str(query_start_time), str(now_time), line[2], line[3])
 				
