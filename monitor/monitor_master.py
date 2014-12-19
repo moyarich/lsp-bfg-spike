@@ -148,7 +148,7 @@ class Monitor_master():
 
 	def get_qd_info(self, filename = ['', ''], interval = 1):
 		count = 0
-		while(RUN_FLAG):
+		while(1):
 			result = self.__get_qd_info()
 			if result is None:
 				count = count + 1
@@ -183,9 +183,7 @@ class Monitor_master():
 		self.report(filename = filename[1], msg = output_string[1])
 
 	def stop(self):
-		RUN_FLAG = False
-		self.run = 10
-		print 'in stop ' + str(RUN_FLAG)
+		pass
 
 	def start(self):
 		print str(self)
@@ -202,13 +200,5 @@ class Monitor_master():
 monitor_master = Monitor_master()
 
 if __name__ == "__main__" :
-	monitor = Monitor_master()
-	#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
-	prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
-	p1 = Process( target = monitor.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
-#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
-	p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
-	p1.start()
-#	p2.start()
-	p3.start()
+	monitor_master.start()
 	
