@@ -6,6 +6,7 @@ import subprocess
 class Monitor_node():
 
 	def __init__(self):
+		self.pwd = ''
 		self.count = 1
 		(s,o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
@@ -25,7 +26,7 @@ class Monitor_node():
 	30713 gpadmin   39  19  526m  10m 6604 S  0.0  0.3   0:00.00 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(38015) con1140 seg3 idle 
 index 0      1      2   3    4     5   6   7   8    9      10     11         12   13     14              15                       16            17     18   19    20     21      22
 	'''
-	def __get_qe_mem_by_top(self):
+	def __get_qe_mem_cpu_by_top(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		grep_string1 = 'postgres'
 		grep_string2 = 'seg'
@@ -74,7 +75,7 @@ index 0      1      2   3    4     5   6   7   8    9      10     11         12 
 index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
 	
-	def __get_qe_mem_by_ps(self):
+	def __get_qe_mem_cpu_by_ps(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		grep_string1 = 'postgres'
 		grep_string2 = 'seg'
@@ -92,7 +93,6 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			temp = line.split()
 			if len(temp) < 15:
 				continue
-
 			# hostname, count, time_point, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
 			if temp[14] == 'idle':
 				one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + 'NUll' + '\t|' + 'NULL' + '\t|' + temp[14] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
@@ -101,34 +101,40 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			else:
 				one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + temp[14] + '\t|' + 'NULL' + '\t|' + temp[16] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
 
-			col_item = one_item.split('\t')
+			#col_item = one_item.split('\t')
 
-			sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, '%s', %s, %s, '%s', '%s', '%s', '%s', %s, %s, %s);" \
-				% (col_item[0], col_item[1], col_item[2], col_item[3], col_item[4][3:], col_item[5], col_item[6], col_item[7], col_item[8], col_item[9], col_item[10], col_item[11])
+			#sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, '%s', %s, %s, '%s', '%s', '%s', '%s', %s, %s, %s);" \
+			#	% (col_item[0], col_item[1], col_item[2], col_item[3], col_item[4][3:], col_item[5], col_item[6], col_item[7], col_item[8], col_item[9], col_item[10], col_item[11])
 
 			output_string[0] = output_string[0] + one_item + '\n'
-			output_string[1] = output_string[1] + sql_item + '\n'
+			#output_string[1] = output_string[1] + sql_item + '\n'
 		self.count = self.count + 1
 
 		return output_string
 	
-	def get_qe_mem(self, filename = ['', ''], interval = 5):
+	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
 		count = 0
 		while(count < 10):
-			result = self.__get_qe_mem_by_ps()
+			result = self.__get_qe_mem_cpu_by_ps()
 			if result is None:
 				count = count + 1
 				time.sleep(2)
 				continue
 			
 			self.report(filename = filename[0], msg = result[0])
-			self.report(filename = filename[1], msg = result[1])
+			#self.report(filename = filename[1], msg = result[1])
 
 			time.sleep(interval)
+
+
+	def start(self, status_file):
+		with open(status_file, 'r') as fstatus:
+			status = fstatus.read()
+
 
 monitor_node = Monitor_node()
 
 if __name__ == "__main__" :
-	mn = Monitor_node()
+	pass
 	#monitor.get_qe_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', interval = 3)
 	

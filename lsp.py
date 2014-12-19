@@ -2,6 +2,7 @@ import os
 import sys
 import commands
 from datetime import datetime
+from multiprocessing import Process
 
 try:
     import yaml
@@ -32,6 +33,10 @@ if WORKLOAD_DIR not in sys.path:
 LIB_DIR = LSP_HOME + os.sep + 'lib'
 if LIB_DIR not in sys.path:
     sys.path.append(LIB_DIR)
+
+MONI_DIR = LSP_HOME + os.sep + 'monitor'
+if MONI_DIR not in sys.path:
+    sys.path.append(MONI_DIR)
 
 #try:
 #    import pexpect
@@ -83,6 +88,8 @@ except ImportError:
     sys.exit(2)
 
 import gl
+
+from monitor_master import monitor_master
 
 ###########################################################################
 #  Try to run if user launches this script directly
@@ -184,6 +191,8 @@ if __name__ == '__main__':
         except Exception as e:
             print 'Error while selecting appropreciate executor for workloads: ' + str(e)
             exit(-1)
+        #p1 = Process(target = monitor_master.start)
+        #p1.start()
         workloads_executor.execute()
     
     end_time = datetime.now()

@@ -6,12 +6,14 @@ from pygresql import pg
 from monitor_node import Monitor_node
 
 
+
 class Monitor_master():
 	def __init__(self):
 		self.query_record = {}
 		self.current_query_record = []
 		self.count = 0
-
+		self.run = 1
+		
 	def report(self, filename, msg):
 		if msg != '':
 		    fp = open(filename, 'a')  
@@ -146,7 +148,7 @@ class Monitor_master():
 
 	def get_qd_info(self, filename = ['', ''], interval = 1):
 		count = 0
-		while(count < 10):
+		while(RUN_FLAG):
 			result = self.__get_qd_info()
 			if result is None:
 				count = count + 1
@@ -180,7 +182,24 @@ class Monitor_master():
 		self.report(filename = filename[0], msg = output_string[0])
 		self.report(filename = filename[1], msg = output_string[1])
 
+	def stop(self):
+		RUN_FLAG = False
+		self.run = 10
+		print 'in stop ' + str(RUN_FLAG)
 
+	def start(self):
+		print str(self)
+		monitor = Monitor_master()
+		#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
+		prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
+		p1 = Process( target = self.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
+		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
+		#p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
+		p1.start()
+		#	p2.start()
+		#p3.start()
+
+monitor_master = Monitor_master()
 
 if __name__ == "__main__" :
 	monitor = Monitor_master()
@@ -188,10 +207,8 @@ if __name__ == "__main__" :
 	prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
 	p1 = Process( target = monitor.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
 #	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
-	p3 = Process( target = Monitor_node().get_qe_mem, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
+	p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
 	p1.start()
 #	p2.start()
 	p3.start()
-
-	#monitor.get_qd_info(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_info.log', interval = 2)
 	
