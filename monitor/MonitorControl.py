@@ -13,16 +13,32 @@ class Monitor_control():
 		self.count = 0
 		self.run = 1
 		self.pwd = os.getcwd()
-		
 		self.seg_script = ''
-		self._get_monitor_seg_script_path()
-
-		self.init_time = datetime.now()
-		self.seg_tmp_folder = '/tmp/monitor_report/' + self.init_time.strftime('%Y%m%d-%H%M%S')
+		self.init_time = datetime.now().strftime('%Y%m%d-%H%M%S')
+		self.seg_tmp_folder = '/tmp/monitor_report/' + self.init_time
 		self.hostfile_seg = self.pwd + os.sep + 'hostfile_seg'
-		self._get_seg_list(hostfile = self.hostfile_seg)
 
-	
+
+	def setup(self):
+		self._get_monitor_seg_script_path()
+		self._get_seg_list(hostfile = self.hostfile_seg)
+		# make tmp dir on every seg host
+		cmd = " gpssh -f %s -e 'mkdir -p %s' " % (self.hostfile_seg, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		if s != 0:
+			print ('perp monitor report in node error.')
+			print s,o
+			sys.exit()
+
+		# gpscp seg monitor script to every seg host
+		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		if s != 0:
+			print ('gpscp monitor node script to every node error.')
+			print s,o
+			sys.exit()
+		
+
 	def _get_monitor_seg_script_path(self):
 		path = os.path.realpath(sys.path[0])
 		if os.path.isfile(path):
@@ -44,23 +60,6 @@ class Monitor_control():
 		with open(hostfile, 'w') as fnode:
 			fnode.write(output + '\n')
 
-
-	def setup(self):
-		# make tmp dir on every seg host
-		cmd = " gpssh -f %s -e 'mkdir -p %s' " % (self.hostfile_seg, self.seg_tmp_folder)
-		(s, o) = commands.getstatusoutput(cmd)
-		if s != 0:
-			print ('perp monitor report in node error.')
-			print s,o
-			sys.exit()
-
-		# gpscp seg monitor script to every seg host
-		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
-		(s, o) = commands.getstatusoutput(cmd)
-		if s != 0:
-			print ('gpscp monitor node script to every node error.')
-			print s,o
-			sys.exit()
 
 	def clean_up(self):
 		cmd = " gpssh -f %s -e 'rm -rf %s' " % (self_hostfile_seg, self.seg_tmp_folder)
@@ -248,14 +247,17 @@ class Monitor_control():
 		prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
 		p1 = Process( target = self.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder)
-		commands.getstatusoutput(cmd)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py %s > monitor.log &' " % (self.hostfile_seg, self.seg_tmp_folder, self.pwd)
 
+		commands.getstatusoutput(cmd)
 		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
 		#p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
 		p1.start()
 		#	p2.start()
 		#p3.start()
+		p1.join()
+		cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
+		commands.getstatusoutput(cmd)
 
 
 monitor_control = Monitor_control()

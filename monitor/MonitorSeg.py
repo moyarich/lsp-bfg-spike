@@ -6,6 +6,7 @@ import subprocess
 class Monitor_seg():
 
 	def __init__(self):
+		self.master_dir = sys.argv[1]
 		self.pwd = os.getcwd()
 		self.count = 1
 		(s,o) = commands.getstatusoutput('hostname')
@@ -66,6 +67,8 @@ index 0      1      2   3    4     5   6   7   8    9      10     11         12 
 
 		return output_string
 
+	
+
 	'''
 	   pid %CPU  VSZ  RSS  %MEM STATE CMD          
 	  1034  1.0 656480 16676  0.4 S postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(51217) con64 seg1 idle
@@ -74,7 +77,6 @@ index 0      1      2   3    4     5   6   7   8    9      10     11         12 
  	  1035  0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con82 seg0 cmd2 slice1 MPPEXEC SELECT
 index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
-	
 	def __get_qe_mem_cpu_by_ps(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		grep_string1 = 'postgres'
@@ -94,12 +96,17 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			if len(temp) < 15:
 				continue
 			# hostname, count, time_point, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
-			if temp[14] == 'idle':
-				one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + 'NUll' + '\t|' + 'NULL' + '\t|' + temp[14] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
-			elif temp[15].find('slice') != -1:
-				one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + temp[14] + '\t|' + temp[15] + '\t|' + temp[17] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
-			else:
-				one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + temp[14] + '\t|' + 'NULL' + '\t|' + temp[16] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
+			try:
+				if temp[14] == 'idle':
+					one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + 'NUll' + '\t|' + 'NULL' + '\t|' + temp[14] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
+				elif temp[15].find('slice') != -1:
+					one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + temp[14] + '\t|' + temp[15] + '\t|' + temp[17] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
+				else:
+					one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + temp[14] + '\t|' + 'NULL' + '\t|' + temp[16] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
+			except Exception, e:
+				print temp
+				continue
+			
 
 			#col_item = one_item.split('\t')
 
@@ -112,13 +119,14 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 
 		return output_string
 	
+	
 	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
 		count = 0
-		while(1):
+		while(count < 10):
 			result = self.__get_qe_mem_cpu_by_ps()
 			if result is None:
 				count = count + 1
-				time.sleep(2)
+				time.sleep(1)
 				continue
 			
 			self.report(filename = filename[0], msg = result[0])
@@ -126,7 +134,13 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 
 			time.sleep(interval)
 
+		cmd = "gpscp -h localhost %s =:%s" % (filename[0], self.master_dir)
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print s,o
 
+
+	
 	def start(self, status_file):
 		with open(status_file, 'r') as fstatus:
 			status = fstatus.read()
@@ -135,5 +149,5 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	monitor_seg.get_qe_mem_cpu(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', interval = 3)
+	monitor_seg.get_qe_mem_cpu(filename = [datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem_cpu.log', ], interval = 3)
 	
