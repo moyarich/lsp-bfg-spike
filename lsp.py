@@ -89,7 +89,7 @@ except ImportError:
 
 import gl
 
-from monitor_master import monitor_master
+from monitor_control import monitor_control
 
 ###########################################################################
 #  Try to run if user launches this script directly

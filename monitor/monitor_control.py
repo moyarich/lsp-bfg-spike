@@ -7,7 +7,7 @@ from monitor_node import Monitor_node
 
 
 
-class Monitor_master():
+class Monitor_control():
 	def __init__(self):
 		self.query_record = {}
 		self.current_query_record = []
@@ -197,8 +197,8 @@ class Monitor_master():
 		#	p2.start()
 		#p3.start()
 
-monitor_master = Monitor_master()
+monitor_control = Monitor_control()
 
 if __name__ == "__main__" :
-	monitor_master.start()
+	monitor_control.start()
 	
