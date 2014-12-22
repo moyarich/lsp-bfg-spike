@@ -10,44 +10,28 @@ class Monitor_control():
 	def __init__(self):
 		self.query_record = {}
 		self.current_query_record = []
-		self.count = 0
-		self.run = 1
-		self.pwd = os.getcwd()
+		
 		self.seg_script = ''
+
+		# prep report folder on master and tmp folder on seg host
 		self.init_time = datetime.now().strftime('%Y%m%d-%H%M%S')
 		self.seg_tmp_folder = '/tmp/monitor_report/' + self.init_time
-		self.hostfile_seg = self.pwd + os.sep + 'hostfile_seg'
-
-
-	def setup(self):
-		self._get_monitor_seg_script_path()
-		self._get_seg_list(hostfile = self.hostfile_seg)
-		# make tmp dir on every seg host
-		cmd = " gpssh -f %s -e 'mkdir -p %s' " % (self.hostfile_seg, self.seg_tmp_folder)
-		(s, o) = commands.getstatusoutput(cmd)
-		if s != 0:
-			print ('perp monitor report in node error.')
-			print s,o
-			sys.exit()
-
-		# gpscp seg monitor script to every seg host
-		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
-		(s, o) = commands.getstatusoutput(cmd)
-		if s != 0:
-			print ('gpscp monitor node script to every node error.')
-			print s,o
-			sys.exit()
+		self.report_folder = os.getcwd() + os.sep + 'monitor_report' + os.sep + self.init_time
+		self.run_lock = self.report_folder + os.sep + 'run.lock'
 		
+		self.hostfile_seg = self.report_folder + os.sep + 'hostfile_seg'
+
+		self.sep_string = '\t|'
 
 	def _get_monitor_seg_script_path(self):
-		path = os.path.realpath(sys.path[0])
-		if os.path.isfile(path):
-			path = os.path.dirname(path)
-		self.seg_script =  os.path.abspath(path) + os.sep + 'MonitorSeg.py'
-		if not os.path.exists(self.seg_script):
-			print ('get MonitorSeg.py path error.')
-		else:
-			return self.seg_script
+		for one_path in sys.path:
+			if one_path.endswith('monitor'):
+				self.seg_script = one_path + os.sep + 'MonitorSeg.py'
+				if os.path.exists(self.seg_script):
+					return 0
+		print 'not find MonitorSeg.py.'
+		sys.exit()
+
 
 	def _get_seg_list(self, hostfile = 'hostfile_seg'):
 		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where content <> -1 and role = 'p';" '''
@@ -60,6 +44,29 @@ class Monitor_control():
 		with open(hostfile, 'w') as fnode:
 			fnode.write(output + '\n')
 
+	def setup(self):
+		os.system( 'mkdir -p %s' % (self.report_folder) )
+		os.system( 'touch %s' % (self.run_lock) )
+		
+		self._get_monitor_seg_script_path()
+		self._get_seg_list(hostfile = self.hostfile_seg)
+		# make tmp dir on every seg host
+		cmd = " gpssh -f %s -e 'mkdir -p %s' " % (self.hostfile_seg, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		if s != 0:
+			print ('perp monitor report folder on seg host error.')
+			print s,o
+			sys.exit()
+
+		# gpscp seg monitor script to every seg host
+		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		if s != 0:
+			print ('gpscp monitor node script to every node error.')
+			print s,o
+			sys.exit()
+
+	
 
 	def clean_up(self):
 		cmd = " gpssh -f %s -e 'rm -rf %s' " % (self_hostfile_seg, self.seg_tmp_folder)
@@ -97,7 +104,7 @@ class Monitor_control():
 			temp = line.split()
 			# time_point, con_id, rss, pmem, pcpu	
 			try:
-				one_item = now_time + '\t' + temp[11][3:] + '\t' + str(int(temp[2])/1024) + '\t' + temp[3] + '\t' + temp[0]
+				one_item = now_time + self.sep_string + temp[11][3:] + self.sep_string + str(int(temp[2])/1024) + self.sep_string + temp[3] + self.sep_string + temp[0]
 				sql_item = "insert into moni.qd_mem_cpu values('%s', %s, %s, %s, %s);" \
 				% (now_time, temp[11][3:], str(int(temp[2])/1024), temp[3], temp[0])
 			except Exception, e:
@@ -124,6 +131,7 @@ class Monitor_control():
 			time.sleep(interval)
 
 
+	
 	# record all query in memory
 	def __get_qd_info1(self):
 		# -R '***' set record separator '***' (default: newline)
@@ -149,7 +157,7 @@ class Monitor_control():
 			if ( line[0] not in self.query_record.keys() ) or ( line[0] in self.query_record.keys() and query_start_time > self.query_record[line[0]] ):
 				self.query_record[line[0]] = query_start_time
 				
-				one_item = line[0] + '\t' + str(query_start_time) + '\t' + line[2] + '\t' + line[3] + '\t' + line[4]
+				one_item = line[0] + self.sep_string + str(query_start_time) + self.sep_string + line[2] + self.sep_string + line[3] + self.sep_string + line[4]
 				sql_item = "insert into moni.qd_info values (%s, '%s', %s, '%s', '%s');" \
 				% (line[0], str(query_start_time), line[2], line[3], line[4])
 				
@@ -158,7 +166,6 @@ class Monitor_control():
 
 		return output_string
 
-	
 	# only record current query in memory
 	def __get_qd_info(self):
 		now_time = datetime.now()
@@ -174,6 +181,7 @@ class Monitor_control():
 		all_items = output.split('***')
 		output_string = ['', '']
 
+		self.sep_string = '\t|'
 		for current_query in self.current_query_record:
 			if current_query not in all_items:
 				line = current_query.split('|')
@@ -183,28 +191,24 @@ class Monitor_control():
 					print 'time error ' + str(line)
 					continue
 
-				one_item = line[0] + '\t|' + str(query_start_time) + '\t|' + str(now_time) + '\t|' +line[2] + '\t|' + line[3]
-				sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
-				% (line[0], str(query_start_time), str(now_time), line[2], line[3])
+				one_item = line[0] + self.sep_string + str(query_start_time) + self.sep_string + str(now_time) + self.sep_string +line[2] + self.sep_string + line[3]
+				#sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
+				#% (line[0], str(query_start_time), str(now_time), line[2], line[3])
 				
 				output_string[0] = output_string[0] + one_item + '\n'
-				output_string[1] = output_string[1] + sql_item + '\n'
+				#output_string[1] = output_string[1] + sql_item + '\n'
 
 				self.current_query_record.remove(current_query)
-				#print 'del 1'
 
 		for line_item in all_items:
 			if line_item not in self.current_query_record:
 				self.current_query_record.append(line_item)
-				self.count = self.count + 1
-				#print 'add: ' + str(self.count)
 
 		return output_string
 
-	
 	def get_qd_info(self, filename = ['', ''], interval = 1):
 		count = 0
-		while(count < 10):
+		while(os.path.exists(self.run_lock)):
 			result = self.__get_qd_info()
 			if result is None:
 				count = count + 1
@@ -212,7 +216,7 @@ class Monitor_control():
 				continue
 
 			self.report(filename = filename[0], msg = result[0])
-			self.report(filename = filename[1], msg = result[1])
+			#self.report(filename = filename[1], msg = result[1])
 
 			time.sleep(interval)
 
@@ -228,36 +232,35 @@ class Monitor_control():
 					print 'time error ' + str(line)
 					continue
 
-				one_item = line[0] + '\t' + str(query_start_time) + '\t' + str(now_time) + '\t' +line[2] + '\t' + line[3]
-				sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
-				% (line[0], str(query_start_time), str(now_time), line[2], line[3])
+				one_item = line[0] + self.sep_string + str(query_start_time) + self.sep_string + str(now_time) + self.sep_string +line[2] + self.sep_string + line[3]
+				#sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
+				#% (line[0], str(query_start_time), str(now_time), line[2], line[3])
 				
 				output_string[0] = output_string[0] + one_item + '\n'
-				output_string[1] = output_string[1] + sql_item + '\n'
+				#output_string[1] = output_string[1] + sql_item + '\n'
 		
 		self.report(filename = filename[0], msg = output_string[0])
 		self.report(filename = filename[1], msg = output_string[1])
 
 	def stop(self):
-		pass
+		os.system('rm -rf %s' % (self.run_lock))
+		cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
+		commands.getstatusoutput(cmd)
 
 	def start(self):
 		self.setup()
 		#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
-		prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
+		prefix = self.report_folder + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
 		p1 = Process( target = self.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py %s > monitor.log &' " % (self.hostfile_seg, self.seg_tmp_folder, self.pwd)
+		#cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py %s > monitor.log &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder)
 
-		commands.getstatusoutput(cmd)
+		#commands.getstatusoutput(cmd)
 		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
 		#p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
 		p1.start()
 		#	p2.start()
 		#p3.start()
-		p1.join()
-		cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
-		commands.getstatusoutput(cmd)
 
 
 monitor_control = Monitor_control()
