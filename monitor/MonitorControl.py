@@ -3,34 +3,37 @@ import os,sys,commands,time
 from datetime import datetime
 from multiprocessing import Process
 from pygresql import pg
-from monitor_node import Monitor_node
-
 
 
 class Monitor_control():
+	
 	def __init__(self):
 		self.query_record = {}
 		self.current_query_record = []
 		self.count = 0
 		self.run = 1
 		self.pwd = os.getcwd()
-		self.node_script = ''
-		self.get_monitor_node_script_path()
-		sys.exit()
-		self.monitor_report_folder = '/tmp/monitor_report/' + datetime.now().strftime('%Y%m%d-%H%M%S')
-		self._get_node_list(hostfile = self.hostfile_node)
+		
+		self.seg_script = ''
+		self._get_monitor_seg_script_path()
 
-	def get_monitor_node_script_path(self):
+		self.init_time = datetime.now()
+		self.seg_tmp_folder = '/tmp/monitor_report/' + self.init_time.strftime('%Y%m%d-%H%M%S')
+		self.hostfile_seg = self.pwd + os.sep + 'hostfile_seg'
+		self._get_seg_list(hostfile = self.hostfile_seg)
+
+	
+	def _get_monitor_seg_script_path(self):
 		path = os.path.realpath(sys.path[0])
 		if os.path.isfile(path):
 			path = os.path.dirname(path)
-		self.node_script =  os.path.abspath(path) + os.sep + 'monitor_node.py'
-		if not os.path.exists(self.node_script):
-			print ('get Monitor_node.py path error.')
+		self.seg_script =  os.path.abspath(path) + os.sep + 'MonitorSeg.py'
+		if not os.path.exists(self.seg_script):
+			print ('get MonitorSeg.py path error.')
 		else:
-			print self.node_script
+			return self.seg_script
 
-	def _get_node_list(self, hostfile = 'hostfile_node'):
+	def _get_seg_list(self, hostfile = 'hostfile_seg'):
 		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where content <> -1 and role = 'p';" '''
 		(status, output) = commands.getstatusoutput(cmd)
 		
@@ -41,9 +44,30 @@ class Monitor_control():
 		with open(hostfile, 'w') as fnode:
 			fnode.write(output + '\n')
 
-	def _scp_monitor_node(self):
-		cmd = 'gpscp -f %s %s =: %s' % (self.hostfile_node, )
-		
+
+	def setup(self):
+		# make tmp dir on every seg host
+		cmd = " gpssh -f %s -e 'mkdir -p %s' " % (self.hostfile_seg, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		if s != 0:
+			print ('perp monitor report in node error.')
+			print s,o
+			sys.exit()
+
+		# gpscp seg monitor script to every seg host
+		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		if s != 0:
+			print ('gpscp monitor node script to every node error.')
+			print s,o
+			sys.exit()
+
+	def clean_up(self):
+		cmd = " gpssh -f %s -e 'rm -rf %s' " % (self_hostfile_seg, self.seg_tmp_folder)
+		commands.getstatusoutput(cmd)
+
+
+
 	def report(self, filename, msg, mode = 'a'):
 		if msg != '':
 		    fp = open(filename, mode)  
@@ -181,7 +205,7 @@ class Monitor_control():
 	
 	def get_qd_info(self, filename = ['', ''], interval = 1):
 		count = 0
-		while(1):
+		while(count < 10):
 			result = self.__get_qd_info()
 			if result is None:
 				count = count + 1
@@ -219,15 +243,20 @@ class Monitor_control():
 		pass
 
 	def start(self):
-		monitor = Monitor_control()
+		self.setup()
 		#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
 		prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
 		p1 = Process( target = self.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
+
+		cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder)
+		commands.getstatusoutput(cmd)
+
 		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
 		#p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
 		p1.start()
 		#	p2.start()
 		#p3.start()
+
 
 monitor_control = Monitor_control()
 

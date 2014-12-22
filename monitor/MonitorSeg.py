@@ -3,10 +3,10 @@ import os,sys,commands,time
 from datetime import datetime
 import subprocess
 
-class Monitor_node():
+class Monitor_seg():
 
 	def __init__(self):
-		self.pwd = ''
+		self.pwd = os.getcwd()
 		self.count = 1
 		(s,o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
@@ -114,7 +114,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	
 	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
 		count = 0
-		while(count < 10):
+		while(1):
 			result = self.__get_qe_mem_cpu_by_ps()
 			if result is None:
 				count = count + 1
@@ -132,9 +132,8 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			status = fstatus.read()
 
 
-monitor_node = Monitor_node()
+monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	pass
-	#monitor.get_qe_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', interval = 3)
+	monitor_seg.get_qe_mem_cpu(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem.log', interval = 3)
 	
