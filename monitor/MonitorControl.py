@@ -13,10 +13,40 @@ class Monitor_control():
 		self.current_query_record = []
 		self.count = 0
 		self.run = 1
+		self.pwd = os.getcwd()
+		self.node_script = ''
+		self.get_monitor_node_script_path()
+		sys.exit()
+		self.monitor_report_folder = '/tmp/monitor_report/' + datetime.now().strftime('%Y%m%d-%H%M%S')
+		self._get_node_list(hostfile = self.hostfile_node)
+
+	def get_monitor_node_script_path(self):
+		path = os.path.realpath(sys.path[0])
+		if os.path.isfile(path):
+			path = os.path.dirname(path)
+		self.node_script =  os.path.abspath(path) + os.sep + 'monitor_node.py'
+		if not os.path.exists(self.node_script):
+			print ('get Monitor_node.py path error.')
+		else:
+			print self.node_script
+
+	def _get_node_list(self, hostfile = 'hostfile_node'):
+		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where content <> -1 and role = 'p';" '''
+		(status, output) = commands.getstatusoutput(cmd)
 		
-	def report(self, filename, msg):
+		if status != 0:
+			print ('Unable to select gp_segment_configuration in monitor_control. ')
+			sys.exit()
+		
+		with open(hostfile, 'w') as fnode:
+			fnode.write(output + '\n')
+
+	def _scp_monitor_node(self):
+		cmd = 'gpscp -f %s %s =: %s' % (self.hostfile_node, )
+		
+	def report(self, filename, msg, mode = 'a'):
 		if msg != '':
-		    fp = open(filename, 'a')  
+		    fp = open(filename, mode)  
 		    fp.write(msg)
 		    fp.flush()
 		    fp.close()
@@ -71,7 +101,7 @@ class Monitor_control():
 			time.sleep(interval)
 
 
-
+	# record all query in memory
 	def __get_qd_info1(self):
 		# -R '***' set record separator '***' (default: newline)
 		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,procpid,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
@@ -105,6 +135,8 @@ class Monitor_control():
 
 		return output_string
 
+	
+	# only record current query in memory
 	def __get_qd_info(self):
 		now_time = datetime.now()
 		# -R '***' set record separator '***' (default: newline)
@@ -146,6 +178,7 @@ class Monitor_control():
 
 		return output_string
 
+	
 	def get_qd_info(self, filename = ['', ''], interval = 1):
 		count = 0
 		while(1):
@@ -186,8 +219,7 @@ class Monitor_control():
 		pass
 
 	def start(self):
-		print str(self)
-		monitor = Monitor_master()
+		monitor = Monitor_control()
 		#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
 		prefix = datetime.now().strftime('%Y%m%d-%H%M%S')
 		p1 = Process( target = self.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
