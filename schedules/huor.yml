@@ -16,7 +16,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 10
+          data_volume_size: 1
           append_only: true
           orientation: ROW
           compression_type: QuickLZ

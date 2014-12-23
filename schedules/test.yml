@@ -1,12 +1,30 @@
 # workloads_list: tpch_ao_row, tpch_ao_co
 #workloads_list: tpch_ao_parquet_nocomp_nopart_load_run,tpch_ao_parquet_nocomp_nopart_run,tpch_ao_parquet_nocomp_nopart_load,tpch_ao_parquet_nocomp_nopart_no,tpch_ao_parquet_nocomp_nopart_run3
-workloads_list: tpch_ao_parquet_nocomp_nopart_run3
+workloads_list: tpch_ao_row
 
 workloads_mode: sequential
 
 cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
+
+    - workload_name: tpch_ao_row
+      database_name: gpsqltest_tpch_ao_row
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 10
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+          partitions: 0
+          distributed_randomly: true
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 2
+      num_iteration: 2
 
     - workload_name: tpch_ao_parquet_nocomp_nopart_load_run
       database_name: gpsqltest_tpch_parquet_nocomp_nopart
