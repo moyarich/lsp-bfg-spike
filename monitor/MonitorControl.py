@@ -21,6 +21,9 @@ class Monitor_control():
 		
 		self.hostfile_seg = self.report_folder + os.sep + 'hostfile_seg'
 
+		(s,o) = commands.getstatusoutput('hostname')
+		self.hostname = o.strip()
+
 		self.sep_string = '\t|'
 
 	def _get_monitor_seg_script_path(self):
@@ -51,7 +54,7 @@ class Monitor_control():
 		self._get_monitor_seg_script_path()
 		self._get_seg_list(hostfile = self.hostfile_seg)
 		# make tmp dir on every seg host
-		cmd = " gpssh -f %s -e 'mkdir -p %s' " % (self.hostfile_seg, self.seg_tmp_folder)
+		cmd = " gpssh -f %s -e 'mkdir -p %s; touch %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder, self.seg_tmp_folder)
 		(s, o) = commands.getstatusoutput(cmd)
 		if s != 0:
 			print ('perp monitor report folder on seg host error.')
@@ -117,7 +120,7 @@ class Monitor_control():
 	
 	def get_qd_mem(self, filename = ['', ''], interval = 5):
 		count = 0
-		while(count < 10):
+		while(os.path.exists(self.run_lock)):
 
 			result = self.__get_qd_mem()
 			if result is None:
@@ -181,7 +184,7 @@ class Monitor_control():
 		all_items = output.split('***')
 		output_string = ['', '']
 
-		self.sep_string = '\t|'
+		
 		for current_query in self.current_query_record:
 			if current_query not in all_items:
 				line = current_query.split('|')
@@ -244,18 +247,19 @@ class Monitor_control():
 
 	def stop(self):
 		os.system('rm -rf %s' % (self.run_lock))
-		cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
+		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
+		#cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
 		commands.getstatusoutput(cmd)
 
 	def start(self):
 		self.setup()
 		#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
-		prefix = self.report_folder + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
-		p1 = Process( target = self.get_qd_info, args = ( [prefix+'_qd_info.log', prefix+'_qd_info.sql'], ) )
+		prefix = self.report_folder + os.sep #+ datetime.now().strftime('%Y%m%d-%H%M%S')
+		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', prefix+'_qd_info.sql'], ) )
 
-		#cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py %s > monitor.log &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py %s %s > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder, self.hostname)
 
-		#commands.getstatusoutput(cmd)
+		commands.getstatusoutput(cmd)
 		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
 		#p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
 		p1.start()

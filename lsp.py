@@ -100,11 +100,13 @@ if __name__ == '__main__':
     parser.add_option('-a', '--add', dest='add_option', action='store_true', default=False, help='Add result in backend database')
     parser.add_option('-c', '--check', dest='check', action='store_true', default=False, help='Check query result')
     parser.add_option('-f', '--suffix', dest='suffix', action='store_true', default=False, help='Add table suffix')
+    parser.add_option('-m', '--monitor', dest='monitor', action='store_true', default=False, help='Add table suffix')
     (options, args) = parser.parse_args()
     schedules = options.schedule
     add_database = options.add_option
     gl.check_result = options.check
     gl.suffix = options.suffix
+    monitor_flag = options.monitor
 
     cs_id = 0
     if schedules is None:
@@ -191,9 +193,14 @@ if __name__ == '__main__':
         except Exception as e:
             print 'Error while selecting appropreciate executor for workloads: ' + str(e)
             exit(-1)
-        #p1 = Process(target = monitor_master.start)
-        #p1.start()
-        workloads_executor.execute()
+
+        if monitor_flag:
+            p1 = Process(target = monitor_control.start)
+            p1.start()
+            workloads_executor.execute()
+            monitor_control.stop()
+        else:
+            workloads_executor.execute()
     
     end_time = datetime.now()
     duration = end_time - beg_time

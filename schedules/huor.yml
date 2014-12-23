@@ -16,18 +16,18 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 1
+          data_volume_size: 10
           append_only: true
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
           partitions: 0
           distributed_randomly: true
-      load_data_flag: false
+      load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 2
-      num_iteration: 1
+      num_iteration: 2
 
     - workload_name: tpch_heap
       database_name: gpsqltest_tpch_heap

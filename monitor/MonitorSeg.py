@@ -7,10 +7,12 @@ class Monitor_seg():
 
 	def __init__(self):
 		self.master_dir = sys.argv[1]
+		self.master_name = sys.argv[2]
 		self.pwd = os.getcwd()
 		self.count = 1
 		(s,o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
+		self.sep = '\t|'
 
 	def report(self, filename, msg):
 		if msg != '':
@@ -98,11 +100,11 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			# hostname, count, time_point, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
 			try:
 				if temp[14] == 'idle':
-					one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + 'NUll' + '\t|' + 'NULL' + '\t|' + temp[14] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
+					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NUll' + self.sep + 'NULL' + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				elif temp[15].find('slice') != -1:
-					one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + temp[14] + '\t|' + temp[15] + '\t|' + temp[17] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
+					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				else:
-					one_item = self.hostname + '\t|' + str(self.count) + '\t|' + now_time + '\t|' + temp[0] + '\t|' + temp[12] + '\t|' + temp[13] + '\t|' + temp[14] + '\t|' + 'NULL' + '\t|' + temp[16] + '\t|' + str(int(temp[3])/1024) + '\t|' + temp[4] + '\t|' + temp[1]
+					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 			except Exception, e:
 				print temp
 				continue
@@ -122,7 +124,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	
 	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
 		count = 0
-		while(count < 10):
+		while(os.path.exists('run.lock')):
 			result = self.__get_qe_mem_cpu_by_ps()
 			if result is None:
 				count = count + 1
@@ -134,11 +136,17 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 
 			time.sleep(interval)
 
-		cmd = "gpscp -h localhost %s =:%s" % (filename[0], self.master_dir)
+		cmd = "gpscp -h %s %s =:%s" % (self.master_name, filename[0], self.master_dir)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print s,o
 
+		cmd = "gpscp -h %s monitor.log =:%s/%s_monitor.log" % (self.master_name, self.master_dir, self.hostname)
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print s,o
+
+		os.system('rm -rf ../*')
 
 	
 	def start(self, status_file):
@@ -149,5 +157,6 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	monitor_seg.get_qe_mem_cpu(filename = [datetime.now().strftime('%Y%m%d-%H%M%S')+'_qe_mem_cpu.log', ], interval = 3)
+	#'_' + datetime.now().strftime('%Y%m%d-%H%M%S') + 
+	monitor_seg.get_qe_mem_cpu(filename = [monitor_seg.hostname + '_qe_mem_cpu.data', ''], interval = 3)
 	
