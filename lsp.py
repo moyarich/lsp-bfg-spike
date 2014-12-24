@@ -1,6 +1,7 @@
 import os
 import sys
 import commands
+import time
 from datetime import datetime
 from multiprocessing import Process
 
@@ -197,6 +198,7 @@ if __name__ == '__main__':
         if monitor_flag:
             p1 = Process(target = monitor_control.start)
             p1.start()
+            time.sleep(30)
             workloads_executor.execute()
             monitor_control.stop()
         else:
