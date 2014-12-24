@@ -152,7 +152,7 @@ class Monitor_control():
 		for line in line_item:
 			line = line.split('|')
 			try:
-				query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+				query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 			except Exception, e:
 				print 'time error ' + str(line)
 				continue
@@ -230,7 +230,7 @@ class Monitor_control():
 			for current_query in self.current_query_record:
 				line = current_query.split('|')
 				try:
-					query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
 					print 'time error ' + str(line)
 					continue
