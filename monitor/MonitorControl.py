@@ -189,7 +189,7 @@ class Monitor_control():
 			if current_query not in all_items:
 				line = current_query.split('|')
 				try:
-					query_start_time = datetime.strptime(line[1].split('+')[0].strip(), "%Y-%m-%d %H:%M:%S.%f")
+					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
 					print 'time error ' + str(line)
 					continue
@@ -249,7 +249,8 @@ class Monitor_control():
 		os.system('rm -rf %s' % (self.run_lock))
 		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
 		#cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
-		commands.getstatusoutput(cmd)
+		print cmd
+		print commands.getstatusoutput(cmd)
 
 	def start(self):
 		self.setup()

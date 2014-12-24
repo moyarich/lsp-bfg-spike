@@ -12,7 +12,7 @@ workloads_content:
       database_name: gpsqltest_tpch_ao_row
       user: gpadmin
       table_setting:
-          data_volume_type: total
+          data_volume_type: PER_NODE
           data_volume_size: 10
           append_only: true
           orientation: ROW
