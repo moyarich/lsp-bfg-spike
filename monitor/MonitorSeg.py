@@ -124,7 +124,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	
 	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
 		count = 0
-		while(os.path.exists('run.lock')):
+		while(os.path.exists('run.lock') and count < 300):
 			result = self.__get_qe_mem_cpu_by_ps()
 			if result is None:
 				count = count + 1
@@ -158,5 +158,5 @@ monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
 	#'_' + datetime.now().strftime('%Y%m%d-%H%M%S') + 
-	monitor_seg.get_qe_mem_cpu(filename = [monitor_seg.hostname + '_qe_mem_cpu.data', ''], interval = 3)
+	monitor_seg.get_qe_mem_cpu(filename = [monitor_seg.hostname + '_qe_mem_cpu.data', ''], interval = 5)
 	
