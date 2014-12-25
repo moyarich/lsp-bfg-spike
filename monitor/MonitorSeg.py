@@ -14,12 +14,15 @@ class Monitor_seg():
 		self.hostname = o.strip()
 		self.sep = '\t|'
 
+
 	def report(self, filename, msg):
 		if msg != '':
 		    fp = open(filename, 'a')  
 		    fp.write(msg)               
 		    fp.flush()
 		    fp.close()
+
+
 
 	'''
 	 PID    USER    PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND

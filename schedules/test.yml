@@ -23,7 +23,7 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 2
+      num_concurrency: 10
       num_iteration: 2
 
     - workload_name: tpch_ao_parquet_nocomp_nopart_load_run

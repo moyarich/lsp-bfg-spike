@@ -35,7 +35,6 @@ class Monitor_control():
 		print 'not find MonitorSeg.py.'
 		sys.exit()
 
-
 	def _get_seg_list(self, hostfile = 'hostfile_seg'):
 		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where content <> -1 and role = 'p';" '''
 		(status, output) = commands.getstatusoutput(cmd)
@@ -69,12 +68,6 @@ class Monitor_control():
 			print s,o
 			sys.exit()
 
-	
-
-	def clean_up(self):
-		cmd = " gpssh -f %s -e 'rm -rf %s' " % (self_hostfile_seg, self.seg_tmp_folder)
-		commands.getstatusoutput(cmd)
-
 
 
 	def report(self, filename, msg, mode = 'a'):
@@ -84,6 +77,9 @@ class Monitor_control():
 		    fp.flush()
 		    fp.close()
 	
+
+
+
 	'''
 	ps -eo pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity"
 	%CPU  VSZ  RSS  %MEM STATE CMD          
@@ -114,27 +110,27 @@ class Monitor_control():
 				continue
 
 			output_string[0] = output_string[0] + one_item + '\n'
-			output_string[1] = output_string[1] + sql_item + '\n'
+			#output_string[1] = output_string[1] + sql_item + '\n'
 
 		return output_string
 	
 	def get_qd_mem(self, filename = ['', ''], interval = 5):
 		count = 0
-		while(os.path.exists(self.run_lock)):
+		while(os.path.exists(self.run_lock) and count < 300):
 
 			result = self.__get_qd_mem()
 			if result is None:
 				count = count + 1
-				time.sleep(2)
+				time.sleep(1)
 				continue
 			
 			self.report(filename = filename[0], msg = result[0])
-			self.report(filename = filename[1], msg = result[1])
+			#self.report(filename = filename[1], msg = result[1])
 
 			time.sleep(interval)
 
 
-	
+
 	# record all query in memory
 	def __get_qd_info1(self):
 		# -R '***' set record separator '***' (default: newline)
@@ -243,7 +239,9 @@ class Monitor_control():
 				#output_string[1] = output_string[1] + sql_item + '\n'
 		
 		self.report(filename = filename[0], msg = output_string[0])
-		self.report(filename = filename[1], msg = output_string[1])
+		#self.report(filename = filename[1], msg = output_string[1])
+
+
 
 	def stop(self):
 		os.system('rm -rf %s' % (self.run_lock))
@@ -252,6 +250,8 @@ class Monitor_control():
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print s, o
+
+
 
 	def start(self):
 		self.setup()
@@ -263,14 +263,10 @@ class Monitor_control():
 
 		commands.getstatusoutput(cmd)
 		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
-		#p3 = Process( target = Monitor_node().get_qe_mem_cpu, args = ( [prefix+'_qe_mem.log', prefix+'_qe_mem.sql'], 3 ) )
 		p1.start()
 		#	p2.start()
-		#p3.start()
-
 
 monitor_control = Monitor_control()
 
 if __name__ == "__main__" :
 	monitor_control.start()
-	
