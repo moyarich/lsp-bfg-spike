@@ -250,7 +250,8 @@ class Monitor_control():
 		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
 		#cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
 		print cmd
-		print commands.getstatusoutput(cmd)
+		(s, o) = commands.getstatusoutput(cmd)
+		print s, o
 
 	def start(self):
 		self.setup()
