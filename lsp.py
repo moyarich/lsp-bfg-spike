@@ -67,25 +67,25 @@ except ImportError:
 try:
     from lib.PSQL import psql
 except ImportError:
-    sys.stderr.write('LSP needs psql in lib/PSQL.py in Workload.py\n')
+    sys.stderr.write('LSP needs psql in lib/PSQL.py in Workload.py.\n')
     sys.exit(2)
 
 try:
     from lib.utils.Check import check
 except ImportError:
-    sys.stderr.write('LSP needs check in lib/utils/Check.py\n')
+    sys.stderr.write('LSP needs check in lib/utils/Check.py.\n')
     sys.exit(2)
 
 try:
     from lib.utils.Report import Report
 except ImportError:
-    sys.stderr.write('LSP needs Report in lib/utils/Report.py\n')
+    sys.stderr.write('LSP needs Report in lib/utils/Report.py.\n')
     sys.exit(2)
 
 try:
     from lib.RemoteCommand import remotecmd
 except ImportError:
-    sys.stderr.write('LSP needs remotecmd in lib/RemoteCommand.py \n')
+    sys.stderr.write('LSP needs remotecmd in lib/RemoteCommand.py.\n')
     sys.exit(2)
 
 import gl
@@ -101,7 +101,7 @@ if __name__ == '__main__':
     parser.add_option('-a', '--add', dest='add_option', action='store_true', default=False, help='Add result in backend database')
     parser.add_option('-c', '--check', dest='check', action='store_true', default=False, help='Check query result')
     parser.add_option('-f', '--suffix', dest='suffix', action='store_true', default=False, help='Add table suffix')
-    parser.add_option('-m', '--monitor', dest='monitor', action='store_true', default=False, help='Add table suffix')
+    parser.add_option('-m', '--monitor', dest='monitor', action='store_true', default=False, help='Monitor resource')
     (options, args) = parser.parse_args()
     schedules = options.schedule
     add_database = options.add_option

@@ -2,10 +2,11 @@
 import os,sys,commands,time
 from datetime import datetime
 import subprocess
+from multiprocessing import Process
 
 class Monitor_seg():
 
-	def __init__(self):
+	def __init__(self, timeout = 120):
 		self.master_dir = sys.argv[1]
 		self.master_name = sys.argv[2]
 		self.pwd = os.getcwd()
@@ -13,6 +14,7 @@ class Monitor_seg():
 		(s,o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
 		self.sep = '\t|'
+		self.timeout = timeout
 
 
 	def report(self, filename, msg):
@@ -126,17 +128,26 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	
 	
 	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
+		stop_count = 0
+		file_no = 1
 		count = 0
-		while(os.path.exists('run.lock') and count < 300):
+		while(os.path.exists('run.lock') and stop_count < 300):
+			if count == self.timeout:
+				p1 = Process( target = self.scp_data, args = (filename, ) )
+				p1.start()
+				count = 0
+				file_no = file_no + 1
+			
 			result = self.__get_qe_mem_cpu_by_ps()
 			if result is None:
-				count = count + 1
+				scount = count + 1
 				time.sleep(1)
 				continue
 			
-			self.report(filename = filename[0], msg = result[0])
-			#self.report(filename = filename[1], msg = result[1])
-
+			filename = self.hostname + '_qe_mem_cpu_' + str(file_no) + '.data'
+			self.report(filename = filename, msg = result[0])
+			#self.report(filename = filename[1], msg = result[1]) 
+			count = count + 1
 			time.sleep(interval)
 
 		cmd = "gpscp -h %s %s =:%s" % (self.master_name, filename[0], self.master_dir)
@@ -149,15 +160,17 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		(s, o) = commands.getstatusoutput(cmd)
 		print s,o
 
-		os.system('rm -rf ../*')
+		os.system('rm -rf /tmp/monitor_report/*')
 
 	
-	def start(self, status_file):
-		with open(status_file, 'r') as fstatus:
-			status = fstatus.read()
+	def scp_data(self, filename):
+		cmd = "gpscp -h %s %s =:%s" % (self.master_name, filename, self.master_dir)
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print s,o
 
 
-monitor_seg = Monitor_seg()
+monitor_seg = Monitor_seg(timeout = 30)
 
 if __name__ == "__main__" :
 	#'_' + datetime.now().strftime('%Y%m%d-%H%M%S') + 
