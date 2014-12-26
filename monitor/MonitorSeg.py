@@ -159,7 +159,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		(s, o) = commands.getstatusoutput(cmd)
 		print s,o
 
-		#os.system('rm -rf /tmp/monitor_report/*')
+		os.system('rm -rf /tmp/monitor_report/*')
 
 	
 	def scp_data(self, filename):

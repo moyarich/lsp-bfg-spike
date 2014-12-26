@@ -20,8 +20,8 @@ workloads_content:
           compression_level: 1
           partitions: 0
           distributed_randomly: true
-      load_data_flag: true
-      run_workload_flag: false
+      load_data_flag: false
+      run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 10
       num_iteration: 10
