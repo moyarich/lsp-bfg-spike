@@ -169,7 +169,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		print s,o
 
 
-monitor_seg = Monitor_seg(timeout = 30)
+monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
 	#'_' + datetime.now().strftime('%Y%m%d-%H%M%S') + 
