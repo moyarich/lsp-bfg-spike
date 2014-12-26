@@ -131,36 +131,35 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		stop_count = 0
 		file_no = 1
 		count = 0
+		filename = self.hostname + '_qe_mem_cpu_' + str(file_no) + '.data'
 		while(os.path.exists('run.lock') and stop_count < 300):
 			if count == self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
 				p1.start()
 				count = 0
 				file_no = file_no + 1
+				filename = self.hostname + '_qe_mem_cpu_' + str(file_no) + '.data'
 			
 			result = self.__get_qe_mem_cpu_by_ps()
 			if result is None:
-				scount = count + 1
+				stop_count = stop_count + 1
 				time.sleep(1)
 				continue
 			
-			filename = self.hostname + '_qe_mem_cpu_' + str(file_no) + '.data'
 			self.report(filename = filename, msg = result[0])
 			#self.report(filename = filename[1], msg = result[1]) 
 			count = count + 1
 			time.sleep(interval)
 
-		cmd = "gpscp -h %s %s =:%s" % (self.master_name, filename[0], self.master_dir)
+		self.scp_data(filename = filename)
+		print 'file_no = ' + str(file_no)
+
+		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s_monitor.log" % (self.master_name, self.master_dir, self.hostname)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print s,o
 
-		cmd = "gpscp -h %s monitor.log =:%s/%s_monitor.log" % (self.master_name, self.master_dir, self.hostname)
-		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print s,o
-
-		os.system('rm -rf /tmp/monitor_report/*')
+		#os.system('rm -rf /tmp/monitor_report/*')
 
 	
 	def scp_data(self, filename):

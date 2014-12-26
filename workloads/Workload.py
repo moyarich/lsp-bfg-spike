@@ -391,6 +391,7 @@ class Workload(object):
                         query = query.replace('TABLESUFFIX', self.tbl_suffix)
                     else:
                         query = query.replace('_TABLESUFFIX', '')
+                    query = query.replace('SQLSUFFIX', self.sql_suffix)
                     with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
                         f.write(query)
 

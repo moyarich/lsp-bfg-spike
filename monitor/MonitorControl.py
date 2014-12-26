@@ -47,7 +47,7 @@ class Monitor_control():
 			fnode.write(output + '\n')
 
 	def setup(self):
-		os.system( 'mkdir -p %s' % (self.report_folder) )
+		os.system( 'mkdir -p %s' % (self.report_folder + os.sep + 'seg_log') )
 		os.system( 'touch %s' % (self.run_lock) )
 		
 		self._get_monitor_seg_script_path()
@@ -68,8 +68,6 @@ class Monitor_control():
 			print s,o
 			sys.exit()
 
-
-
 	def report(self, filename, msg, mode = 'a'):
 		if msg != '':
 		    fp = open(filename, mode)  
@@ -77,8 +75,6 @@ class Monitor_control():
 		    fp.flush()
 		    fp.close()
 	
-
-
 
 	'''
 	ps -eo pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity"
@@ -246,23 +242,20 @@ class Monitor_control():
 	def stop(self):
 		os.system('rm -rf %s' % (self.run_lock))
 		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
-		#cmd = " ps -ef | grep python | grep MonitorSeg.py | awk '{print $2}' | xargs kill -9 "
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print s, o
 
 
-
 	def start(self):
 		self.setup()
-		#monitor.get_qd_mem(filename = datetime.now().strftime('%Y%m%d-%H%M%S')+'_qd_mem.log', interval = 4)
-		prefix = self.report_folder + os.sep #+ datetime.now().strftime('%Y%m%d-%H%M%S')
-		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', prefix+'_qd_info.sql'], ) )
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder, self.hostname)
+		(s, o) = commands.getstatusoutput(cmd)
+		print s, o
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python MonitorSeg.py %s %s > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder, self.hostname)
-
-		commands.getstatusoutput(cmd)
 		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
+		prefix = self.report_folder + os.sep
+		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', prefix+'_qd_info.sql'], ) )
 		p1.start()
 		#	p2.start()
 
