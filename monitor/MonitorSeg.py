@@ -13,7 +13,7 @@ class Monitor_seg():
 		self.count = 1
 		(s,o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
-		self.sep = '\t|'
+		self.sep = '|'
 		self.timeout = timeout
 
 
@@ -70,8 +70,8 @@ index 0      1      2   3    4     5   6   7   8    9      10     11         12 
 
 			output_string[0] = output_string[0] + '\n' + one_item
 			output_string[1] = output_string[1] + '\n' + sql_item
+		
 		self.count = self.count + 1
-
 		return output_string
 
 	
@@ -105,7 +105,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			# hostname, count, time_point, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
 			try:
 				if temp[14] == 'idle':
-					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NUll' + self.sep + 'NULL' + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + 'NULL' + self.sep + 'NUll' + self.sep + temp[14] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				elif temp[15].find('slice') != -1:
 					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				else:
@@ -122,8 +122,8 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 
 			output_string[0] = output_string[0] + one_item + '\n'
 			#output_string[1] = output_string[1] + sql_item + '\n'
+		
 		self.count = self.count + 1
-
 		return output_string
 	
 	

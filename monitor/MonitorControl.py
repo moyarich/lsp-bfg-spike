@@ -24,7 +24,8 @@ class Monitor_control():
 		(s,o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
 
-		self.sep_string = '\t|'
+		self.count = 1
+		self.sep = '|'
 
 	def _get_monitor_seg_script_path(self):
 		for one_path in sys.path:
@@ -77,16 +78,17 @@ class Monitor_control():
 	
 
 	'''
-	ps -eo pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity"
-	%CPU  VSZ  RSS  %MEM STATE CMD          
-	4.0 799100 27772  0.7 S postgres: port  5432, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(56830) con335 127.0.0.1(56830) cmd1 SELECT            
- 	4.6 799100 27756  0.7 S postgres: port  5432, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(56847) con336 127.0.0.1(56847) cmd1 SELECT
+	ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager"
+	 PID   PPID  %CPU  VSZ   RSS  %MEM STATE CMD          
+	10836  3817  0.5 655800 27068  0.6  S  postgres: port  5432, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(34512) con202 127.0.0.1(34512) cmd1 SELECT
+	10836  3817  0.5 655800 27068  0.6  S  postgres: port  5432, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(34512) con202 127.0.0.1(34512) cmd1 idle
+index  0     1    2    3      4     5   6    7       8      9      10               11                     12             13       14            15    16          
 	'''
 	
 	def __get_qd_mem(self):
-		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity'
+		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager'
 		grep_string1 = 'postgres'
-		cmd = ''' ps -eo pcpu,vsz,rss,pmem,state,command | grep %s | grep -vE "%s" ''' % (grep_string1, filter_string)
+		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep %s | grep -vE "%s" ''' % (grep_string1, filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'error code: ' + str(status) + ' output: ' + output + ' in qd_mem_cpu'
@@ -97,17 +99,16 @@ class Monitor_control():
 		now_time = str(datetime.now())
 		for line in line_item:
 			temp = line.split()
-			# time_point, con_id, rss, pmem, pcpu	
-			try:
-				one_item = now_time + self.sep_string + temp[11][3:] + self.sep_string + str(int(temp[2])/1024) + self.sep_string + temp[3] + self.sep_string + temp[0]
-				sql_item = "insert into moni.qd_mem_cpu values('%s', %s, %s, %s, %s);" \
-				% (now_time, temp[11][3:], str(int(temp[2])/1024), temp[3], temp[0])
-			except Exception, e:
+			if len(temp) < 17:
 				continue
+			# hostname, count, time_point, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
+			one_item = self.hostname + self.sep + str(self.count)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
+			temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
 
 			output_string[0] = output_string[0] + one_item + '\n'
 			#output_string[1] = output_string[1] + sql_item + '\n'
 
+		self.count = self.count + 1
 		return output_string
 	
 	def get_qd_mem(self, filename = ['', ''], interval = 5):
@@ -154,7 +155,7 @@ class Monitor_control():
 			if ( line[0] not in self.query_record.keys() ) or ( line[0] in self.query_record.keys() and query_start_time > self.query_record[line[0]] ):
 				self.query_record[line[0]] = query_start_time
 				
-				one_item = line[0] + self.sep_string + str(query_start_time) + self.sep_string + line[2] + self.sep_string + line[3] + self.sep_string + line[4]
+				one_item = line[0] + self.sep + str(query_start_time) + self.sep + line[2] + self.sep + line[3] + self.sep + line[4]
 				sql_item = "insert into moni.qd_info values (%s, '%s', %s, '%s', '%s');" \
 				% (line[0], str(query_start_time), line[2], line[3], line[4])
 				
@@ -190,7 +191,7 @@ class Monitor_control():
 					print 'time error ' + str(line)
 					continue
 
-				one_item = line[0] + self.sep_string + str(query_start_time) + self.sep_string + str(now_time) + self.sep_string +line[2] + self.sep_string + line[3]
+				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
 				#sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
 				#% (line[0], str(query_start_time), str(now_time), line[2], line[3])
 				
@@ -233,7 +234,7 @@ class Monitor_control():
 					print 'time error ' + str(line)
 					continue
 
-				one_item = line[0] + self.sep_string + str(query_start_time) + self.sep_string + str(now_time) + self.sep_string +line[2] + self.sep_string + line[3]
+				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
 				#sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
 				#% (line[0], str(query_start_time), str(now_time), line[2], line[3])
 				
@@ -259,11 +260,11 @@ class Monitor_control():
 		(s, o) = commands.getstatusoutput(cmd)
 		print s, o
 
-		#	p2 = Process( target = monitor.get_qd_mem, args = ( [prefix+'_qd_mem.log', prefix+'_qd_mem.sql'], 3 ) )
 		prefix = self.report_folder + os.sep
-		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', prefix+'_qd_info.sql'], ) )
+		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', prefix+'_qd_info.sql', ''], ) )
+		p2 = Process( target = self.get_qd_mem, args = ( [prefix+'qd_mem_cpu.data', prefix+'_qd_mem.sql', ''], ) )
 		p1.start()
-		#	p2.start()
+		p2.start()
 
 monitor_control = Monitor_control()
 

@@ -16,14 +16,20 @@ CREATE TABLE moni.qd_info
 	query_end_time					TIMESTAMP WITH TIME ZONE,
 --	pid								INT,
 	user_name						VARCHAR(128),
-	db_name							VARCHAR(256)
+	db_name							VARCHAR(128)
 ) DISTRIBUTED RANDOMLY;
 
 -- 2.2 qd_mem_cpu
 CREATE TABLE moni.qd_mem_cpu
 (
+	hostname						VARCHAR(32),
+	count							INT,
 	time_point						TIMESTAMP WITH TIME ZONE,
+	pid								INT,
+	ppid							INT,
 	con_id							INT,
+	cmd								VARCHAR(16),
+	status							VARCHAR(16),
 	rss								INT,
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
@@ -40,10 +46,10 @@ CREATE TABLE moni.qe_mem_cpu
 	seg_id							VARCHAR(16),
 	cmd								VARCHAR(16),
 	slice							VARCHAR(16),
-	status							VARCHAR(64),
+	status							VARCHAR(16),
 	rss								INT,
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
 ) DISTRIBUTED RANDOMLY;
 
-COPY lineitem_TABLESUFFIX_copy_NUMBER FROM 'FNAME' WITH DELIMITER '|' SEGMENT REJECT LIMIT 10 ROWS;
+--COPY moni.qe_mem_cpu FROM 'FNAME' WITH DELIMITER '|';
