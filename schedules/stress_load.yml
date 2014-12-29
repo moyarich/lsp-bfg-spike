@@ -20,8 +20,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
+      num_concurrency: 0
+      num_iteration: 0
 
     - workload_name: tpch_row_comp_part_200g
       database_name: gpsqltest_tpch_row_comp_part_200g
@@ -37,8 +37,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
+      num_concurrency: 0
+      num_iteration: 0
 
     - workload_name: tpch_parquet_comp_10g
       database_name: gpsqltest_tpch_parquet_comp_10g
@@ -54,8 +54,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
+      num_concurrency: 0
+      num_iteration: 0
 
     - workload_name: tpch_parquet_comp_part_10g
       database_name: gpsqltest_tpch_parquet_comp_part_10g
@@ -73,8 +73,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
+      num_concurrency: 0
+      num_iteration: 0
 
     - workload_name: tpch_parquet_200g
       database_name: gpsqltest_tpch_parquet_200g
@@ -89,8 +89,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
+      num_concurrency: 0
+      num_iteration: 0
 
     - workload_name: tpch_parquet_comp_part_200g
       database_name: gpsqltest_tpch_parquet_comp_part_200g
@@ -107,5 +107,5 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
+      num_concurrency: 0
+      num_iteration: 0

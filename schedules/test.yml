@@ -23,8 +23,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 10
-      num_iteration: 10
+      num_concurrency: 0
+      num_iteration: 0
 
     - workload_name: tpch_ao_parquet_nocomp_nopart_load_run
       database_name: gpsqltest_tpch_parquet_nocomp_nopart

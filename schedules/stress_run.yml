@@ -121,7 +121,7 @@ workloads_content:
           page_size: 1048576
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 1000000
+      num_iteration: 200000
 
     - workload_name: sri_parquet_part
       database_name: gpsqltest_sri_parquet_part
@@ -150,7 +150,7 @@ workloads_content:
           compression_level: 1
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 1000000
+      num_iteration: 600000
 
     - workload_name: sri_ao_part
       database_name: gpsqltest_sri_ao_part
@@ -165,7 +165,7 @@ workloads_content:
           partitions: 128
       load_data_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 500000
+      num_iteration: 600000
 
     - workload_name: copy
       database_name: gpsqltest_copy
