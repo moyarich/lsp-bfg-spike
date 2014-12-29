@@ -12,6 +12,7 @@ class Monitor_control():
 		self.current_query_record = []
 		
 		self.seg_script = ''
+		self.schema_script = ''
 
 		# prep report folder on master and tmp folder on seg host
 		self.init_time = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -31,6 +32,7 @@ class Monitor_control():
 		for one_path in sys.path:
 			if one_path.endswith('monitor'):
 				self.seg_script = one_path + os.sep + 'MonitorSeg.py'
+				self.schema_script = one_path + os.sep + 'schema.sql'
 				if os.path.exists(self.seg_script):
 					return 0
 		print 'not find MonitorSeg.py.'
@@ -248,21 +250,37 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 	def stop(self):
 		os.system('rm -rf %s' % (self.run_lock))
+		time.sleep(10)
+
+		cmd = '''psql -d postgres -c "COPY moni.qd_info FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_info.data')
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print 'return code = ', s, '\n', o
+
+		cmd = '''psql -d postgres -c "COPY moni.qd_mem_cpu FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_mem_cpu.data')
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print 'return code = ', s, '\n', o
+		
 		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
-		print s, o
+		print 'return code = ', s, '\n', o
 
 
 	def start(self):
 		self.setup()
+		cmd = "psql -d postgres -f %s" % (self.schema_script)
+		(s, o) = commands.getstatusoutput(cmd)
+		print 'return code = ', s, '\n', o
+
 		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder, self.hostname)
 		(s, o) = commands.getstatusoutput(cmd)
-		print s, o
+		print 'return code = ', s, '\n', o
 
 		prefix = self.report_folder + os.sep
-		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', prefix+'_qd_info.sql', ''], ) )
-		p2 = Process( target = self.get_qd_mem, args = ( [prefix+'qd_mem_cpu.data', prefix+'_qd_mem.sql', ''], ) )
+		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', ''], ) )
+		p2 = Process( target = self.get_qd_mem, args = ( [prefix+'qd_mem_cpu.data', ''], ) )
 		p1.start()
 		p2.start()
 

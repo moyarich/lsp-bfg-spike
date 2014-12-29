@@ -151,14 +151,14 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			count = count + 1
 			time.sleep(interval)
 
+		time.sleep(15)
 		self.scp_data(filename = filename)
 		print 'file_no = ' + str(file_no)
 
 		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s_monitor.log" % (self.master_name, self.master_dir, self.hostname)
 		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print s,o
-
+		
+		os.system(cmd)
 		os.system('rm -rf /tmp/monitor_report/*')
 
 	
@@ -166,7 +166,21 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		cmd = "gpscp -h %s %s =:%s" % (self.master_name, filename, self.master_dir)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
-		print s,o
+		print 'return code = ', s, '\n', o
+
+		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (self.master_dir + os.sep + filename)
+		with open (self.hostname + '_qe_mem_cpu.copy', 'w') as fcopy:
+			fcopy.write(cmd)
+
+		cmd = "gpscp -h %s %s =:%s" % (self.master_name, self.hostname + '_qe_mem_cpu.copy', self.master_dir)
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print 'return code = ', s, '\n', o
+
+		cmd = 'gpssh -h %s -e "cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.master_name, self.master_dir, self.hostname + '_qe_mem_cpu.copy', self.hostname + '_qe_mem_cpu.copy')
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print 'return code = ', s, '\n', o
 
 
 monitor_seg = Monitor_seg()
