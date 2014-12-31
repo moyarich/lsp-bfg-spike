@@ -12,7 +12,7 @@ class Monitor_control():
 		self.current_query_record = []
 		
 		self.seg_script = ''
-		self.schema_script = ''
+		self.local_schema_script = ''
 
 		# prep report folder on master and tmp folder on seg host
 		self.init_time = datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -28,15 +28,24 @@ class Monitor_control():
 		self.count = 1
 		self.sep = '|'
 
+	def report(self, filename, msg, mode = 'a'):
+		if msg != '':
+		    fp = open(filename, mode)  
+		    fp.write(msg)
+		    fp.flush()
+		    fp.close()
+
+
+
 	def _get_monitor_seg_script_path(self):
 		for one_path in sys.path:
 			if one_path.endswith('monitor'):
 				self.seg_script = one_path + os.sep + 'MonitorSeg.py'
-				self.schema_script = one_path + os.sep + 'schema.sql'
+				self.local_schema_script = one_path + os.sep + 'schema.sql'
 				if os.path.exists(self.seg_script):
 					return 0
 		print 'not find MonitorSeg.py.'
-		sys.exit()
+		sys.exit(2)
 
 	def _get_seg_list(self, hostfile = 'hostfile_seg'):
 		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where content <> -1 and role = 'p';" '''
@@ -44,24 +53,26 @@ class Monitor_control():
 		
 		if status != 0:
 			print ('Unable to select gp_segment_configuration in monitor_control. ')
-			sys.exit()
+			sys.exit(2)
 		
 		with open(hostfile, 'w') as fnode:
 			fnode.write(output + '\n')
 
 	def setup(self):
+		self._get_monitor_seg_script_path()
+		
 		os.system( 'mkdir -p %s' % (self.report_folder + os.sep + 'seg_log') )
+		self._get_seg_list(hostfile = self.hostfile_seg)
+		
 		os.system( 'touch %s' % (self.run_lock) )
 		
-		self._get_monitor_seg_script_path()
-		self._get_seg_list(hostfile = self.hostfile_seg)
 		# make tmp dir on every seg host
 		cmd = " gpssh -f %s -e 'mkdir -p %s; touch %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder, self.seg_tmp_folder)
 		(s, o) = commands.getstatusoutput(cmd)
 		if s != 0:
 			print ('perp monitor report folder on seg host error.')
 			print s,o
-			sys.exit()
+			sys.exit(2)
 
 		# gpscp seg monitor script to every seg host
 		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
@@ -69,14 +80,7 @@ class Monitor_control():
 		if s != 0:
 			print ('gpscp monitor node script to every node error.')
 			print s,o
-			sys.exit()
-
-	def report(self, filename, msg, mode = 'a'):
-		if msg != '':
-		    fp = open(filename, mode)  
-		    fp.write(msg)
-		    fp.flush()
-		    fp.close()
+			sys.exit(2)
 	
 
 	'''
@@ -87,25 +91,30 @@ class Monitor_control():
 index  0     1    2    3      4     5   6    7       8      9      10               11                     12             13       14            15    16          
 	'''
 	
-	def __get_qd_mem(self):
+	def __get_qd_mem_cpu(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager'
 		grep_string1 = 'postgres'
 		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep %s | grep -vE "%s" ''' % (grep_string1, filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			print 'error code: ' + str(status) + ' output: ' + output + ' in qd_mem_cpu'
+			print 'return code: ' + str(status) + ' output: ' + output + ' in qd_mem_cpu'
 			return None
 		
 		line_item = output.splitlines()
 		output_string = ['', '']
 		now_time = str(datetime.now())
+		
 		for line in line_item:
 			temp = line.split()
 			if len(temp) < 17:
 				continue
-			# hostname, count, time_point, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
-			one_item = self.hostname + self.sep + str(self.count)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
-			temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
+			try:
+				# hostname, count, time_point, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
+				one_item = self.hostname + self.sep + str(self.count)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
+				temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
+			except Exception, e:
+				print temp
+				continue
 
 			output_string[0] = output_string[0] + one_item + '\n'
 			#output_string[1] = output_string[1] + sql_item + '\n'
@@ -113,13 +122,12 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		self.count = self.count + 1
 		return output_string
 	
-	def get_qd_mem(self, filename = ['', ''], interval = 5):
-		count = 0
-		while(os.path.exists(self.run_lock) and count < 300):
-
-			result = self.__get_qd_mem()
+	def get_qd_mem_cpu(self, filename = ['', ''], interval = 5):
+		stop_count = 0
+		while(os.path.exists(self.run_lock) and stop_count < 300):
+			result = self.__get_qd_mem_cpu()
 			if result is None:
-				count = count + 1
+				stop_count = stop_count + 1
 				time.sleep(1)
 				continue
 			
@@ -127,7 +135,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			#self.report(filename = filename[1], msg = result[1])
 
 			time.sleep(interval)
-
 
 
 	# record all query in memory
@@ -209,12 +216,12 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		return output_string
 
 	def get_qd_info(self, filename = ['', ''], interval = 1):
-		count = 0
-		while(os.path.exists(self.run_lock)):
+		stop_count = 0
+		while(os.path.exists(self.run_lock) and stop_count < 300):
 			result = self.__get_qd_info()
 			if result is None:
-				count = count + 1
-				time.sleep(2)
+				stop_count = stop_count + 1
+				time.sleep(1)
 				continue
 
 			self.report(filename = filename[0], msg = result[0])
@@ -270,7 +277,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 	def start(self):
 		self.setup()
-		cmd = "psql -d postgres -f %s" % (self.schema_script)
+		cmd = "psql -d postgres -f %s" % (self.local_schema_script)
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
 
@@ -280,7 +287,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 		prefix = self.report_folder + os.sep
 		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', ''], ) )
-		p2 = Process( target = self.get_qd_mem, args = ( [prefix+'qd_mem_cpu.data', ''], ) )
+		p2 = Process( target = self.get_qd_mem_cpu, args = ( [prefix+'qd_mem_cpu.data', ''], ) )
 		p1.start()
 		p2.start()
 
