@@ -1,8 +1,9 @@
 # workloads_list: tpch_ao_row, tpch_ao_co
 #workloads_list: tpch_ao_parquet_nocomp_nopart_load_run,tpch_ao_parquet_nocomp_nopart_run,tpch_ao_parquet_nocomp_nopart_load,tpch_ao_parquet_nocomp_nopart_no,tpch_ao_parquet_nocomp_nopart_run3
-workloads_list: tpch_ao_row
+workloads_list: tpch_ao_row,xmarq_ao_row
 
-workloads_mode: sequential
+#workloads_mode: sequential
+workloads_mode: concurrent
 
 cluster_name: HAWQ main performance on Geneva cluster
 
@@ -13,7 +14,7 @@ workloads_content:
       user: gpadmin
       table_setting:
           data_volume_type: PER_NODE
-          data_volume_size: 10
+          data_volume_size: 100
           append_only: true
           orientation: ROW
           compression_type: QuickLZ
@@ -24,89 +25,20 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 10
-      num_iteration: 10
+      num_iteration: 20
 
-    - workload_name: tpch_ao_parquet_nocomp_nopart_load_run
-      database_name: gpsqltest_tpch_parquet_nocomp_nopart
+     - workload_name: xmarq_ao_row
+      database_name: xmarq
       user: gpadmin
       table_setting:
-          data_volume_type: total
-          data_volume_size: 1
+          data_volume_type: PER_NODE
+          data_volume_size: 100
           append_only: true
-          orientation: PARQUET
-          row_group_size: 8388608
-          page_size: 1048576
+          orientation: COLUMN
           partitions: 0
-      load_data_flag: true
-      run_workload_flag: true
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
-
-    - workload_name: tpch_ao_parquet_nocomp_nopart_run
-      database_name: gpsqltest_tpch_parquet_nocomp_nopart
-      user: gpadmin
-      table_setting:
-          data_volume_type: total
-          data_volume_size: 1
-          append_only: true
-          orientation: PARQUET
-          row_group_size: 8388608
-          page_size: 1048576
-          partitions: 0
+          distributed_randomly: true
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
-      num_iteration: 1
-
-    - workload_name: tpch_ao_parquet_nocomp_nopart_load
-      database_name: gpsqltest_tpch_parquet_nocomp_nopart
-      user: gpadmin
-      table_setting:
-          data_volume_type: total
-          data_volume_size: 1
-          append_only: true
-          orientation: PARQUET
-          row_group_size: 8388608
-          page_size: 1048576
-          partitions: 0
-      load_data_flag: true
-      run_workload_flag: false
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
-
-    - workload_name: tpch_ao_parquet_nocomp_nopart_no
-      database_name: gpsqltest_tpch_parquet_nocomp_nopart
-      user: gpadmin
-      table_setting:
-          data_volume_type: total
-          data_volume_size: 1
-          append_only: true
-          orientation: PARQUET
-          row_group_size: 8388608
-          page_size: 1048576
-          partitions: 0
-      load_data_flag: false
-      run_workload_flag: false
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
-
-    - workload_name: tpch_ao_parquet_nocomp_nopart_run3
-      database_name: gpsqltest_tpch_parquet_nocomp_nopart
-      user: gpadmin
-      table_setting:
-          data_volume_type: total
-          data_volume_size: 1
-          append_only: true
-          orientation: PARQUET
-          row_group_size: 8388608
-          page_size: 1048576
-          partitions: 0
-      load_data_flag: true
-      run_workload_flag: true
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 3
-      num_iteration: 2
+      num_iteration: 20
