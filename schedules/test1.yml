@@ -27,7 +27,7 @@ workloads_content:
       num_concurrency: 10
       num_iteration: 20
 
-     - workload_name: xmarq_ao_row
+    - workload_name: xmarq_ao_row
       database_name: xmarq
       user: gpadmin
       table_setting:

@@ -1,6 +1,6 @@
 # workloads_list: tpch_ao_row, tpch_ao_co
 #workloads_list: tpch_ao_parquet_nocomp_nopart_load_run,tpch_ao_parquet_nocomp_nopart_run,tpch_ao_parquet_nocomp_nopart_load,tpch_ao_parquet_nocomp_nopart_no,tpch_ao_parquet_nocomp_nopart_run3
-workloads_list: tpch_ao_row
+workloads_list: tpch_ao_row,xmarq_ao_row
 
 workloads_mode: sequential
 
@@ -25,8 +25,8 @@ workloads_content:
       run_workload_mode: SEQUENTIAL
       num_concurrency: 0
       num_iteration: 0
-
-     - workload_name: xmarq_ao_row
+      
+    - workload_name: xmarq_ao_row
       database_name: xmarq
       user: gpadmin
       table_setting:
