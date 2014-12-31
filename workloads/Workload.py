@@ -251,8 +251,8 @@ class Workload(object):
         if self.append_only in [None, True]:
             tbl_suffix = tbl_suffix + 'ao'
             sql_suffix = sql_suffix + 'appendonly = true'
-            self.check_condition += " and wl_appendonly = %s" % (str(self.append_only).upper())
-            self.wl_values += ", '%s'" % (str(self.append_only).upper())
+            self.check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), str(self.distributed_randomly).upper() )
+            self.wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), str(self.distributed_randomly).upper())
 
             tbl_suffix = tbl_suffix + '_' + self.orientation
             sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
@@ -329,7 +329,7 @@ class Workload(object):
             self.wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = self.check_condition)
             if self.wl_id is None:
                 check.insert_new_record(table_name = 'hst.workload',
-                                        col_list = 'wl_name, wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order',
+                                        col_list = 'wl_name, wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_disrandomly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order',
                                         values = self.wl_values)
                 self.wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
                 
