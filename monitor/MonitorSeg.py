@@ -4,6 +4,19 @@ from datetime import datetime
 import subprocess
 from multiprocessing import Process
 
+gphome = os.getenv('GPHOME')
+if gphome.endswith('/'):
+	gphome = gphome[:-1]
+pexpect_dir = gphome + os.sep + 'bin' + os.sep + 'lib'
+if pexpect_dir not in sys.path:
+    sys.path.append(pexpect_dir)
+
+try:
+    import pexpect
+except ImportError:
+    sys.stderr.write('scp ssh needs pexpect\n')
+    sys.exit(2)
+
 class Monitor_seg():
 
 	def __init__(self, timeout = 120):
@@ -24,6 +37,38 @@ class Monitor_seg():
 		    fp.flush()
 		    fp.close()
 
+	# ssh gpadmin@gpdb63.qa.dh.greenplum.com -e "pwd;ls"
+	# scp qe_mem_cpu.data gpadmin@gpdb63.qa.dh.greenplum.com:~/
+	def ssh_command(self, cmd, password = 'changeme'):
+	    ssh_newkey = 'Are you sure you want to continue connecting'
+	    child = pexpect.spawn(cmd, timeout = 600)
+	    try:
+	    	i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password:'])
+	    except Exception,e:
+	    	return child.before
+	    else:
+		    if i == 0: 
+		        print 'ERROR!'
+		        print 'SSH could not login. Here is what SSH said:'
+		        print child.before, child.after
+		        return None
+		    # SSH does not have the public key. Just accept it.
+		    if i == 1: 
+		        child.sendline ('yes')
+		        child.expect ('password: ')
+		        j = child.expect([pexpect.TIMEOUT, 'password: '])
+		        child.sendline(password)
+		        # Timeout
+		        if j == 0: 
+		            print 'ERROR!'
+		            print 'SSH could not login. Here is what SSH said:'
+		            print child.before, child.after
+		            return None
+		    if i == 2:
+		    	child.sendline(password)
+	    
+	    child.expect(pexpect.EOF)
+	    return child.before
 
 
 	'''
@@ -157,10 +202,10 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		print cmd
 		os.system(cmd)
 		
-		os.system('rm -rf /tmp/monitor_report/*')
+		#os.system('rm -rf /tmp/monitor_report/*')
 
 	
-	def scp_data(self, filename):
+	def gpscp_data(self, filename):
 		cmd = "gpscp -h %s %s =:%s" % (self.master_name, filename, self.master_dir)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
@@ -180,6 +225,27 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
+
+	def scp_data(self, filename):
+		cmd = "scp %s gpadmin@%s:%s" % (filename, self.master_name, self.master_dir)
+		print cmd
+		result = self.ssh_command(cmd = cmd)
+		print result
+
+		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (self.master_dir + os.sep + filename)
+		copy_file = self.hostname + '_qe_mem_cpu.copy'
+		with open (copy_file, 'w') as fcopy:
+			fcopy.write(cmd)
+
+		cmd = "scp %s gpadmin@%s:%s" % (copy_file, self.master_name, self.master_dir)
+		print cmd
+		result = self.ssh_command(cmd = cmd)
+		print result
+
+		cmd = 'ssh gpadmin@%s "cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.master_name, self.master_dir, copy_file, copy_file)
+		print cmd
+		result = self.ssh_command(cmd = cmd)
+		print result
 
 
 monitor_seg = Monitor_seg()
