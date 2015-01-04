@@ -55,15 +55,15 @@ class Monitor_seg():
 		    # SSH does not have the public key. Just accept it.
 		    if i == 1: 
 		        child.sendline ('yes')
-		        child.expect ('password: ')
 		        j = child.expect([pexpect.TIMEOUT, 'password: '])
-		        child.sendline(password)
 		        # Timeout
 		        if j == 0: 
 		            print 'ERROR!'
 		            print 'SSH could not login. Here is what SSH said:'
 		            print child.before, child.after
 		            return None
+		        else:
+		        	child.sendline(password)
 		    if i == 2:
 		    	child.sendline(password)
 	    
