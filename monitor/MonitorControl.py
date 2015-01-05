@@ -322,20 +322,19 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		#self.report(filename = filename[1], msg = output_string[1])
 
 
-
 	def stop(self):
 		os.system('rm -rf %s' % (self.run_lock))
 		time.sleep(10)
 
-		#cmd = '''psql -d postgres -c "COPY moni.qd_info FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_info.data')
-		#print cmd
-		#(s, o) = commands.getstatusoutput(cmd)
-		#print 'return code = ', s, '\n', o
+		cmd = '''psql -d postgres -c "COPY moni.qd_info FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_info.data')
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print 'return code = ', s, '\n', o
 
-		#cmd = '''psql -d postgres -c "COPY moni.qd_mem_cpu FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_mem_cpu.data')
-		#print cmd
-		#(s, o) = commands.getstatusoutput(cmd)
-		#print 'return code = ', s, '\n', o
+		cmd = '''psql -d postgres -c "COPY moni.qd_mem_cpu FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_mem_cpu.data')
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print 'return code = ', s, '\n', o
 		
 		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
 		print cmd
@@ -346,7 +345,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def start(self):
 		self.setup()
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s> monitor.log 2>&1 &' " % (pexpect_dir, self.hostfile_seg, self.seg_tmp_folder, self.report_folder, self.hostname, self.mode, self.remote_host)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s> monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.report_folder, self.hostname, self.mode, self.remote_host)
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
 
@@ -356,7 +355,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		p1.start()
 		p2.start()
 
-monitor_control = Monitor_control(mode = 'remote')
+monitor_control = Monitor_control()#(mode = 'remote')
 
 if __name__ == "__main__" :
 	monitor_control.start()

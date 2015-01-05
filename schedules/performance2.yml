@@ -1,0 +1,83 @@
+#workloads_list:  tpch_parquet_10gpn_snappy_part, tpch_parquet_500gpn_snappy_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_500gpn_quicklz1_nopart
+workloads_list: tpch_parquet_500gpn_snappy_part, tpch_row_500gpn_quicklz1_nopart
+
+#workloads_mode: sequential
+workloads_mode: concurrent
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+
+    - workload_name: tpch_parquet_10gpn_snappy_part
+      database_name: tpch_parquet_10gpn_snappy_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 10
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+          partitions: 128
+          distributed_randomly: false
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_500gpn_snappy_part
+      database_name: tpch_parquet_500gpn_snappy_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 500
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+          partitions: 128
+          distributed_randomly: false
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 5
+      num_iteration: 1
+
+    - workload_name: tpch_row_10gpn_quicklz1_nopart
+      database_name: tpch_row_10gpn_quicklz1_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 10
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 0
+          distributed_randomly: false
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_row_500gpn_quicklz1_nopart
+      database_name: tpch_row_500gpn_quicklz1_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 500
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 0
+          distributed_randomly: false
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 5
+      num_iteration: 1

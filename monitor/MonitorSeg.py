@@ -134,7 +134,7 @@ index 0      1      2   3    4     5   6   7   8    9      10     11         12 
  	  1035  0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con82 seg0 cmd2 slice1 MPPEXEC SELECT
 index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
-	def __get_qe_mem_cpu_by_ps(self):
+	def __get_qe_mem_cpu(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
@@ -173,11 +173,11 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		return output_string
 	
 	
-	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
+	def get_qe_data(self, data_type = 'qe_mem_cpu', interval = 5):
 		stop_count = 0
 		file_no = 1
 		count = 0   # control scp data with self.timeout
-		filename = self.hostname + '_qe_mem_cpu_' + str(file_no) + '.data'
+		filename = self.hostname + '_' + data_type + '_' + str(file_no)
 		
 		while(os.path.exists('run.lock') and stop_count < 300):
 			if count == self.timeout:
@@ -185,9 +185,12 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 				p1.start()
 				count = 0
 				file_no = file_no + 1
-				filename = self.hostname + '_qe_mem_cpu_' + str(file_no) + '.data'
+				filename = self.hostname + '_' + data_type + '_' + str(file_no)
 			
-			result = self.__get_qe_mem_cpu_by_ps()
+			#function = 'self.__get_' + data_type + '()'
+			#print function
+			#print '111111111111111111111111111111111111111'
+			result = self.__get_qe_mem_cpu()
 			if result is None:
 				stop_count = stop_count + 1
 				time.sleep(1)
@@ -206,7 +209,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		print cmd
 		os.system(cmd)
 		
-		os.system('rm -rf /tmp/monitor_report/*')
+		#os.system('rm -rf /tmp/monitor_report/*')
 
 	
 	def gpscp_data(self, filename):
@@ -265,6 +268,6 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	#'_' + datetime.now().strftime('%Y%m%d-%H%M%S') + 
-	monitor_seg.get_qe_mem_cpu(filename = [monitor_seg.hostname + '_qe_mem_cpu.data', ''], interval = 5)
+	p1 = Process( target = monitor_seg.get_qe_data, args = ('qe_mem_cpu', 5) )
+	p1.start()
 	
