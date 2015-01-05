@@ -17,7 +17,8 @@ CREATE TABLE moni.qd_info
 --	pid								INT,
 	user_name						VARCHAR(128),
 	db_name							VARCHAR(128)
-) DISTRIBUTED RANDOMLY;
+) ;
+--DISTRIBUTED RANDOMLY;
 
 -- 2.2 qd_mem_cpu
 CREATE TABLE moni.qd_mem_cpu
@@ -33,7 +34,8 @@ CREATE TABLE moni.qd_mem_cpu
 	rss								INT,
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
-) DISTRIBUTED RANDOMLY;
+) ;
+--DISTRIBUTED RANDOMLY;
 
 -- 2.3 qe_mem_cpu
 CREATE TABLE moni.qe_mem_cpu
@@ -50,6 +52,7 @@ CREATE TABLE moni.qe_mem_cpu
 	rss								INT,
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
-) DISTRIBUTED RANDOMLY;
+) ;
+--DISTRIBUTED RANDOMLY;
 
 --COPY moni.qe_mem_cpu FROM 'FNAME' WITH DELIMITER '|';

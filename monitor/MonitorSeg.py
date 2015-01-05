@@ -22,6 +22,13 @@ class Monitor_seg():
 	def __init__(self, timeout = 120):
 		self.master_dir = sys.argv[1]
 		self.master_name = sys.argv[2]
+		self.remote_host = ''
+
+		self.local = True
+		if sys.argv[3] == 'remote':
+			self.local = False
+			self.remote_host = sys.argv[4]
+		
 		self.pwd = os.getcwd()
 		self.count = 1
 		(s,o) = commands.getstatusoutput('hostname')
@@ -202,7 +209,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		print cmd
 		os.system(cmd)
 		
-		#os.system('rm -rf /tmp/monitor_report/*')
+		os.system('rm -rf /tmp/monitor_report/*')
 
 	
 	def gpscp_data(self, filename):
@@ -226,23 +233,31 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
 
+	
 	def scp_data(self, filename):
-		cmd = "scp %s gpadmin@%s:%s" % (filename, self.master_name, self.master_dir)
+		if self.local:
+			host = self.master_name
+			folder = self.master_dir
+		else:
+			host = self.remote_host
+			folder = self.pwd
+		
+		cmd = "scp %s gpadmin@%s:%s" % (filename, host, folder)
 		print cmd
 		result = self.ssh_command(cmd = cmd)
 		print result
 
-		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (self.master_dir + os.sep + filename)
+		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (folder + os.sep + filename)
 		copy_file = self.hostname + '_qe_mem_cpu.copy'
 		with open (copy_file, 'w') as fcopy:
 			fcopy.write(cmd)
 
-		cmd = "scp %s gpadmin@%s:%s" % (copy_file, self.master_name, self.master_dir)
+		cmd = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
 		print cmd
 		result = self.ssh_command(cmd = cmd)
 		print result
 
-		cmd = 'ssh gpadmin@%s "cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.master_name, self.master_dir, copy_file, copy_file)
+		cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, folder, copy_file, copy_file)
 		print cmd
 		result = self.ssh_command(cmd = cmd)
 		print result

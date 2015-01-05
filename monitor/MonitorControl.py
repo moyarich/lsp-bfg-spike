@@ -4,10 +4,25 @@ from datetime import datetime
 from multiprocessing import Process
 from pygresql import pg
 
+gphome = os.getenv('GPHOME')
+if gphome.endswith('/'):
+	gphome = gphome[:-1]
+pexpect_dir = gphome + os.sep + 'bin' + os.sep + 'lib'
+if pexpect_dir not in sys.path:
+    sys.path.append(pexpect_dir)
+
+try:
+    import pexpect
+except ImportError:
+    sys.stderr.write('scp ssh needs pexpect\n')
+    sys.exit(2)
+
 
 class Monitor_control():
 	
-	def __init__(self):
+	def __init__(self, mode = 'local'):
+		self.mode = mode
+		self.remote_host = 'gpdb63.qa.dh.greenplum.com'
 		self.query_record = {}
 		self.current_query_record = []
 		
@@ -34,6 +49,39 @@ class Monitor_control():
 		    fp.write(msg)
 		    fp.flush()
 		    fp.close()
+
+	# ssh gpadmin@gpdb63.qa.dh.greenplum.com -e "pwd;ls"
+	# scp qe_mem_cpu.data gpadmin@gpdb63.qa.dh.greenplum.com:~/
+	def ssh_command(self, cmd, password = 'changeme'):
+	    ssh_newkey = 'Are you sure you want to continue connecting'
+	    child = pexpect.spawn(cmd, timeout = 600)
+	    try:
+	    	i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password:'])
+	    except Exception,e:
+	    	return child.before
+	    else:
+		    if i == 0: 
+		        print 'ERROR!'
+		        print 'SSH could not login. Here is what SSH said:'
+		        print child.before, child.after
+		        return None
+		    # SSH does not have the public key. Just accept it.
+		    if i == 1: 
+		        child.sendline ('yes')
+		        j = child.expect([pexpect.TIMEOUT, 'password: '])
+		        # Timeout
+		        if j == 0: 
+		            print 'ERROR!'
+		            print 'SSH could not login. Here is what SSH said:'
+		            print child.before, child.after
+		            return None
+		        else:
+		        	child.sendline(password)
+		    if i == 2:
+		    	child.sendline(password)
+	    
+	    child.expect(pexpect.EOF)
+	    return child.before
 
 
 
@@ -81,6 +129,26 @@ class Monitor_control():
 			print ('gpscp monitor node script to every node error.')
 			print s,o
 			sys.exit(2)
+
+		if self.mode == 'remote':
+			cmd = 'ssh gpadmin@%s "mkdir -p %s"' % (self.remote_host, self.seg_tmp_folder)
+			print cmd
+			result = self.ssh_command(cmd = cmd)
+			print result
+
+			cmd = "scp %s gpadmin@%s:%s" % (self.local_schema_script, self.remote_host, self.seg_tmp_folder)
+			print cmd
+			result = self.ssh_command(cmd = cmd)
+			print result
+
+			cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f schema.sql"' % (self.remote_host, self.seg_tmp_folder)
+			print cmd
+			result = self.ssh_command(cmd = cmd)
+			print result
+		else:
+			cmd = "psql -d postgres -f %s" % (self.local_schema_script)
+			(s, o) = commands.getstatusoutput(cmd)
+			print 'return code = ', s, '\n', o
 	
 
 	'''
@@ -259,15 +327,15 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		os.system('rm -rf %s' % (self.run_lock))
 		time.sleep(10)
 
-		cmd = '''psql -d postgres -c "COPY moni.qd_info FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_info.data')
-		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
+		#cmd = '''psql -d postgres -c "COPY moni.qd_info FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_info.data')
+		#print cmd
+		#(s, o) = commands.getstatusoutput(cmd)
+		#print 'return code = ', s, '\n', o
 
-		cmd = '''psql -d postgres -c "COPY moni.qd_mem_cpu FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_mem_cpu.data')
-		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
+		#cmd = '''psql -d postgres -c "COPY moni.qd_mem_cpu FROM '%s' WITH DELIMITER '|';" ''' % (self.report_folder + os.sep + 'qd_mem_cpu.data')
+		#print cmd
+		#(s, o) = commands.getstatusoutput(cmd)
+		#print 'return code = ', s, '\n', o
 		
 		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
 		print cmd
@@ -277,11 +345,8 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 	def start(self):
 		self.setup()
-		cmd = "psql -d postgres -f %s" % (self.local_schema_script)
-		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder, self.hostname)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s> monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, self.report_folder, self.hostname, self.mode, self.remote_host)
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
 
@@ -291,7 +356,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		p1.start()
 		p2.start()
 
-monitor_control = Monitor_control()
+monitor_control = Monitor_control(mode = 'remote')
 
 if __name__ == "__main__" :
 	monitor_control.start()
