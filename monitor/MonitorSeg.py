@@ -4,10 +4,7 @@ from datetime import datetime
 import subprocess
 from multiprocessing import Process
 
-gphome = os.getenv('GPHOME')
-if gphome.endswith('/'):
-	gphome = gphome[:-1]
-pexpect_dir = gphome + os.sep + 'bin' + os.sep + 'lib'
+pexpect_dir = sys.argv[1]
 if pexpect_dir not in sys.path:
     sys.path.append(pexpect_dir)
 
@@ -20,21 +17,21 @@ except ImportError:
 class Monitor_seg():
 
 	def __init__(self, timeout = 120):
-		self.master_dir = sys.argv[1]
-		self.master_name = sys.argv[2]
-		self.remote_host = ''
+		self.master_folder = sys.argv[2]
+		self.master_host = sys.argv[3]
+		self.remote_host = 'gpdb63.qa.dh.greenplum.com'
 
 		self.local = True
-		if sys.argv[3] == 'remote':
+		if sys.argv[4] == 'remote':
 			self.local = False
-			self.remote_host = sys.argv[4]
+			self.remote_host = sys.argv[5]
 		
 		self.pwd = os.getcwd()
-		self.count = 1
-		(s,o) = commands.getstatusoutput('hostname')
+		(s, o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
-		self.sep = '|'
 		self.timeout = timeout
+		self.count = 1
+		self.sep = '|'
 
 
 	def report(self, filename, msg):
@@ -129,6 +126,7 @@ index 0      1      2   3    4     5   6   7   8    9      10     11         12 
 	
 
 	'''
+	ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager"
 	   pid %CPU  VSZ  RSS  %MEM STATE CMD          
 	  1034  1.0 656480 16676  0.4 S postgres: port 40001, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(51217) con64 seg1 idle
 	  1676  0.0 538684 12280  0.3 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(37854) con81 seg0 cmd6 MPPEXEC INSERT             
@@ -138,9 +136,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	'''
 	def __get_qe_mem_cpu_by_ps(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
-		grep_string1 = 'postgres'
-		grep_string2 = 'seg'
-		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep %s | grep %s | grep -vE "%s" ''' % (grep_string1, grep_string2, filter_string)
+		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'return code: ' + str(status) + ' output: ' + output + ' in qe_mem_cpu'
@@ -180,8 +176,9 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	def get_qe_mem_cpu(self, filename = ['', ''], interval = 5):
 		stop_count = 0
 		file_no = 1
-		count = 0
+		count = 0   # control scp data with self.timeout
 		filename = self.hostname + '_qe_mem_cpu_' + str(file_no) + '.data'
+		
 		while(os.path.exists('run.lock') and stop_count < 300):
 			if count == self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
@@ -205,7 +202,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		self.scp_data(filename = filename)
 		print 'file_no = ', file_no
 
-		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (self.master_name, self.master_dir, self.hostname)
+		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (self.master_host, self.master_folder, self.hostname)
 		print cmd
 		os.system(cmd)
 		
@@ -213,22 +210,22 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 
 	
 	def gpscp_data(self, filename):
-		cmd = "gpscp -h %s %s =:%s" % (self.master_name, filename, self.master_dir)
+		cmd = "gpscp -h %s %s =:%s" % (self.master_host, filename, self.master_folder)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
 
-		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (self.master_dir + os.sep + filename)
+		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (self.master_folder + os.sep + filename)
 		copy_file = self.hostname + '_qe_mem_cpu.copy'
 		with open (copy_file, 'w') as fcopy:
 			fcopy.write(cmd)
 
-		cmd = "gpscp -h %s %s =:%s" % (self.master_name, copy_file, self.master_dir)
+		cmd = "gpscp -h %s %s =:%s" % (self.master_host, copy_file, self.master_folder)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
 
-		cmd = 'gpssh -h %s -e "cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.master_name, self.master_dir, copy_file, copy_file)
+		cmd = 'gpssh -h %s -e "cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.master_host, self.master_folder, copy_file, copy_file)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
@@ -236,11 +233,13 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	
 	def scp_data(self, filename):
 		if self.local:
-			host = self.master_name
-			folder = self.master_dir
+			host = self.master_host
+			folder = self.master_folder
+			source = ''
 		else:
 			host = self.remote_host
 			folder = self.pwd
+			source = 'source ~/psql.sh;'
 		
 		cmd = "scp %s gpadmin@%s:%s" % (filename, host, folder)
 		print cmd
@@ -257,7 +256,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		result = self.ssh_command(cmd = cmd)
 		print result
 
-		cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, folder, copy_file, copy_file)
+		cmd = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
 		print cmd
 		result = self.ssh_command(cmd = cmd)
 		print result
