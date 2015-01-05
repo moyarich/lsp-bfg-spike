@@ -1,7 +1,6 @@
 workloads_list:  tpch_parquet_10gpn_snappy_part, tpch_parquet_500gpn_snappy_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_500gpn_quicklz1_nopart
 
-#workloads_mode: sequential
-workloads_mode: concurrent
+workloads_mode: sequential
 
 cluster_name: HAWQ main performance on Geneva cluster
 
