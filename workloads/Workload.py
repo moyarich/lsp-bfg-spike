@@ -289,7 +289,7 @@ class Workload(object):
                     self.page_size = 1048576
 
                 sql_suffix = sql_suffix + ', ' + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
-                self.check_condition += " and wl_row_group_size = %d, and wl_page_size = %d" % (self.row_group_size, self.page_size)
+                self.check_condition += " and wl_row_group_size = %d and wl_page_size = %d" % (self.row_group_size, self.page_size)
                 self.wl_values += ", %d, %d" % (self.row_group_size, self.page_size)
 
                 if self.compression_type == 'SNAPPY':
