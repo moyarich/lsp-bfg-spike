@@ -159,7 +159,7 @@ class Monitor_control():
 index  0     1    2    3      4     5   6    7       8      9      10               11                     12             13       14            15    16          
 	'''
 	
-	def __get_qd_mem_cpu(self):
+	def _get_qd_mem_cpu(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager'
 		grep_string1 = 'postgres'
 		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep %s | grep -vE "%s" ''' % (grep_string1, filter_string)
@@ -190,10 +190,10 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		self.count = self.count + 1
 		return output_string
 	
-	def get_qd_mem_cpu(self, filename = ['', ''], interval = 5):
+	def get_qd_data(self, filename = ['', ''], interval = 5):
 		stop_count = 0
 		while(os.path.exists(self.run_lock) and stop_count < 300):
-			result = self.__get_qd_mem_cpu()
+			result = self._get_qd_mem_cpu()
 			if result is None:
 				stop_count = stop_count + 1
 				time.sleep(1)
@@ -206,7 +206,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 
 	# record all query in memory
-	def __get_qd_info1(self):
+	def _get_qd_info1(self):
 		# -R '***' set record separator '***' (default: newline)
 		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,procpid,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
 		#cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity order by sess_id,query_start;" '''
@@ -242,7 +242,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		return output_string
 
 	# only record current query in memory
-	def __get_qd_info(self):
+	def _get_qd_info(self):
 		now_time = datetime.now()
 		# -R '***' set record separator '***' (default: newline)
 		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
@@ -286,7 +286,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def get_qd_info(self, filename = ['', ''], interval = 1):
 		stop_count = 0
 		while(os.path.exists(self.run_lock) and stop_count < 300):
-			result = self.__get_qd_info()
+			result = self._get_qd_info()
 			if result is None:
 				stop_count = stop_count + 1
 				time.sleep(1)
@@ -351,7 +351,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 		prefix = self.report_folder + os.sep
 		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', ''], ) )
-		p2 = Process( target = self.get_qd_mem_cpu, args = ( [prefix+'qd_mem_cpu.data', ''], ) )
+		p2 = Process( target = self.get_qd_data, args = ( [prefix+'qd_mem_cpu.data', ''], ) )
 		p1.start()
 		p2.start()
 

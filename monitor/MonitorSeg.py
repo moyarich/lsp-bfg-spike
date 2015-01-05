@@ -83,7 +83,7 @@ class Monitor_seg():
 	30713 gpadmin   39  19  526m  10m 6604 S  0.0  0.3   0:00.00 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(38015) con1140 seg3 idle 
 index 0      1      2   3    4     5   6   7   8    9      10     11         12   13     14              15                       16            17     18   19    20     21      22
 	'''
-	def __get_qe_mem_cpu_by_top(self):
+	def _get_qe_mem_cpu_by_top(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		grep_string1 = 'postgres'
 		grep_string2 = 'seg'
@@ -134,7 +134,7 @@ index 0      1      2   3    4     5   6   7   8    9      10     11         12 
  	  1035  0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con82 seg0 cmd2 slice1 MPPEXEC SELECT
 index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
-	def __get_qe_mem_cpu(self):
+	def _get_qe_mem_cpu(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
@@ -173,11 +173,11 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		return output_string
 	
 	
-	def get_qe_data(self, data_type = 'qe_mem_cpu', interval = 5):
+	def get_qe_data(self, function = 'self._get_qe_mem_cpu()', interval = 5):
 		stop_count = 0
 		file_no = 1
 		count = 0   # control scp data with self.timeout
-		filename = self.hostname + '_' + data_type + '_' + str(file_no)
+		filename = self.hostname + '_' + function[10:-2] + '_' + str(file_no) + '.data'
 		
 		while(os.path.exists('run.lock') and stop_count < 300):
 			if count == self.timeout:
@@ -185,12 +185,9 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 				p1.start()
 				count = 0
 				file_no = file_no + 1
-				filename = self.hostname + '_' + data_type + '_' + str(file_no)
-			
-			#function = 'self.__get_' + data_type + '()'
-			#print function
-			#print '111111111111111111111111111111111111111'
-			result = self.__get_qe_mem_cpu()
+				filename = self.hostname + '_' + function[function.find('qe'):-2] + '_' + str(file_no) + '.data'
+
+			result = eval(function)
 			if result is None:
 				stop_count = stop_count + 1
 				time.sleep(1)
@@ -211,7 +208,40 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		
 		#os.system('rm -rf /tmp/monitor_report/*')
 
-	
+
+	def scp_data(self, filename):
+		if self.local:
+			host = self.master_host
+			folder = self.master_folder
+			source = ''
+		else:
+			host = self.remote_host
+			folder = self.pwd
+			source = 'source ~/psql.sh;'
+		
+		cmd = "scp %s gpadmin@%s:%s" % (filename, host, folder)
+		print cmd
+		result = self.ssh_command(cmd = cmd)
+		print result
+
+		table_name = filename[filename.find('qe'):filename.rindex('_')]
+
+		cmd = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
+		copy_file = self.hostname + '_qe_mem_cpu.copy'
+		with open (copy_file, 'w') as fcopy:
+			fcopy.write(cmd)
+
+		cmd = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
+		print cmd
+		result = self.ssh_command(cmd = cmd)
+		print result
+
+		cmd = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
+		print cmd
+		result = self.ssh_command(cmd = cmd)
+		print result
+
+
 	def gpscp_data(self, filename):
 		cmd = "gpscp -h %s %s =:%s" % (self.master_host, filename, self.master_folder)
 		print cmd
@@ -233,41 +263,10 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		(s, o) = commands.getstatusoutput(cmd)
 		print 'return code = ', s, '\n', o
 
-	
-	def scp_data(self, filename):
-		if self.local:
-			host = self.master_host
-			folder = self.master_folder
-			source = ''
-		else:
-			host = self.remote_host
-			folder = self.pwd
-			source = 'source ~/psql.sh;'
-		
-		cmd = "scp %s gpadmin@%s:%s" % (filename, host, folder)
-		print cmd
-		result = self.ssh_command(cmd = cmd)
-		print result
-
-		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (folder + os.sep + filename)
-		copy_file = self.hostname + '_qe_mem_cpu.copy'
-		with open (copy_file, 'w') as fcopy:
-			fcopy.write(cmd)
-
-		cmd = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
-		print cmd
-		result = self.ssh_command(cmd = cmd)
-		print result
-
-		cmd = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
-		print cmd
-		result = self.ssh_command(cmd = cmd)
-		print result
-
 
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	p1 = Process( target = monitor_seg.get_qe_data, args = ('qe_mem_cpu', 5) )
+	p1 = Process( target = monitor_seg.get_qe_data, args = ('self._get_qe_mem_cpu()', 5) )
 	p1.start()
 	
