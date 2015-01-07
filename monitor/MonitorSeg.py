@@ -32,6 +32,7 @@ class Monitor_seg():
 		self.timeout = timeout
 		self.count = 1
 		self.sep = '|'
+		self.interval = 
 
 
 	def report(self, filename, msg):
@@ -74,57 +75,7 @@ class Monitor_seg():
 	    child.expect(pexpect.EOF)
 	    return child.before
 
-
-	'''
-	 PID    USER    PR  NI  VIRT  RES  SHR S %CPU %MEM    TIME+  COMMAND
-	30705 gpadmin   39  19  528m  12m 6408 S  0.0  0.3   0:00.00 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(38011) con1140 seg6 cmd2 slice4 MPPEXEC SELECT
-	35019 gpadmin   39  19  526m 9944 5964 S  0.0  0.3   0:00.00 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(40991) con1376 seg0 cmd6 MPPEXEC INSERT                                                                                                                                                   
-    35021 gpadmin   39  19  526m 9.8m 5996 S  0.0  0.3   0:00.00 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(40992) con1376 seg0 cmd6 slice1 MPPEXEC INSERT                                                                                                                                            
-	30713 gpadmin   39  19  526m  10m 6604 S  0.0  0.3   0:00.00 postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(38015) con1140 seg3 idle 
-index 0      1      2   3    4     5   6   7   8    9      10     11         12   13     14              15                       16            17     18   19    20     21      22
-	'''
-	def _get_qe_mem_cpu_by_top(self):
-		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
-		grep_string1 = 'postgres'
-		grep_string2 = 'seg'
-		cmd = ''' top -n 1 -b -c | grep postgres | grep seg | grep -vE "bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|resource manager" ''' 
-		p = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
-		output, error = p.communicate()
-		
-		if error is not None or output == '':
-			print 'error: ' + str(error) + ' output: ' + output + 'in qe_mem_cpu'
-			return None
-		
-		line_item = output.splitlines()
-		now_time = str(datetime.now())
-		output_string = ['', '']
-		
-		for line in line_item:
-			temp = line.split()
-			if len(temp) < 20:
-				continue
-
-			# hostname, count, time_point, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
-			if temp[19] == 'idle':
-				one_item = self.hostname + '\t' + str(self.count) + '\t' + now_time + '\t' + temp[0] + '\t' + temp[17] + '\t' + temp[18] + '\t' + temp[19] + '\t' + 'NUll' + '\t' + 'NULL' + '\t' + temp[5]+ '\t' + temp[9] + '\t' + temp[8]
-			elif temp[20].find('slice') != -1:
-				one_item = self.hostname + '\t' + str(self.count) + '\t' + now_time + '\t' + temp[0] + '\t' + temp[17] + '\t' + temp[18] + '\t' + temp[19] + '\t' + temp[20] + '\t' + temp[22] + '\t' + temp[5] + '\t' + temp[9] + '\t' + temp[8]
-			else:
-				one_item = self.hostname + '\t' + str(self.count) + '\t' + now_time + '\t' + temp[0] + '\t' + temp[17] + '\t' + temp[18] + '\t' + temp[19 ] + '\t' + 'NULL' + '\t' + temp[21] + '\t' + temp[5] + '\t' + temp[9] + '\t' + temp[8]
-
-			col_item = one_item.split('\t')
-
-			sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, '%s', %s, %s, '%s', '%s', '%s', '%s', %s, %s, %s);" \
-				% (col_item[0], col_item[1], col_item[2], col_item[3], col_item[4][3:], col_item[5], col_item[6], col_item[7], col_item[8], col_item[9], col_item[10], col_item[11])
-
-			output_string[0] = output_string[0] + '\n' + one_item
-			output_string[1] = output_string[1] + '\n' + sql_item
-		
-		self.count = self.count + 1
-		return output_string
-
 	
-
 	'''
 	ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager"
 	   pid %CPU  VSZ  RSS  %MEM STATE CMD          
@@ -219,49 +170,36 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			folder = self.pwd
 			source = 'source ~/psql.sh;'
 		
-		cmd = "scp %s gpadmin@%s:%s" % (filename, host, folder)
-		print cmd
-		result = self.ssh_command(cmd = cmd)
-		print result
+		count = 0
+		while (count < 10):
+			print 'scp date try times = ' + str(count + 1)
+			time.sleep(2*count + 1)
 
-		table_name = filename[filename.find('qe'):filename.rindex('_')]
+			cmd = "scp %s gpadmin@%s:%s" % (filename, host, folder)
+			print cmd
+			result = self.ssh_command(cmd = cmd)
+			print result
 
-		cmd = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
-		copy_file = self.hostname + '_qe_mem_cpu.copy'
-		with open (copy_file, 'w') as fcopy:
-			fcopy.write(cmd)
+			table_name = filename[filename.find('qe'):filename.rindex('_')]
 
-		cmd = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
-		print cmd
-		result = self.ssh_command(cmd = cmd)
-		print result
+			cmd = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
+			copy_file = self.hostname + '_qe_mem_cpu.copy'
+			with open (copy_file, 'w') as fcopy:
+				fcopy.write(cmd)
 
-		cmd = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
-		print cmd
-		result = self.ssh_command(cmd = cmd)
-		print result
+			cmd = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
+			print cmd
+			result = self.ssh_command(cmd = cmd)
+			print result
 
-
-	def gpscp_data(self, filename):
-		cmd = "gpscp -h %s %s =:%s" % (self.master_host, filename, self.master_folder)
-		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
-
-		cmd = "COPY moni.qe_mem_cpu FROM '%s' WITH DELIMITER '|';" % (self.master_folder + os.sep + filename)
-		copy_file = self.hostname + '_qe_mem_cpu.copy'
-		with open (copy_file, 'w') as fcopy:
-			fcopy.write(cmd)
-
-		cmd = "gpscp -h %s %s =:%s" % (self.master_host, copy_file, self.master_folder)
-		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
-
-		cmd = 'gpssh -h %s -e "cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.master_host, self.master_folder, copy_file, copy_file)
-		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
+			cmd = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
+			print cmd
+			result = self.ssh_command(cmd = cmd)
+			if str(result).find('COPY') != -1:
+				print result
+				break
+			else:
+				count += 1
 
 
 monitor_seg = Monitor_seg()

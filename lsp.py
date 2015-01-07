@@ -90,7 +90,7 @@ except ImportError:
 
 import gl
 
-from MonitorControl import monitor_control
+from MonitorControl import Monitor_control
 
 ###########################################################################
 #  Try to run if user launches this script directly
@@ -196,6 +196,7 @@ if __name__ == '__main__':
             exit(-1)
 
         if monitor_flag:
+            monitor_control = Monitor_control()
             p1 = Process(target = monitor_control.start)
             p1.start()
             time.sleep(30)

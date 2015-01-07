@@ -20,8 +20,9 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local'):
+	def __init__(self, mode = 'local', interval = 5):
 		self.mode = mode
+		self.interval = interval
 		self.remote_host = 'gpdb63.qa.dh.greenplum.com'
 		self.query_record = {}
 		self.current_query_record = []
@@ -82,7 +83,6 @@ class Monitor_control():
 	    
 	    child.expect(pexpect.EOF)
 	    return child.before
-
 
 
 	def _get_monitor_seg_script_path(self):
@@ -159,6 +159,45 @@ class Monitor_control():
 index  0     1    2    3      4     5   6    7       8      9      10               11                     12             13       14            15    16          
 	'''
 	
+
+	def scp_data(self, filename):
+		table_name = filename[filename.find('qd'):filename.rindex('_')]
+		if self.mode == 'local':
+			cmd = '''psql -d postgres -c "COPY moni.%s FROM '%s' WITH DELIMITER '|';" ''' % (table_name, self.report_folder + os.sep + filename)
+			print cmd
+			(s, o) = commands.getstatusoutput(cmd)
+			print 'return code = ', s, '\n', o
+		else:
+			count = 0
+			while (count < 10):
+				print 'scp date try times = ' + str(count + 1)
+				time.sleep(2*count + 1)
+
+				cmd = "scp %s gpadmin@%s:%s" % (filename, self.remote_host, self.seg_tmp_folder)
+				print cmd
+				result = self.ssh_command(cmd = cmd)
+				print result.strip()
+
+				cmd = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
+				copy_file = self.hostname + '_' + table_name + '.copy'
+				with open (copy_file, 'w') as fcopy:
+					fcopy.write(cmd)
+
+				cmd = "scp %s gpadmin@%s:%s" % (copy_file, self.remote_host, self.seg_tmp_folder)
+				print cmd
+				result = self.ssh_command(cmd = cmd)
+				print result.strip()
+
+				cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.remote_host, self.seg_tmp_folder, copy_file, copy_file)
+				print cmd
+				result = self.ssh_command(cmd = cmd)
+				if result.find('COPY') != -1:
+					print result.strip()
+					break
+				else:
+					count += 1
+
+
 	def _get_qd_mem_cpu(self):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager'
 		grep_string1 = 'postgres'
@@ -169,7 +208,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			return None
 		
 		line_item = output.splitlines()
-		output_string = ['', '']
+		output_string = ''
 		now_time = str(datetime.now())
 		
 		for line in line_item:
@@ -184,14 +223,16 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				print temp
 				continue
 
-			output_string[0] = output_string[0] + one_item + '\n'
-			#output_string[1] = output_string[1] + sql_item + '\n'
+			output_string = output_string + one_item + '\n'
 
 		self.count = self.count + 1
 		return output_string
+
 	
-	def get_qd_data(self, filename = ['', ''], interval = 5):
+	def get_qd_data(self, function = 'self._get_qd_mem_cpu()'):
 		stop_count = 0
+		file_no = 1
+		filename = self.hostname + '_' + function[10:-2] + '_' + str(file_no) + '.data'
 		while(os.path.exists(self.run_lock) and stop_count < 300):
 			result = self._get_qd_mem_cpu()
 			if result is None:
@@ -199,47 +240,11 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				time.sleep(1)
 				continue
 			
-			self.report(filename = filename[0], msg = result[0])
-			#self.report(filename = filename[1], msg = result[1])
+			self.report(filename = filename, msg = result)
+			stop_count = 0
 
-			time.sleep(interval)
+			time.sleep(self.interval)
 
-
-	# record all query in memory
-	def _get_qd_info1(self):
-		# -R '***' set record separator '***' (default: newline)
-		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,procpid,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
-		#cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity order by sess_id,query_start;" '''
-		(status, output) = commands.getstatusoutput(cmd)
-		if status != 0 or output == '':
-			print 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
-			return None
-
-		''' sess_id  query_start  procpid  usename  datname  current_query '''
-		line_item = output.split('***')
-		output_string = ['', '']
-		
-		for line in line_item:
-			line = line.split('|')
-			if line[1] == '':
-				continue
-			try:
-				query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
-			except Exception, e:
-				print 'time error ' + str(line)
-				continue
-
-			if ( line[0] not in self.query_record.keys() ) or ( line[0] in self.query_record.keys() and query_start_time > self.query_record[line[0]] ):
-				self.query_record[line[0]] = query_start_time
-				
-				one_item = line[0] + self.sep + str(query_start_time) + self.sep + line[2] + self.sep + line[3] + self.sep + line[4]
-				sql_item = "insert into moni.qd_info values (%s, '%s', %s, '%s', '%s');" \
-				% (line[0], str(query_start_time), line[2], line[3], line[4])
-				
-				output_string[0] = output_string[0] + one_item + '\n'
-				output_string[1] = output_string[1] + sql_item + '\n'
-
-		return output_string
 
 	# only record current query in memory
 	def _get_qd_info(self):
@@ -254,8 +259,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 		'''line_item = sess_id|query_start|procpid|usename|datname '''
 		all_items = output.split('***')
-		output_string = ['', '']
-
+		output_string = ''
 		
 		for current_query in self.current_query_record:
 			if current_query not in all_items:
@@ -269,11 +273,8 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					continue
 
 				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
-				#sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
-				#% (line[0], str(query_start_time), str(now_time), line[2], line[3])
 				
-				output_string[0] = output_string[0] + one_item + '\n'
-				#output_string[1] = output_string[1] + sql_item + '\n'
+				output_string = output_string + one_item + '\n'
 
 				self.current_query_record.remove(current_query)
 
@@ -282,25 +283,27 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				self.current_query_record.append(line_item)
 
 		return output_string
+	
 
-	def get_qd_info(self, filename = ['', ''], interval = 1):
+	def get_qd_info(self, interval = 1):
+		filename = self.report_folder + os.sep + 'qd_info.data'
 		stop_count = 0
-		while(os.path.exists(self.run_lock) and stop_count < 300):
+		while(os.path.exists(self.run_lock) and stop_count < 120):
 			result = self._get_qd_info()
 			if result is None:
 				stop_count = stop_count + 1
 				time.sleep(1)
 				continue
 
-			self.report(filename = filename[0], msg = result[0])
-			#self.report(filename = filename[1], msg = result[1])
+			self.report(filename = filename, msg = result)
+			stop_count = 0
 
 			time.sleep(interval)
 
 		now_time = datetime.now()
 		if len(self.current_query_record) != 0:
 			#print len(self.current_query_record)
-			output_string = ['', '']
+			output_string = ''
 			for current_query in self.current_query_record:
 				line = current_query.split('|')
 				if line[1] == '':
@@ -312,14 +315,9 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					continue
 
 				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
-				#sql_item = "insert into moni.qd_info values (%s, '%s', '%s', '%s', '%s');" \
-				#% (line[0], str(query_start_time), str(now_time), line[2], line[3])
-				
-				output_string[0] = output_string[0] + one_item + '\n'
-				#output_string[1] = output_string[1] + sql_item + '\n'
+				output_string = output_string + one_item + '\n'
 		
-		self.report(filename = filename[0], msg = output_string[0])
-		#self.report(filename = filename[1], msg = output_string[1])
+		self.report(filename = filename, msg = output_string)
 
 
 	def stop(self):
@@ -342,16 +340,15 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		print 'return code = ', s, '\n', o
 
 
-	def start(self):
+	def start(self, interval = 5):
 		self.setup()
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s> monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.report_folder, self.hostname, self.mode, self.remote_host)
-		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
+		#cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s> monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.report_folder, self.hostname, self.mode, self.remote_host)
+		#(s, o) = commands.getstatusoutput(cmd)
+		#print 'return code = ', s, '\n', o
 
-		prefix = self.report_folder + os.sep
-		p1 = Process( target = self.get_qd_info, args = ( [prefix+'qd_info.data', ''], ) )
-		p2 = Process( target = self.get_qd_data, args = ( [prefix+'qd_mem_cpu.data', ''], ) )
+		p1 = Process( target = self.get_qd_info, args = (1, ) )
+		p2 = Process( target = self.get_qd_data, args = () )
 		p1.start()
 		p2.start()
 
