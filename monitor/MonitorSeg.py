@@ -136,7 +136,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 				p1.start()
 				count = 0
 				file_no = file_no + 1
-				filename = self.hostname + '_' + function[function.find('qe'):-2] + '_' + str(file_no) + '.data'
+				filename = self.hostname + '_' + function[10:-2] + '_' + str(file_no) + '.data'
 
 			result = eval(function)
 			if result is None:
@@ -146,7 +146,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			
 			self.report(filename = filename, msg = result[0])
 			#self.report(filename = filename[1], msg = result[1]) 
-			count = count + 1
+			count += 1
 			time.sleep(interval)
 
 		time.sleep(15)
