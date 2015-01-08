@@ -2,11 +2,11 @@
 --This table is to aggerate all process for each segment 
 DROP TABLE IF EXISTS moni.qe_mem_cpu_per_seg_con;
 CREATE TABLE moni.qe_mem_cpu_per_seg_con AS
-SELECT hostname, count as timeslot, min(time_point) as begintime,
+SELECT hostname, timeslot, min(real_time) as begintime,
 con_id, seg_id,
 SUM(rss) AS rss, SUM(pmem) AS pmem, SUM(pcpu) AS pcpu
 FROM moni.qe_mem_cpu
-GROUP BY hostname,count, con_id, seg_id DISTRIBUTED RANDOMLY;
+GROUP BY hostname, timeslot, con_id, seg_id DISTRIBUTED RANDOMLY;
 
 ------ for each connection, get total cpu and memory for per node
 DROP VIEW IF EXISTS moni.qe_mem_cpu_per_node_con;
@@ -33,7 +33,7 @@ group by hostname, timeslot/300
 order by hostname,tm;
 
 ---------For each get total memory/cpu for each node
-CREATE TABLE qd_qe_query_mem_cpu_per_query
+CREATE TABLE moni.qd_qe_query_mem_cpu_per_query AS
 SELECT
         qd_stat.con_id,
         qd_stat.query_start_time,
@@ -48,12 +48,13 @@ SELECT
         qd.pmem as qdpmem,
         qd.pcpu as qdcpu
 FROM  qd_info as qd_stat,
-        (SELECT hostname, count as timeslot, min(time_point) as begintime, con_id,
+      (SELECT hostname, timeslot, min(real_time) as begintime, con_id,
                      SUM(rss) AS rss, SUM(pmem) AS pmem, SUM(pcpu) AS pcpu
       FROM qd_mem_cpu
-      GROUP BY hostname, timeslot,con_id) as qd,
+      GROUP BY hostname, timeslot, con_id) as qd,
       qe_mem_cpu_per_seg_con as qe
 WHERE qe.con_id = qd_stat.con_id AND qe.begintime >= qd_stat.query_start_time
        AND qe.begintime <= qd_stat.query_end_time
       AND qd.con_id = qd_stat.con_id and qd.begintime >= qd_stat.query_start_time
-      AND qd.begintime <= qd_stat.query_end_time;
+      AND qd.begintime <= qd_stat.query_end_time
+DISTRIBUTED RANDOMLY;

@@ -229,7 +229,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 			output_string = output_string + one_item + '\n'
 
-		timeslot = timeslot + 1
 		return output_string
 
 	
@@ -246,10 +245,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				stop_count = stop_count + 1
 				time.sleep(1)
 				continue
-			
-			self.report(filename = self.report_folder + os.sep + filename, msg = result)
-			stop_count = 0
-			count += 1
 
 			if count > self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
@@ -258,12 +253,15 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				file_no += 1
 				filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 
+			self.report(filename = self.report_folder + os.sep + filename, msg = result)
+			stop_count = 0
+			count += 1
 			time.sleep(self.interval)
 
 		self.scp_data(filename = filename)
 		
 		if stop_count == self.stop_time:
-			print '%s hava no content for %d seconds and stop.' % (function[10:-2], self.stop_time)
+			print '%s hava no content for %d seconds and stop.' % (function[10:], self.stop_time)
 		else:
 			print '%s normally stop.' % (function[10:])
 		print '%s: '% (function[10:]), file_no, ' files'
@@ -294,7 +292,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					#print 'time error in get qd info: ', line
+					#print line, '\n', str(e)
 					continue
 
 				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
@@ -331,7 +329,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			if result != '':
 				self.report(filename = self.report_folder + os.sep + filename, msg = result)
 				count += 1
-			stop_count = 0
+				stop_count = 0
 			time.sleep(interval)
 
 		now_time = datetime.now()
@@ -372,7 +370,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def start(self):
 		self.setup()
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d> monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.report_folder, self.hostname, self.mode, self.remote_host, self.timeout, self.interval, self.stop_time)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time)
 		(s, o) = commands.getstatusoutput(cmd)
 		print o
 
