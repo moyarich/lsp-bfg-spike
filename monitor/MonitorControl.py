@@ -20,11 +20,11 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'remote', interval = 5, timeout = 20):
+	def __init__(self, mode = 'local', interval = 5, timeout = 20):
 		self.mode = mode
 		self.interval = interval
 		self.timeout = timeout
-		self.remote_host = 'localhost' #'gpdb63.qa.dh.greenplum.com'
+		self.remote_host = 'gpdb63.qa.dh.greenplum.com'
 		self.query_record = {}
 		self.current_query_record = []
 		
@@ -168,7 +168,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			cmd = '''psql -d postgres -c "COPY moni.%s FROM '%s' WITH DELIMITER '|';" ''' % (table_name, self.report_folder + os.sep + filename)
 			print cmd
 			(s, o) = commands.getstatusoutput(cmd)
-			print o
+			print o.strip()
 		else:
 			count = 0
 			while (count < 10):
@@ -264,15 +264,18 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	# only record current query in memory
 	def _get_qd_info(self):
 		now_time = datetime.now()
+		if self.mode == 'local':
+			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
+		else:
+			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start;"
 		# -R '***' set record separator '***' (default: newline)
-		cmd = ''' psql -d postgres -t -A -R '***' -c "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start,procpid;" '''
-		#cmd = ''' psql -d postgres -t -c "select sess_id,query_start,procpid,usename,datname from pg_stat_activity order by sess_id,query_start;" '''
+		cmd = ''' psql -d postgres -t -A -R '***' -c "%s" ''' % (sql)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
 			return None
 
-		'''line_item = sess_id|query_start|procpid|usename|datname '''
+		'''line_item = sess_id|query_start|usename|datname '''
 		all_items = output.split('***')
 		output_string = ''
 		
@@ -284,7 +287,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					print 'time error ' + str(line)
+					print 'time error in get qd info: ', line
 					continue
 
 				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
