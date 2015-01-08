@@ -87,7 +87,49 @@ class Monitor_control():
 	    child.expect(pexpect.EOF)
 	    return child.before
 
+	def scp_data(self, filename):
+		table_name = filename[filename.find('qd'):filename.rindex('_')]
+		if self.mode == 'local':
+			cmd = '''psql -d postgres -c "COPY moni.%s FROM '%s' WITH DELIMITER '|';" ''' % (table_name, self.report_folder + os.sep + filename)
+			(s, o) = commands.getstatusoutput(cmd)
+			if o.find('COPY') != -1 and o.find('ERROR') == -1:
+				print 'copy file %s success. '% (filename)
+				print o
+			else:
+				print cmd
+				print o.strip()
+		else:
+			count = 0
+			while (count < 15):
+				time.sleep(count)
 
+				filepath = self.report_folder + os.sep + filename
+				cmd1 = "scp %s gpadmin@%s:%s" % (filepath, self.remote_host, self.seg_tmp_folder)
+				result1 = self.ssh_command(cmd = cmd1)
+
+				cmd2 = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, self.seg_tmp_folder + os.sep + filename)
+				copy_file = self.hostname + '_' + table_name + '.copy'
+				with open (self.report_folder + os.sep + copy_file, 'w') as fcopy:
+					fcopy.write(cmd2)
+
+				cmd3 = "scp %s gpadmin@%s:%s" % (self.report_folder + os.sep + copy_file, self.remote_host, self.seg_tmp_folder)
+				result3 = self.ssh_command(cmd = cmd3)
+
+				cmd4 = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.remote_host, self.seg_tmp_folder, copy_file, copy_file)
+				result4 = self.ssh_command(cmd = cmd4)
+				if result4.find('COPY') != -1 and result4.find('ERROR') == -1:
+					print 'copy file %s success in %d times. '% (filename, count + 1)
+					print result4
+					break
+				else:
+					count += 1
+			
+			if count == 15:
+				print 'copy file %s error for %d times, the last time error is below: '% (filename, count)
+				print cmd1, '\n', result1
+				print cmd2
+				print cmd3, '\n', result3
+				print cmd4, '\n', result4
 
 	def _get_monitor_seg_script_path(self):
 		for one_path in sys.path:
@@ -156,55 +198,15 @@ class Monitor_control():
 	
 
 	'''
-	ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager"
+	ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager|psql -d postgres"
 	 PID   PPID  %CPU  VSZ   RSS  %MEM STATE CMD          
 	10836  3817  0.5 655800 27068  0.6  S  postgres: port  5432, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(34512) con202 127.0.0.1(34512) cmd1 SELECT
 	10836  3817  0.5 655800 27068  0.6  S  postgres: port  5432, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(34512) con202 127.0.0.1(34512) cmd1 idle
 index  0     1    2    3      4     5   6    7       8      9      10               11                     12             13       14            15    16          
 	'''
-	
-
-	def scp_data(self, filename):
-		table_name = filename[filename.find('qd'):filename.rindex('_')]
-		if self.mode == 'local':
-			cmd = '''psql -d postgres -c "COPY moni.%s FROM '%s' WITH DELIMITER '|';" ''' % (table_name, self.report_folder + os.sep + filename)
-			print cmd
-			(s, o) = commands.getstatusoutput(cmd)
-			print o.strip()
-		else:
-			count = 0
-			while (count < 15):
-				print 'scp %s try times = '% (filename) + str(count + 1)
-				time.sleep(count)
-
-				filepath = self.report_folder + os.sep + filename
-				cmd = "scp %s gpadmin@%s:%s" % (filepath, self.remote_host, self.seg_tmp_folder)
-				print cmd
-				result = self.ssh_command(cmd = cmd)
-				print result.strip()
-
-				cmd = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, self.seg_tmp_folder + os.sep + filename)
-				copy_file = self.hostname + '_' + table_name + '.copy'
-				with open (self.report_folder + os.sep + copy_file, 'w') as fcopy:
-					fcopy.write(cmd)
-
-				cmd = "scp %s gpadmin@%s:%s" % (self.report_folder + os.sep + copy_file, self.remote_host, self.seg_tmp_folder)
-				print cmd
-				result = self.ssh_command(cmd = cmd)
-				print result.strip()
-
-				cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.remote_host, self.seg_tmp_folder, copy_file, copy_file)
-				print cmd
-				result = self.ssh_command(cmd = cmd)
-				if result.find('COPY') != -1:
-					print result.strip()
-					break
-				else:
-					count += 1
-
 
 	def _get_qd_mem_cpu(self, timeslot):
-		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager'
+		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager|psql -d postgres'
 		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
@@ -217,7 +219,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		
 		for line in line_item:
 			temp = line.split()
-			if len(temp) < 17:
+			if len(temp) != 17:
 				continue
 			try:
 				# hostname, timeslot, real_time, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
@@ -258,6 +260,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			count += 1
 			time.sleep(self.interval)
 
+		time.sleep(15)
 		self.scp_data(filename = filename)
 		
 		if stop_count == self.stop_time:
@@ -292,7 +295,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					#print line, '\n', str(e)
+					print line, '\n', str(e)
 					continue
 
 				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
@@ -348,8 +351,9 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
 				output_string = output_string + one_item + '\n'
 		
-		self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
-		self.scp_data(filename = filename)
+			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
+			time.sleep(15)
+			self.scp_data(filename = filename)
 		 
 		if stop_count == self.stop_time:
 			print 'get_qd_info have no content for %s seconds and stop.' % (stop_time)

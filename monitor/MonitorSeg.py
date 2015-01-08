@@ -84,34 +84,36 @@ class Monitor_seg():
 		
 		count = 0
 		while (count < 15):
-			print 'scp date try times = ' + str(count + 1)
 			time.sleep(count)
 
-			cmd = "scp %s gpadmin@%s:%s" % (filename, host, folder)
-			print cmd
-			result = self.ssh_command(cmd = cmd)
-			print result
+			cmd1 = "scp %s gpadmin@%s:%s" % (filename, host, folder)
+			result1 = self.ssh_command(cmd = cmd1)
 
 			table_name = filename[filename.find('qe'):filename.rindex('_')]
 
-			cmd = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
+			cmd2 = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
 			copy_file = self.hostname + '_qe_mem_cpu.copy'
 			with open (copy_file, 'w') as fcopy:
-				fcopy.write(cmd)
+				fcopy.write(cmd2)
 
-			cmd = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
-			print cmd
-			result = self.ssh_command(cmd = cmd)
-			print result
+			cmd3 = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
+			result3 = self.ssh_command(cmd = cmd3)
 
-			cmd = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
-			print cmd
-			result = self.ssh_command(cmd = cmd)
-			if str(result).find('COPY') != -1:
-				print result
+			cmd4 = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
+			result4 = self.ssh_command(cmd = cmd4)
+			if result4.find('COPY') != -1 and result4.find('ERROR') == -1:
+				print 'copy file %s success in %d times. '% (filename, count + 1)
+				print result4
 				break
 			else:
 				count += 1
+			
+		if count == 15:
+			print 'copy file %s error for %d times, the last time error is below: '% (filename, count)
+			print cmd1, '\n', result1
+			print cmd2
+			print cmd3, '\n', result3
+			print cmd4, '\n', result4
 
 	
 	'''
@@ -182,7 +184,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			count += 1
 			time.sleep(self.interval)
 
-		#time.sleep(15)
+		time.sleep(15)
 		self.scp_data(filename = filename)
 
 		if stop_count == self.stop_time:
