@@ -24,8 +24,8 @@ CREATE TABLE moni.qd_info
 CREATE TABLE moni.qd_mem_cpu
 (
 	hostname						VARCHAR(32),
-	count							INT,
-	time_point						TIMESTAMP WITH TIME ZONE,
+	timeslot						INT,
+	real_time						TIMESTAMP WITH TIME ZONE,
 	pid								INT,
 	ppid							INT,
 	con_id							INT,
@@ -41,8 +41,8 @@ CREATE TABLE moni.qd_mem_cpu
 CREATE TABLE moni.qe_mem_cpu
 (
 	hostname						VARCHAR(32),
-	count							INT,
-	time_point						TIMESTAMP WITH TIME ZONE,
+	timeslot						INT,
+	real_time						TIMESTAMP WITH TIME ZONE,
 	pid								INT,
 	con_id							INT,
 	seg_id							VARCHAR(16),

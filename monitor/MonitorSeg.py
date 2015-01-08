@@ -16,23 +16,20 @@ except ImportError:
 
 class Monitor_seg():
 
-	def __init__(self, timeout = 120):
+	def __init__(self):
 		self.master_folder = sys.argv[2]
 		self.master_host = sys.argv[3]
-		self.remote_host = 'gpdb63.qa.dh.greenplum.com'
-
-		self.local = True
-		if sys.argv[4] == 'remote':
-			self.local = False
-			self.remote_host = sys.argv[5]
+		self.mode = sys.argv[4]
+		self.remote_host = sys.argv[5]
+		self.timeout = sys.argv[6]
+		self.interval = sys.argv[7]
+		self.stop_time = sys.argv[8]
 		
 		self.pwd = os.getcwd()
 		(s, o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
 		self.timeout = timeout
-		self.count = 1
 		self.sep = '|'
-		self.interval = 
 
 
 	def report(self, filename, msg):
@@ -85,7 +82,7 @@ class Monitor_seg():
  	  1035  0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con82 seg0 cmd2 slice1 MPPEXEC SELECT
 index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
-	def _get_qe_mem_cpu(self):
+	def _get_qe_mem_cpu(self, timeslot):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
@@ -95,59 +92,55 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		
 		line_item = output.splitlines()
 		now_time = str(datetime.now())
-		output_string = ['', '']
+		output_string = ''
 		
 		for line in line_item:
 			temp = line.split()
 			if len(temp) < 15:
 				continue
-			# hostname, count, time_point, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
+			# hostname, timeslot, real_time, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
 			try:
 				if temp[14] == 'idle':
-					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + 'NULL' + self.sep + 'NUll' + self.sep + temp[14] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + 'NULL' + self.sep + 'NUll' + self.sep + temp[14] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				elif temp[15].find('slice') != -1:
-					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				else:
-					one_item = self.hostname + self.sep + str(self.count) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 			except Exception, e:
 				print temp, '\n', str(e)
 				continue
-			
-			#col_item = one_item.split('\t')
-			#sql_item = "insert into moni.qe_mem_cpu values ('%s', %s, '%s', %s, %s, '%s', '%s', '%s', '%s', %s, %s, %s);" \
-			#	% (col_item[0], col_item[1], col_item[2], col_item[3], col_item[4][3:], col_item[5], col_item[6], col_item[7], col_item[8], col_item[9], col_item[10], col_item[11])
-
-			output_string[0] = output_string[0] + one_item + '\n'
-			#output_string[1] = output_string[1] + sql_item + '\n'
+			output_string = output_string + one_item + '\n'
 		
-		self.count = self.count + 1
+		timeslot = timeslot + 1
 		return output_string
 	
 	
-	def get_qe_data(self, function = 'self._get_qe_mem_cpu()', interval = 5):
+	def get_qe_data(self, function = 'self._get_qe_mem_cpu'):
 		stop_count = 0
 		file_no = 1
-		count = 0   # control scp data with self.timeout
-		filename = self.hostname + '_' + function[10:-2] + '_' + str(file_no) + '.data'
+		count = 1   # control scp data with self.timeout
+		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 		
-		while(os.path.exists('run.lock') and stop_count < 300):
-			if count == self.timeout:
-				p1 = Process( target = self.scp_data, args = (filename, ) )
-				p1.start()
-				count = 0
-				file_no = file_no + 1
-				filename = self.hostname + '_' + function[10:-2] + '_' + str(file_no) + '.data'
-
-			result = eval(function)
+		while(os.path.exists('run.lock') and stop_count < self.stop_time ):
+			timeslot = (file_no - 1) * self.timeout + count
+			result = eval(function + '(timeslot)')
 			if result is None:
 				stop_count = stop_count + 1
 				time.sleep(1)
 				continue
 			
-			self.report(filename = filename, msg = result[0])
-			#self.report(filename = filename[1], msg = result[1]) 
+			self.report(filename = filename, msg = result)
+			stop_count = 0
 			count += 1
-			time.sleep(interval)
+			
+			if count == self.timeout:
+				p1 = Process( target = self.scp_data, args = (filename, ) )
+				p1.start()
+				count = 1
+				file_no = file_no + 1
+				filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
+			
+			time.sleep(self.interval)
 
 		time.sleep(15)
 		self.scp_data(filename = filename)
@@ -171,7 +164,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			source = 'source ~/psql.sh;'
 		
 		count = 0
-		while (count < 10):
+		while (count < 15):
 			print 'scp date try times = ' + str(count + 1)
 			time.sleep(2*count + 1)
 
@@ -205,6 +198,6 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	p1 = Process( target = monitor_seg.get_qe_data, args = ('self._get_qe_mem_cpu()', 5) )
+	p1 = Process( target = monitor_seg.get_qe_data, args = ('self._get_qe_mem_cpu', ) )
 	p1.start()
 	

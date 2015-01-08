@@ -20,11 +20,14 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 20):
+	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 180, remote_host = 'gpdb63.qa.dh.greenplum.com'):
+		assert mode in ['local', 'remote']
 		self.mode = mode
 		self.interval = interval
 		self.timeout = timeout
-		self.remote_host = 'gpdb63.qa.dh.greenplum.com'
+		self.stop_time = stop_time
+		self.remote_host = remote_host
+		
 		self.query_record = {}
 		self.current_query_record = []
 		
@@ -42,7 +45,6 @@ class Monitor_control():
 		(s,o) = commands.getstatusoutput('hostname')
 		self.hostname = o.strip()
 
-		self.count = 1
 		self.sep = '|'
 
 	def report(self, filename, msg, mode = 'a'):
@@ -94,7 +96,7 @@ class Monitor_control():
 				self.local_schema_script = one_path + os.sep + 'schema.sql'
 				if os.path.exists(self.seg_script):
 					return 0
-		print 'not find MonitorSeg.py.'
+		print 'not find MonitorSeg.py when setup monitor. '
 		sys.exit(2)
 
 	def _get_seg_list(self, hostfile = 'hostfile_seg'):
@@ -136,21 +138,21 @@ class Monitor_control():
 			cmd = 'ssh gpadmin@%s "mkdir -p %s"' % (self.remote_host, self.seg_tmp_folder)
 			print cmd
 			result = self.ssh_command(cmd = cmd)
-			print result
+			print result.strip()
 
 			cmd = "scp %s gpadmin@%s:%s" % (self.local_schema_script, self.remote_host, self.seg_tmp_folder)
 			print cmd
 			result = self.ssh_command(cmd = cmd)
-			print result
+			print result.strip()
 
 			cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f schema.sql"' % (self.remote_host, self.seg_tmp_folder)
 			print cmd
 			result = self.ssh_command(cmd = cmd)
-			print result
+			print result.strip()
 		else:
 			cmd = "psql -d postgres -f %s" % (self.local_schema_script)
 			(s, o) = commands.getstatusoutput(cmd)
-			print 'return code = ', s, '\n', o
+			print o
 	
 
 	'''
@@ -171,7 +173,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			print o.strip()
 		else:
 			count = 0
-			while (count < 10):
+			while (count < 15):
 				print 'scp %s try times = '% (filename) + str(count + 1)
 				time.sleep(count)
 
@@ -201,13 +203,12 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					count += 1
 
 
-	def _get_qd_mem_cpu(self):
+	def _get_qd_mem_cpu(self, timeslot):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager'
-		grep_string1 = 'postgres'
-		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep %s | grep -vE "%s" ''' % (grep_string1, filter_string)
+		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			print 'return code: ' + str(status) + ' output: ' + output + ' in qd_mem_cpu'
+			#print 'return code: ' + str(status) + ' output: ' + output + ' in qd_mem_cpu'
 			return None
 		
 		line_item = output.splitlines()
@@ -219,34 +220,28 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			if len(temp) < 17:
 				continue
 			try:
-				# hostname, count, time_point, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
-				one_item = self.hostname + self.sep + str(self.count)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
+				# hostname, timeslot, real_time, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
+				one_item = self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
 				temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
 			except Exception, e:
-				print temp
+				#print temp
 				continue
 
 			output_string = output_string + one_item + '\n'
 
-		self.count = self.count + 1
+		timeslot = timeslot + 1
 		return output_string
 
 	
-	def get_qd_data(self, function = 'self._get_qd_mem_cpu()'):
-		count = 0   # control scp data with self.timeout
+	def get_qd_data(self, function = 'self._get_qd_mem_cpu'):
+		count = 1   # control scp data with self.timeout
 		file_no = 1
-		filename = function[10:-2] + '_' + str(file_no) + '.data'
+		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 		
 		stop_count = 0
-		while(os.path.exists(self.run_lock) and stop_count < 180):
-			if count == self.timeout:
-				p1 = Process( target = self.scp_data, args = (filename, ) )
-				p1.start()
-				count = 0
-				file_no += 1
-				filename = self.hostname + '_' + function[10:-2] + '_' + str(file_no) + '.data'
-			
-			result = eval(function)
+		while(os.path.exists(self.run_lock) and stop_count < self.stop_time):
+			timeslot = (file_no - 1) * self.timeout + count
+			result = eval(function + '(timeslot)')
 			if result is None:
 				stop_count = stop_count + 1
 				time.sleep(1)
@@ -255,11 +250,23 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			self.report(filename = self.report_folder + os.sep + filename, msg = result)
 			stop_count = 0
 			count += 1
+
+			if count > self.timeout:
+				p1 = Process( target = self.scp_data, args = (filename, ) )
+				p1.start()
+				count = 1
+				file_no += 1
+				filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
+
 			time.sleep(self.interval)
 
 		self.scp_data(filename = filename)
-		print '%s: '% (function[10:-2]), file_no, ' files'
-
+		
+		if stop_count == self.stop_time:
+			print '%s hava no content for %d seconds and stop.' % (function[10:-2], self.stop_time)
+		else:
+			print '%s normally stop.' % (function[10:])
+		print '%s: '% (function[10:]), file_no, ' files'
 
 	# only record current query in memory
 	def _get_qd_info(self):
@@ -272,10 +279,10 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		cmd = ''' psql -d postgres -t -A -R '***' -c "%s" ''' % (sql)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			print 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
+			#print 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
 			return None
 
-		'''line_item = sess_id|query_start|usename|datname '''
+		''' line_item = sess_id|query_start|usename|datname '''
 		all_items = output.split('***')
 		output_string = ''
 		
@@ -287,13 +294,11 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					print 'time error in get qd info: ', line
+					#print 'time error in get qd info: ', line
 					continue
 
 				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
-				
 				output_string = output_string + one_item + '\n'
-
 				self.current_query_record.remove(current_query)
 
 		for line_item in all_items:
@@ -306,20 +311,20 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def get_qd_info(self, interval = 1):
 		count = 0
 		file_no = 1
-		filename = 'qd_info_' + str(file_no) + '.data'
+		filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
 
 		stop_count = 0
-		while(os.path.exists(self.run_lock) and stop_count < 180):
+		while(os.path.exists(self.run_lock) and stop_count < self.stop_time):
 			if count == self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
 				p1.start()
 				count = 0
 				file_no += 1
-				filename = 'qd_info_' + str(file_no) + '.data'
+				filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
 
 			result = self._get_qd_info()
 			if result is None:
-				stop_count = stop_count + 1
+				stop_count += 1
 				time.sleep(1)
 				continue
 
@@ -331,7 +336,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 		now_time = datetime.now()
 		if len(self.current_query_record) != 0:
-			#print len(self.current_query_record)
 			output_string = ''
 			for current_query in self.current_query_record:
 				line = current_query.split('|')
@@ -348,7 +352,12 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		
 		self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
 		self.scp_data(filename = filename)
-		print 'qd_info: ', file_no, ' files' 
+		 
+		if stop_count == self.stop_time:
+			print 'get_qd_info have no content for %s seconds and stop.' % (stop_time)
+		else:
+			print 'get_qd_info normally stop.'
+		print 'qd_info: ', file_no, ' files'
 
 
 	def stop(self):
@@ -357,22 +366,22 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
 		print cmd
 		(s, o) = commands.getstatusoutput(cmd)
-		print 'return code = ', s, '\n', o
+		print o
 
 
-	def start(self, interval = 5):
+	def start(self):
 		self.setup()
 
-		#cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s> monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.report_folder, self.hostname, self.mode, self.remote_host)
-		#(s, o) = commands.getstatusoutput(cmd)
-		#print 'return code = ', s, '\n', o
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d> monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.report_folder, self.hostname, self.mode, self.remote_host, self.timeout, self.interval, self.stop_time)
+		(s, o) = commands.getstatusoutput(cmd)
+		print o
 
 		p1 = Process( target = self.get_qd_info, args = (1, ) )
 		p2 = Process( target = self.get_qd_data, args = () )
 		p1.start()
 		p2.start()
 
-monitor_control = Monitor_control()#(mode = 'remote')
+#monitor_control = Monitor_control()#(mode = 'remote')
 
-if __name__ == "__main__" :
-	monitor_control.start()
+if __name__ == "__main__":
+	pass
