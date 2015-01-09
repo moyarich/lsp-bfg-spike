@@ -24,6 +24,7 @@ class Monitor_seg():
 		self.interval = int(sys.argv[6])
 		self.timeout = int(sys.argv[7])
 		self.stop_time = int(sys.argv[8])
+		self.run_id = int(sys.argv[9])
 		
 		self.pwd = os.getcwd()
 		(s, o) = commands.getstatusoutput('hostname')
@@ -144,11 +145,11 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			# hostname, timeslot, real_time, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
 			try:
 				if temp[14] == 'idle':
-					one_item = self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + 'NULL' + self.sep + 'NUll' + self.sep + temp[14] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + 'NULL' + self.sep + 'NUll' + self.sep + temp[14] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				elif temp[15].find('slice') != -1:
-					one_item = self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				else:
-					one_item = self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 			except Exception, e:
 				print temp, '\n', str(e)
 				continue

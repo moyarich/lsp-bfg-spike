@@ -20,7 +20,7 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 180, remote_host = 'gpdb63.qa.dh.greenplum.com'):
+	def __init__(self, mode = 'local', interval = 5, timeout = 11, stop_time = 180, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
 		assert mode in ['local', 'remote']
 		self.mode = mode
 		self.interval = interval
@@ -46,6 +46,7 @@ class Monitor_control():
 		self.hostname = o.strip()
 
 		self.sep = '|'
+		self.run_id = run_id
 
 	def report(self, filename, msg, mode = 'a'):
 		if msg != '':
@@ -108,7 +109,7 @@ class Monitor_control():
 				result1 = self.ssh_command(cmd = cmd1)
 
 				cmd2 = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, self.seg_tmp_folder + os.sep + filename)
-				copy_file = self.hostname + '_' + table_name + '.copy'
+				copy_file = self.hostname + '_' + filename[:-5] + '.copy'
 				with open (self.report_folder + os.sep + copy_file, 'w') as fcopy:
 					fcopy.write(cmd2)
 
@@ -223,7 +224,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				continue
 			try:
 				# hostname, timeslot, real_time, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
-				one_item = self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
+				one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
 				temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
 			except Exception, e:
 				#print temp
@@ -298,7 +299,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print line, '\n', str(e)
 					continue
 
-				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
 				output_string = output_string + one_item + '\n'
 				self.current_query_record.remove(current_query)
 
@@ -332,7 +333,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			if result != '':
 				self.report(filename = self.report_folder + os.sep + filename, msg = result)
 				count += 1
-				stop_count = 0
+			stop_count = 0
 			time.sleep(interval)
 
 		now_time = datetime.now()
@@ -348,7 +349,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print 'time error ' + str(line)
 					continue
 
-				one_item = line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
 				output_string = output_string + one_item + '\n'
 		
 			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
@@ -374,7 +375,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def start(self):
 		self.setup()
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time, self.run_id)
 		(s, o) = commands.getstatusoutput(cmd)
 		print o
 

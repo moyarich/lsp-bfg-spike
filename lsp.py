@@ -196,7 +196,7 @@ if __name__ == '__main__':
             exit(-1)
 
         if monitor_flag:
-            monitor_control = Monitor_control()
+            monitor_control = Monitor_control(mode = 'local', timeout = 7, interval = int(sys.argv[4]), run_id = int(sys.argv[5]))
             p1 = Process(target = monitor_control.start)
             p1.start()
             time.sleep(30)
