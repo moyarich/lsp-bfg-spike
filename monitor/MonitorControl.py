@@ -20,7 +20,7 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 11, stop_time = 180, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
+	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 180, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
 		assert mode in ['local', 'remote']
 		self.mode = mode
 		self.interval = interval
@@ -274,9 +274,9 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def _get_qd_info(self):
 		now_time = datetime.now()
 		if self.mode == 'local':
-			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
+			sql = "select sess_id,query_start,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
 		else:
-			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' order by sess_id,query_start;"
+			sql = "select sess_id,query_start,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
 		# -R '***' set record separator '***' (default: newline)
 		cmd = ''' psql -d postgres -t -A -R '***' -c "%s" ''' % (sql)
 		(status, output) = commands.getstatusoutput(cmd)
@@ -284,7 +284,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			#print 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
 			return None
 
-		''' line_item = sess_id|query_start|usename|datname '''
+		''' line_item = sess_id|query_start|usename|datname|current_query '''
 		all_items = output.split('***')
 		output_string = ''
 		
@@ -299,7 +299,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print line, '\n', str(e)
 					continue
 
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep + line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 				self.current_query_record.remove(current_query)
 
@@ -349,7 +349,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print 'time error ' + str(line)
 					continue
 
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3]
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep + line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 		
 			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)

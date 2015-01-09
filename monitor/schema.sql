@@ -17,9 +17,10 @@ CREATE TABLE moni.qd_info
 	query_end_time					TIMESTAMP WITH TIME ZONE,
 --	pid								INT,
 	user_name						VARCHAR(128),
-	db_name							VARCHAR(128)
-) ;
---DISTRIBUTED RANDOMLY;
+	db_name							VARCHAR(128),
+	query 							VARCHAR(20480)
+)
+DISTRIBUTED RANDOMLY;
 
 -- 2.2 qd_mem_cpu
 CREATE TABLE moni.qd_mem_cpu
@@ -36,8 +37,8 @@ CREATE TABLE moni.qd_mem_cpu
 	rss								INT,
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
-) ;
---DISTRIBUTED RANDOMLY;
+)
+DISTRIBUTED RANDOMLY;
 
 -- 2.3 qe_mem_cpu
 CREATE TABLE moni.qe_mem_cpu
@@ -55,8 +56,8 @@ CREATE TABLE moni.qe_mem_cpu
 	rss								INT,
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
-) ;
---DISTRIBUTED RANDOMLY;
+)
+DISTRIBUTED RANDOMLY;
 
 CREATE TABLE moni.run_info
 (
@@ -65,7 +66,7 @@ CREATE TABLE moni.run_info
 	case_name						VARCHAR(128),
 	start_time						TIMESTAMP WITH TIME ZONE,
 	end_time						TIMESTAMP WITH TIME ZONE
-) ;
---DISTRIBUTED RANDOMLY;
+)
+DISTRIBUTED RANDOMLY;
 
 --COPY moni.qe_mem_cpu FROM 'FNAME' WITH DELIMITER '|';
