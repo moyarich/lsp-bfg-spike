@@ -242,7 +242,8 @@ class Workload(object):
         tbl_suffix = ''
         sql_suffix = ''
         # init tpch specific configuration such as tpch table_settings
-        self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
+        #self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
+        self.check_condition = "wl_catetory = '%s'" % (self.workload_name.split('_')[0].upper())
         self.wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
 
         self.check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.data_volume_size)
