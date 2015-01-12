@@ -251,8 +251,11 @@ class Workload(object):
         if self.append_only in [None, True]:
             tbl_suffix = tbl_suffix + 'ao'
             sql_suffix = sql_suffix + 'appendonly = true'
-            self.check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), str(self.distributed_randomly).upper() )
-            self.wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), str(self.distributed_randomly).upper())
+            self.check_condition += " and wl_appendonly = %s" % ( str(self.append_only).upper() )
+            self.wl_values += ", '%s', 'FALSE'" % (str(self.append_only).upper())
+            # add distributed randomly
+            #self.check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), str(self.distributed_randomly).upper() )
+            #self.wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), str(self.distributed_randomly).upper())
 
             tbl_suffix = tbl_suffix + '_' + self.orientation
             sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
