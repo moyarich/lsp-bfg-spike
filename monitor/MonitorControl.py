@@ -27,6 +27,7 @@ class Monitor_control():
 		self.timeout = timeout
 		self.stop_time = stop_time
 		self.remote_host = remote_host
+		self.run_id = run_id
 		
 		self.query_record = {}
 		self.current_query_record = []
@@ -46,8 +47,7 @@ class Monitor_control():
 		self.hostname = o.strip()
 
 		self.sep = '|'
-		self.run_id = run_id
-
+		
 	def report(self, filename, msg, mode = 'a'):
 		if msg != '':
 		    fp = open(filename, mode)  
@@ -109,7 +109,7 @@ class Monitor_control():
 				result1 = self.ssh_command(cmd = cmd1)
 
 				cmd2 = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, self.seg_tmp_folder + os.sep + filename)
-				copy_file = self.hostname + '_' + filename[:-5] + '.copy'
+				copy_file = filename[:-5] + '.sql'
 				with open (self.report_folder + os.sep + copy_file, 'w') as fcopy:
 					fcopy.write(cmd2)
 

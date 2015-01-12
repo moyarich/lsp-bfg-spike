@@ -93,7 +93,7 @@ class Monitor_seg():
 			table_name = filename[filename.find('qe'):filename.rindex('_')]
 
 			cmd2 = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
-			copy_file = self.hostname + '_qe_mem_cpu.copy'
+			copy_file = filename[:-5] + '.sql'
 			with open (copy_file, 'w') as fcopy:
 				fcopy.write(cmd2)
 
