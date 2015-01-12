@@ -20,26 +20,8 @@ workloads_content:
           compression_level: 1
           partitions: 128
           distributed_randomly: false
-      load_data_flag: true
-      run_workload_flag: true
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
-
-    - workload_name: xmarq_row_200gpn_quicklz1_part
-      database_name: tpch_row_200gpn_quicklz1_part
-      user: gpadmin
-      table_setting:
-          data_volume_type: PER_NODE
-          data_volume_size: 200
-          append_only: true
-          orientation: ROW
-          compression_type: QUICKLZ
-          compression_level: 1
-          partitions: 128
-          distributed_randomly: false
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
+      num_concurrency: 8
       num_iteration: 1
