@@ -88,6 +88,22 @@ class Monitor_control():
 	    child.expect(pexpect.EOF)
 	    return child.before
 
+	def remote_sql(self, sql):
+		#os.system( 'mkdir -p %s' % (self.report_folder + os.sep + 'seg_log') )
+		with open(self.report_folder + os.sep + 'monitor_temp.sql', 'w') as fsql:
+			fsql.write(sql)
+
+		cmd1 = "scp %s gpadmin@%s:%s" % (self.report_folder + os.sep + 'monitor_temp.sql', self.remote_host, '/tmp/')
+		print cmd1
+		result1 = self.ssh_command(cmd = cmd1)
+		print result1
+
+		cmd2 = 'ssh gpadmin@%s "source ~/psql.sh; psql -d postgres -f %s"' % (self.remote_host, '/tmp/monitor_temp.sql')
+		print cmd2
+		result2 = self.ssh_command(cmd = cmd2)
+		print result2
+
+
 	def scp_data(self, filename):
 		table_name = filename[filename.find('qd'):filename.rindex('_')]
 		if self.mode == 'local':
@@ -387,4 +403,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 #monitor_control = Monitor_control()#(mode = 'remote')
 
 if __name__ == "__main__":
-	pass
+	m = Monitor_control()
+	sql = 'select version();'
+	m.remote_sql(sql = sql)
