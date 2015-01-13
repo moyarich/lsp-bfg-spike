@@ -23,8 +23,8 @@ workloads_content:
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 0
-      num_iteration: 0
+      num_concurrency: 1
+      num_iteration: 1
 
     - workload_name: tpch_parquet_500gpn_snappy_part
       database_name: tpch_parquet_500gpn_snappy_part

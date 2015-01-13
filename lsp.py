@@ -212,6 +212,7 @@ if __name__ == '__main__':
 
     if monitor_flag and start_flag:
         monitor_control.stop()
+        time.sleep(20)
 
     # update backend database to log execution time
     if add_database and start_flag:
@@ -220,7 +221,7 @@ if __name__ == '__main__':
         # add detailed execution information of test cases into backend database
         remotecmd.scp_command(from_user = '', from_host = '', from_file = report_sql_file,
             to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':/tmp/', password = 'changeme')
-        cmd = 'source ~psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
+        cmd = 'source ~/psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
         remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
 
         # retrieve test report from backend database for pulse report purpose`
