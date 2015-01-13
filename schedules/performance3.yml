@@ -19,7 +19,7 @@ workloads_content:
           compression_type: QUICKLZ
           compression_level: 1
           partitions: 0
-          distributed_randomly: false
+          distributed_randomly: true
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL

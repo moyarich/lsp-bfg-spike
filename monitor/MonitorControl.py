@@ -154,6 +154,7 @@ class Monitor_control():
 			if one_path.endswith('monitor'):
 				self.seg_script = one_path + os.sep + 'MonitorSeg.py'
 				self.local_schema_script = one_path + os.sep + 'schema.sql'
+				self.remote_schema_script = one_path + os.sep + 'remote_schema.sql'
 				if os.path.exists(self.seg_script):
 					return 0
 		print 'not find MonitorSeg.py when setup monitor. '
@@ -200,15 +201,15 @@ class Monitor_control():
 			result = self.ssh_command(cmd = cmd)
 			print result.strip()
 
-			cmd = "scp %s gpadmin@%s:%s" % (self.local_schema_script, self.remote_host, self.seg_tmp_folder)
+			cmd = "scp %s gpadmin@%s:%s" % (self.remote_schema_script, self.remote_host, self.seg_tmp_folder)
 			print cmd
 			result = self.ssh_command(cmd = cmd)
 			print result.strip()
 
-			#cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f schema.sql"' % (self.remote_host, self.seg_tmp_folder)
-			#print cmd
-			#result = self.ssh_command(cmd = cmd)
-			#print result.strip()
+			cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d hawq_cov -f remote_schema.sql"' % (self.remote_host, self.seg_tmp_folder)
+			print cmd
+			result = self.ssh_command(cmd = cmd)
+			print result.strip()
 		else:
 			cmd = "psql -d postgres -f %s" % (self.local_schema_script)
 			(s, o) = commands.getstatusoutput(cmd)
@@ -396,7 +397,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		(s, o) = commands.getstatusoutput(cmd)
 		print o
 
-		p1 = Process( target = self.get_qd_info, args = (1, ) )
+		p1 = Process( target = self.get_qd_info, args = (5, ) )
 		p2 = Process( target = self.get_qd_data, args = () )
 		p1.start()
 		p2.start()

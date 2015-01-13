@@ -1,5 +1,4 @@
-workloads_list:  tpch_parquet_10gpn_snappy_part
-#, tpch_row_10gpn_quicklz1_nopart
+workloads_list:  tpch_parquet_10gpn_snappy_part, tpch_row_10gpn_quicklz1_nopart
 #tpch_parquet_10gpn_snappy_part, tpch_parquet_500gpn_snappy_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_500gpn_quicklz1_nopart
 
 workloads_mode: sequential
@@ -20,9 +19,9 @@ workloads_content:
           page_size: 1048576
           compression_type: SNAPPY
           partitions: 128
-          distributed_randomly: false
-      load_data_flag: false
-      run_workload_flag: false
+          distributed_randomly: true
+      load_data_flag: true
+      run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 0
       num_iteration: 0
@@ -57,7 +56,7 @@ workloads_content:
           compression_type: QUICKLZ
           compression_level: 1
           partitions: 0
-          distributed_randomly: false
+          distributed_randomly: true
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
