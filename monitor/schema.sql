@@ -8,24 +8,32 @@ CREATE SCHEMA moni;
 -- 2. Definition of fact tables
 --
 
+--CREATE TABLE moni.test_result
+--(
+--	query_name					VARCHAR(64),
+--	start_time				    TIMESTAMP WITH TIME ZONE,
+--	end_time					TIMESTAMP WITH TIME ZONE,
+--);
 -- 2.1 qd_info
 CREATE TABLE moni.qd_info
 (
-	run_id							INT,
+	tr_id							INT,
+	ms_id							INT,
 	con_id							INT,
 	query_start_time				TIMESTAMP WITH TIME ZONE,
 	query_end_time					TIMESTAMP WITH TIME ZONE,
 --	pid								INT,
 	user_name						VARCHAR(128),
 	db_name							VARCHAR(128),
-	query 							VARCHAR(20480)
+	query 							VARCHAR(10240)
 )
 DISTRIBUTED RANDOMLY;
 
 -- 2.2 qd_mem_cpu
 CREATE TABLE moni.qd_mem_cpu
 (
-	run_id							INT,
+	tr_id							INT,
+	ms_id							INT,
 	hostname						VARCHAR(32),
 	timeslot						INT,
 	real_time						TIMESTAMP WITH TIME ZONE,
@@ -43,7 +51,8 @@ DISTRIBUTED RANDOMLY;
 -- 2.3 qe_mem_cpu
 CREATE TABLE moni.qe_mem_cpu
 (
-	run_id							INT,
+	tr_id							INT,
+	ms_id							INT,
 	hostname						VARCHAR(32),
 	timeslot						INT,
 	real_time						TIMESTAMP WITH TIME ZONE,
@@ -59,14 +68,14 @@ CREATE TABLE moni.qe_mem_cpu
 )
 DISTRIBUTED RANDOMLY;
 
-CREATE TABLE moni.run_info
-(
-	run_id							INT,
-	cluster_name					VARCHAR(128),
-	case_name						VARCHAR(128),
-	start_time						TIMESTAMP WITH TIME ZONE,
-	end_time						TIMESTAMP WITH TIME ZONE
-)
-DISTRIBUTED RANDOMLY;
+--CREATE TABLE moni.run_info
+--(
+--	run_id							INT,
+--	cluster_name					VARCHAR(128),
+--	case_name						VARCHAR(128),
+--	start_time						TIMESTAMP WITH TIME ZONE,
+--	end_time						TIMESTAMP WITH TIME ZONE
+--)
+--DISTRIBUTED RANDOMLY;
 
 --COPY moni.qe_mem_cpu FROM 'FNAME' WITH DELIMITER '|';

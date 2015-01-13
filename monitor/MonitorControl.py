@@ -20,7 +20,7 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 180, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
+	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 600, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0, ms_id = 0):
 		assert mode in ['local', 'remote']
 		self.mode = mode
 		self.interval = interval
@@ -28,6 +28,7 @@ class Monitor_control():
 		self.stop_time = stop_time
 		self.remote_host = remote_host
 		self.run_id = run_id
+		self.ms_id = ms_id
 		
 		self.query_record = {}
 		self.current_query_record = []
@@ -124,7 +125,7 @@ class Monitor_control():
 				cmd1 = "scp %s gpadmin@%s:%s" % (filepath, self.remote_host, self.seg_tmp_folder)
 				result1 = self.ssh_command(cmd = cmd1)
 
-				cmd2 = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, self.seg_tmp_folder + os.sep + filename)
+				cmd2 = "COPY hst.%s FROM '%s' WITH DELIMITER '|';" % (table_name, self.seg_tmp_folder + os.sep + filename)
 				copy_file = filename[:-5] + '.sql'
 				with open (self.report_folder + os.sep + copy_file, 'w') as fcopy:
 					fcopy.write(cmd2)
@@ -132,7 +133,7 @@ class Monitor_control():
 				cmd3 = "scp %s gpadmin@%s:%s" % (self.report_folder + os.sep + copy_file, self.remote_host, self.seg_tmp_folder)
 				result3 = self.ssh_command(cmd = cmd3)
 
-				cmd4 = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f %s; rm -rf %s"' % (self.remote_host, self.seg_tmp_folder, copy_file, copy_file)
+				cmd4 = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d hawq_cov -f %s; rm -rf %s"' % (self.remote_host, self.seg_tmp_folder, copy_file, copy_file)
 				result4 = self.ssh_command(cmd = cmd4)
 				if result4.find('COPY') != -1 and result4.find('ERROR') == -1:
 					print 'copy file %s success in %d times. '% (filename, count + 1)
@@ -204,10 +205,10 @@ class Monitor_control():
 			result = self.ssh_command(cmd = cmd)
 			print result.strip()
 
-			cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f schema.sql"' % (self.remote_host, self.seg_tmp_folder)
-			print cmd
-			result = self.ssh_command(cmd = cmd)
-			print result.strip()
+			#cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d postgres -f schema.sql"' % (self.remote_host, self.seg_tmp_folder)
+			#print cmd
+			#result = self.ssh_command(cmd = cmd)
+			#print result.strip()
 		else:
 			cmd = "psql -d postgres -f %s" % (self.local_schema_script)
 			(s, o) = commands.getstatusoutput(cmd)
@@ -239,8 +240,8 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			if len(temp) != 17:
 				continue
 			try:
-				# hostname, timeslot, real_time, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
-				one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
+				# tr_id, ms_id, hostname, timeslot, real_time, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
+				one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
 				temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
 			except Exception, e:
 				#print temp
@@ -315,7 +316,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print line, '\n', str(e)
 					continue
 
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep + line[4].strip().replace('\n', ' ')
+				one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 				self.current_query_record.remove(current_query)
 
@@ -365,7 +366,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print 'time error ' + str(line)
 					continue
 
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep + line[4].strip().replace('\n', ' ')
+				one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 		
 			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
@@ -373,7 +374,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			self.scp_data(filename = filename)
 		 
 		if stop_count == self.stop_time:
-			print 'get_qd_info have no content for %s seconds and stop.' % (stop_time)
+			print 'get_qd_info have no content for %s seconds and stop.' % (self.stop_time)
 		else:
 			print 'get_qd_info normally stop.'
 		print 'qd_info: ', file_no, ' files'
@@ -391,7 +392,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def start(self):
 		self.setup()
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time, self.run_id)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time, self.run_id, self.ms_id)
 		(s, o) = commands.getstatusoutput(cmd)
 		print o
 

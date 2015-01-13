@@ -25,6 +25,7 @@ class Monitor_seg():
 		self.timeout = int(sys.argv[7])
 		self.stop_time = int(sys.argv[8])
 		self.run_id = int(sys.argv[9])
+		self.ms_id = int(sys.argv[10])
 		
 		self.pwd = os.getcwd()
 		(s, o) = commands.getstatusoutput('hostname')
@@ -77,14 +78,18 @@ class Monitor_seg():
 		if self.mode == 'local':
 			host = self.master_host
 			folder = self.master_folder
+			db = 'postgres'
+			schema = 'moni'
 			source = ''
 		else:
 			host = self.remote_host
 			folder = self.pwd
+			db = 'hawq_cov'
+			schema = 'hst'
 			source = 'source ~/psql.sh;'
 		
 		count = 0
-		while (count < 15):
+		while (count < 10):
 			time.sleep(count)
 
 			cmd1 = "scp %s gpadmin@%s:%s" % (filename, host, folder)
@@ -92,7 +97,7 @@ class Monitor_seg():
 
 			table_name = filename[filename.find('qe'):filename.rindex('_')]
 
-			cmd2 = "COPY moni.%s FROM '%s' WITH DELIMITER '|';" % (table_name, folder + os.sep + filename)
+			cmd2 = "COPY %s.%s FROM '%s' WITH DELIMITER '|';" % (schema, table_name, folder + os.sep + filename)
 			copy_file = filename[:-5] + '.sql'
 			with open (copy_file, 'w') as fcopy:
 				fcopy.write(cmd2)
@@ -100,7 +105,7 @@ class Monitor_seg():
 			cmd3 = "scp %s gpadmin@%s:%s" % (copy_file, host, folder)
 			result3 = self.ssh_command(cmd = cmd3)
 
-			cmd4 = 'ssh gpadmin@%s "%s cd %s; psql -d postgres -f %s; rm -rf %s"' % (host, source, folder, copy_file, copy_file)
+			cmd4 = 'ssh gpadmin@%s "%s cd %s; psql -d %s -f %s; rm -rf %s"' % (host, source, folder, db, copy_file, copy_file)
 			result4 = self.ssh_command(cmd = cmd4)
 			if result4.find('COPY') != -1 and result4.find('ERROR') == -1:
 				print 'copy file %s success in %d times. '% (filename, count + 1)
@@ -108,6 +113,10 @@ class Monitor_seg():
 				break
 			else:
 				count += 1
+				print cmd1, '\n', result1
+				print cmd2
+				print cmd3, '\n', result3
+				print cmd4, '\n', result4
 			
 		if count == 15:
 			print 'copy file %s error for %d times, the last time error is below: '% (filename, count)
@@ -142,14 +151,14 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			temp = line.split()
 			if len(temp) < 15:
 				continue
-			# hostname, timeslot, real_time, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
+			# tr_id, ms_id, hostname, timeslot, real_time, pid, con_id, seg_id, cmd, slice, status, rss, pmem, pcpu
 			try:
 				if temp[14] == 'idle':
-					one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + 'NULL' + self.sep + 'NUll' + self.sep + temp[14] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + 'NULL' + self.sep + 'NUll' + self.sep + temp[14] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				elif temp[15].find('slice') != -1:
-					one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + temp[15] + self.sep + temp[17] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 				else:
-					one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
+					one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 			except Exception, e:
 				print temp, '\n', str(e)
 				continue
@@ -159,7 +168,6 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	
 	
 	def get_qe_data(self, function = 'self._get_qe_mem_cpu'):
-		print 'start qe mem cpu'
 		stop_count = 0
 		file_no = 1
 		count = 1   # control scp data with self.timeout

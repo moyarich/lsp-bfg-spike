@@ -171,8 +171,8 @@ if __name__ == '__main__':
             if monitor_flag:
                 tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
                 if tr_id is None:
-                    tr_id = 0
-                monitor_control = Monitor_control(mode = 'local', timeout = 120, interval = int(sys.argv[4]), run_id = tr_id)
+                    tr_id = -1
+                monitor_control = Monitor_control(mode = 'remote', timeout = 120, interval = int(sys.argv[4]), run_id = tr_id)
                 p1 = Process(target = monitor_control.start)
                 p1.start()
                 time.sleep(30)
