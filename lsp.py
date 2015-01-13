@@ -144,7 +144,7 @@ if __name__ == '__main__':
                     build_id = output[output.index('PULSE_ID_INFO'):].split('\n')[0].split('=')[1]
                     build_url = output[output.index('PULSE_PROJECT_INFO'):].split('\n')[0].split('=')[1]
                 except Exception, e:
-              #      print('read build_info_file error. ')
+                    print('read build_info_file error: ' + str(e))
                     build_id = -1
                     build_url = 'Local'
 
@@ -167,6 +167,15 @@ if __name__ == '__main__':
             os.system('mkdir -p %s' % (report_directory))
             os.system('mkdir -p %s' % (report_directory + os.sep + 'tmp'))
             report_sql_file = os.path.join(report_directory, 'report.sql')
+
+            if monitor_flag:
+                tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
+                if tr_id is None:
+                    tr_id = 0
+                monitor_control = Monitor_control(mode = 'local', timeout = 120, interval = int(sys.argv[4]), run_id = tr_id)
+                p1 = Process(target = monitor_control.start)
+                p1.start()
+                time.sleep(30)
 
         # parse list of the workloads for execution
         workloads_list = schedule_parser['workloads_list']
@@ -195,19 +204,14 @@ if __name__ == '__main__':
             print 'Error while selecting appropreciate executor for workloads: ' + str(e)
             exit(-1)
 
-        if monitor_flag:
-            monitor_control = Monitor_control(mode = 'local', timeout = 7, interval = int(sys.argv[4]), run_id = int(sys.argv[5]))
-            p1 = Process(target = monitor_control.start)
-            p1.start()
-            time.sleep(30)
-            workloads_executor.execute()
-            monitor_control.stop()
-        else:
-            workloads_executor.execute()
+        workloads_executor.execute()
     
     end_time = datetime.now()
     duration = end_time - beg_time
     duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
+
+    if monitor_flag and start_flag:
+        monitor_control.stop()
 
     # update backend database to log execution time
     if add_database and start_flag:
@@ -216,12 +220,12 @@ if __name__ == '__main__':
         # add detailed execution information of test cases into backend database
         remotecmd.scp_command(from_user = '', from_host = '', from_file = report_sql_file,
             to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':/tmp/', password = 'changeme')
-        cmd = 'source psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
+        cmd = 'source ~psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
         remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
 
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')
-        tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
+        tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
         sql = "select 'Test Suite Name|'|| wl_name || '|Test Case Name|' || action_type ||'.' || action_target \
         || '|Test Detail|' \
         || 'Actural Run time is: ' || CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE 'N.A.' END || ' ms, ' \
@@ -230,7 +234,7 @@ if __name__ == '__main__':
         || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
         || '|Test Status|' || test_result \
         from \
-            hst.f_generate_test_report_detail(%s, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');" % (tr_id)
+            hst.f_generate_test_report_detail(94, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');" #% (tr_id)
 
         result = check.get_result_by_sql(sql = sql)
         
