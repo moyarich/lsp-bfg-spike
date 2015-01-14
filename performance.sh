@@ -14,6 +14,6 @@ source ~/qa.sh
 python -u lsp.py -s performance1 -m 5 -a > ./performance1.log 2>&1
 sleep 10
 python -u lsp.py -s performance2 -m 60 -a > ./performance2.log 2>&1
-#sleep 10
-#python -u lsp.py -s performance3 -m 60 -a > ./performance3.log 2>&1
+sleep 10
+python -u lsp.py -s performance3 -m 60 -a > ./performance3.log 2>&1
 #python -u lsp.py -s performance1,performance2,performance3 -a > ./performance.log 2>&1
