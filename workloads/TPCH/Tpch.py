@@ -154,8 +154,8 @@ class Tpch(Workload):
                 
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
-            beg_time = str(beg_time).split('.')[0]
-            end_time = str(end_time).split('.')[0]         
+            beg_time = str(beg_time)
+            end_time = str(end_time)        
             self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, status, duration))
             self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
                 % (self.tr_id, self.s_id, con_id, table_name, status, beg_time, end_time, duration))

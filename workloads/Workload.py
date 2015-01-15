@@ -413,7 +413,7 @@ class Workload(object):
                     end_time = datetime.now()
                     con_id = int(result[0].split('***')[1].split('|')[2].strip())
                     
-                    if ok and str(result).find('psql: FATAL:') == -1:
+                    if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1:
                         status = 'SUCCESS'
                         # generate output and md5 file
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
@@ -452,8 +452,8 @@ class Workload(object):
                 
             duration = end_time - beg_time
             duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000     
-            beg_time = str(beg_time).split('.')[0]
-            end_time = str(end_time).split('.')[0]
+            beg_time = str(beg_time)
+            end_time = str(end_time)
             self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
             self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
                 % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration))
@@ -499,6 +499,7 @@ class Workload(object):
                 sql = 'VACUUM ANALYZE;'
                 self.output(sql)
                 sql_filename = 'vacuum.sql'
+                # get con_id
                 sql_file = '%' + sql_filename + '%'
                 get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (sql_filename , sql_file)
                 
@@ -510,7 +511,6 @@ class Workload(object):
                 (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + sql_filename, dbname = self.database_name, username = self.user, flag = '-t -A')
                 end_time = datetime.now()
                 con_id = int(result[0].split('***')[1].split('|')[2].strip())
-                print con_id
                 self.output(result[0].split('***')[0])
 
                 if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
@@ -529,8 +529,8 @@ class Workload(object):
 
         duration = end_time - beg_time
         duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
-        beg_time = str(beg_time).split('.')[0]
-        end_time = str(end_time).split('.')[0]
+        beg_time = str(beg_time)
+        end_time = str(end_time)
  
         self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, status, duration))
         self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
