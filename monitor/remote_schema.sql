@@ -1,4 +1,4 @@
-INSERT INTO hst.qd_info_history select * from hst.qd_info;
+--INSERT INTO hst.qd_info_history select * from hst.qd_info;
 DROP TABLE IF EXISTS hst.qd_info;
 CREATE TABLE hst.qd_info
 (
@@ -13,7 +13,7 @@ CREATE TABLE hst.qd_info
 );
 
 -- 2.2 qd_mem_cpu
-INSERT INTO hst.qd_mem_cpu_history select * from hst.qd_mem_cpu;
+--INSERT INTO hst.qd_mem_cpu_history select * from hst.qd_mem_cpu;
 DROP TABLE IF EXISTS hst.qd_mem_cpu;
 CREATE TABLE hst.qd_mem_cpu
 (
@@ -32,7 +32,7 @@ CREATE TABLE hst.qd_mem_cpu
 );
 
 -- 2.3 qe_mem_cpu
-INSERT INTO hst.qe_mem_cpu_history select * from hst.qe_mem_cpu;
+--INSERT INTO hst.qe_mem_cpu_history select * from hst.qe_mem_cpu;
 DROP TABLE IF EXISTS hst.qe_mem_cpu;
 CREATE TABLE hst.qe_mem_cpu
 (

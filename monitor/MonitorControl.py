@@ -117,7 +117,7 @@ class Monitor_control():
 				print o.strip()
 		else:
 			count = 0
-			while (count < 10):
+			while (count < 15):
 				time.sleep(count)
 
 				filepath = self.report_folder + os.sep + filename
