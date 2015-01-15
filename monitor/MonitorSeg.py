@@ -133,7 +133,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	def _get_qe_mem_cpu(self, timeslot):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
-		print cmd
+		#print cmd
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'return code: ' + str(status) + ' output: ' + output + ' in qe_mem_cpu'
@@ -142,7 +142,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		line_item = output.splitlines()
 		now_time = str(datetime.now())
 		output_string = ''
-		print output
+		#print output
 		
 		for line in line_item:
 			temp = line.split()
