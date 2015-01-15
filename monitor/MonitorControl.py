@@ -316,7 +316,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print line, '\n', str(e)
 					continue
 
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[5] + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 				self.current_query_record.remove(current_query)
 
@@ -366,7 +366,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print 'time error ' + str(line)
 					continue
 
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) +  self.sep + line[4] + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 		
 			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)

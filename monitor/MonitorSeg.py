@@ -113,7 +113,7 @@ class Monitor_seg():
 			else:
 				count += 1
 			
-		if count == 15:
+		if count == 10:
 			print 'copy file %s error for %d times, the last time error is below: '% (filename, count)
 			print cmd1, '\n', result1
 			print cmd2
@@ -131,8 +131,9 @@ class Monitor_seg():
 index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
 	def _get_qe_mem_cpu(self, timeslot):
-		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager|'
+		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
+		print cmd
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			print 'return code: ' + str(status) + ' output: ' + output + ' in qe_mem_cpu'

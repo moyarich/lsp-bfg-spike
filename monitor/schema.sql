@@ -21,7 +21,6 @@ CREATE TABLE moni.qd_info
 	con_id							INT,
 	query_start_time				TIMESTAMP WITH TIME ZONE,
 	query_end_time					TIMESTAMP WITH TIME ZONE,
-	pid								INT,
 	user_name						VARCHAR(128),
 	db_name							VARCHAR(128),
 	query 							VARCHAR(10240)
