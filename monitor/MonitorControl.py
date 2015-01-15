@@ -20,7 +20,7 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 600, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0, ms_id = 0):
+	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 600, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
 		assert mode in ['local', 'remote']
 		self.mode = mode
 		self.interval = interval
@@ -28,7 +28,6 @@ class Monitor_control():
 		self.stop_time = stop_time
 		self.remote_host = remote_host
 		self.run_id = run_id
-		self.ms_id = ms_id
 		
 		self.query_record = {}
 		self.current_query_record = []
@@ -224,7 +223,7 @@ class Monitor_control():
 index  0     1    2    3      4     5   6    7       8      9      10               11                     12             13       14            15    16          
 	'''
 
-	def _get_qd_mem_cpu(self, timeslot):
+	def _get_qd_mem_cpu(self, timeslot): 
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager|psql -d postgres|HAWQ|build|NULL'
 		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
@@ -241,8 +240,8 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			if len(temp) != 17 or temp[13][:3] != 'con':
 				continue
 			try:
-				# tr_id, ms_id, hostname, timeslot, real_time, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
-				one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
+				# tr_id, hostname, timeslot, real_time, pid, ppid, con_id, cmd, status, rss, pmem, pcpu	  
+				one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
 				temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
 			except Exception, e:
 				#print temp
@@ -317,7 +316,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print line, '\n', str(e)
 					continue
 
-				one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[5] + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 				self.current_query_record.remove(current_query)
 
@@ -367,7 +366,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					print 'time error ' + str(line)
 					continue
 
-				one_item = str(self.run_id) + self.sep + str(self.ms_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) +  self.sep + line[4] + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
 		
 			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
@@ -393,11 +392,11 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 	def start(self):
 		self.setup()
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time, self.run_id, self.ms_id)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time, self.run_id)
 		(s, o) = commands.getstatusoutput(cmd)
 		print o
 
-		p1 = Process( target = self.get_qd_info, args = (5, ) )
+		p1 = Process( target = self.get_qd_info, args = (1, ) )
 		p2 = Process( target = self.get_qd_data, args = () )
 		p1.start()
 		p2.start()

@@ -373,20 +373,22 @@ class Workload(object):
         '''Load data for workload'''
         pass
 
-    def run_queries(self, iteration, stream):
+    def run_queries(self, iteration, stream, query_files = ''):
         queries_directory = self.workload_directory + os.sep + 'queries'
         if not os.path.exists(queries_directory):
             print 'Not find the queries_directory for %s' % (self.workload_name)
             sys.exit(2)
 
-        query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
-        if self.run_workload_mode == 'SEQUENTIAL':
-            query_files = sorted(query_files)
-        else:
-            random.shuffle(query_files)
+        if query_files == '':
+            query_files = [file for file in os.listdir(queries_directory) if file.endswith('.sql')]
+            if self.run_workload_mode == 'SEQUENTIAL':
+                query_files = sorted(query_files)
+            else:
+                random.shuffle(query_files)
 
         # run all sql files in queries directory
         for qf_name in query_files:
+            con_id = -1
             if self.continue_flag:
                 if self.run_workload_flag:
                     with open(os.path.join(queries_directory, qf_name),'r') as f:
@@ -396,19 +398,26 @@ class Workload(object):
                     else:
                         query = query.replace('_TABLESUFFIX', '')
                     query = query.replace('SQLSUFFIX', self.sql_suffix)
+
+                    # get con_id use this query
+                    sql_filename = '%' + '%d_%d_' % (iteration, stream) + qf_name + '%'
+                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % ('%d_%d_' % (iteration, stream) + qf_name , sql_filename)
+
                     with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
                         f.write(query)
+                        f.write(get_con_id_sql)
 
                     self.output(query)
                     beg_time = datetime.now()
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
                     end_time = datetime.now()
+                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
                     
                     if ok and str(result).find('psql: FATAL:') == -1:
                         status = 'SUCCESS'
                         # generate output and md5 file
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
-                            f.write(str(result[0]))
+                            f.write(str(result[0].split('***')[0]))
                         with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
                             result = f.read()
                             md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
@@ -446,8 +455,8 @@ class Workload(object):
             beg_time = str(beg_time).split('.')[0]
             end_time = str(end_time).split('.')[0]
             self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+                % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration))
                               
     def run_workload(self):
         niteration = 1
@@ -485,13 +494,24 @@ class Workload(object):
         self.output('-- Start vacuum analyze')     
         
         if self.continue_flag:
+            con_id = -1
             if self.load_data_flag:
                 sql = 'VACUUM ANALYZE;'
                 self.output(sql)
+                sql_filename = 'vacuum.sql'
+                sql_file = '%' + sql_filename + '%'
+                get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (sql_filename , sql_file)
+                
+                with open(self.tmp_folder + os.sep + sql_filename, 'w') as f:
+                    f.write(sql)
+                    f.write(get_con_id_sql)
+
                 beg_time = datetime.now()
-                (ok, result) = psql.runcmd(cmd = sql, dbname = self.database_name, username = self.user)
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + sql_filename, dbname = self.database_name, username = self.user, flag = '-t -A')
                 end_time = datetime.now()
-                self.output('\n'.join(result))
+                con_id = int(result[0].split('***')[1].split('|')[2].strip())
+                print con_id
+                self.output(result[0].split('***')[0])
 
                 if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
                     status = 'SUCCESS'
@@ -513,8 +533,8 @@ class Workload(object):
         end_time = str(end_time).split('.')[0]
  
         self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, status, duration))
-        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-            % (self.tr_id, self.s_id, status, beg_time, end_time, duration))
+        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+            % (self.tr_id, self.s_id, con_id, status, beg_time, end_time, duration))
         
         self.output('-- Complete vacuum analyze')
 

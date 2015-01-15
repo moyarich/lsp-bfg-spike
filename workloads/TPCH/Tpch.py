@@ -117,19 +117,26 @@ class Tpch(Workload):
 
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         for table_name in tables:
+            con_id = -1
             if self.continue_flag:
                 if self.load_data_flag:
                     with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
                         cmd = f.read()
                     cmd = self.replace_sql(sql = cmd, table_name = table_name)
+                    # get con_id use this query
+                    sql_filename = '%' + table_name + '.sql%'
+                    get_con_id_sql = "select '***', '%s.sql', sess_id from pg_stat_activity where current_query like '%s';" % (table_name, sql_filename)
                     with open(self.tmp_folder + os.sep + table_name + '.sql', 'w') as f:
                         f.write(cmd)
+                        f.write(get_con_id_sql)
 
                     self.output(cmd)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = self.user)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = self.user, flag = '-t -A')
                     end_time = datetime.now()
-                    self.output('\n'.join(result))
+                    self.output(result[0].split('***')[0])
+                    #self.output('\n'.join(result))
+                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
 
                     if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
                         status = 'SUCCESS'
@@ -150,8 +157,8 @@ class Tpch(Workload):
             beg_time = str(beg_time).split('.')[0]
             end_time = str(end_time).split('.')[0]         
             self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, status, duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, table_name, status, beg_time, end_time, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
+                % (self.tr_id, self.s_id, con_id, table_name, status, beg_time, end_time, duration))
                
         self.output('-- Complete loading data')
 

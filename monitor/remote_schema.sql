@@ -3,7 +3,6 @@ DROP TABLE IF EXISTS hst.qd_info;
 CREATE TABLE hst.qd_info
 (
 	tr_id							INT,
-	ms_id							INT,
 	con_id							INT,
 	query_start_time				TIMESTAMP WITH TIME ZONE,
 	query_end_time					TIMESTAMP WITH TIME ZONE,
@@ -19,7 +18,6 @@ DROP TABLE IF EXISTS hst.qd_mem_cpu;
 CREATE TABLE hst.qd_mem_cpu
 (
 	tr_id							INT,
-	ms_id							INT,
 	hostname						VARCHAR(32),
 	timeslot						INT,
 	real_time						TIMESTAMP WITH TIME ZONE,
@@ -28,7 +26,7 @@ CREATE TABLE hst.qd_mem_cpu
 	con_id							INT,
 	cmd								VARCHAR(16),
 	status							VARCHAR(16),
-	rss								INT,
+	rss								DECIMAL(10,2),
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
 );
@@ -39,7 +37,6 @@ DROP TABLE IF EXISTS hst.qe_mem_cpu;
 CREATE TABLE hst.qe_mem_cpu
 (
 	tr_id							INT,
-	ms_id							INT,
 	hostname						VARCHAR(32),
 	timeslot						INT,
 	real_time						TIMESTAMP WITH TIME ZONE,
@@ -49,7 +46,7 @@ CREATE TABLE hst.qe_mem_cpu
 	cmd								VARCHAR(16),
 	slice							VARCHAR(16),
 	status							VARCHAR(16),
-	rss								INT,
+	rss								DECIMAL(10,2),
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
 );
