@@ -492,9 +492,8 @@ class Workload(object):
 
     def vacuum_analyze(self):
         self.output('-- Start vacuum analyze')     
-        
+        con_id = -1
         if self.continue_flag:
-            con_id = -1
             if self.load_data_flag:
                 sql = 'VACUUM ANALYZE;'
                 self.output(sql)
