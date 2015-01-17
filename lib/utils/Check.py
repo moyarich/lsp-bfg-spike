@@ -21,7 +21,7 @@ def remote_psql_file(sql, user, host, password, local_file = '/tmp/temp.sql', re
     if str(result).find('ERROR') != -1 or str(result).find('FATAL') != -1:
         print(sql)
         print(str(result))
-        sys.exit(2)
+        #sys.exit(2)
     return result
 
 
