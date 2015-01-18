@@ -215,10 +215,6 @@ if __name__ == '__main__':
     if monitor_flag and start_flag:
         monitor_control.stop()
         time.sleep(60)
-        if report_flag:
-            sql = 'select hst.f_generate_monitor_report(%s, %s)' % (tr_id,tr_id)
-            result = check.get_result_by_sql(sql = sql)
-            print 'generate monitor repost: ', result
 
     # update backend database to log execution time
     if add_database and start_flag:
@@ -228,8 +224,7 @@ if __name__ == '__main__':
         remotecmd.scp_command(from_user = '', from_host = '', from_file = report_sql_file,
             to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':/tmp/', password = 'changeme')
         cmd = 'source ~/psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
-        result = remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
-        print result
+        remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
 
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')
@@ -251,5 +246,8 @@ if __name__ == '__main__':
             msg = str(one_tuple).strip()
             Report(result_file , msg)
 
-
-
+        if monitor_flag and report_flag:
+            sql = 'select hst.f_generate_monitor_report(%s, %s);' % (tr_id, tr_id)
+	    print sql
+            result = check.get_result_by_sql(sql = sql)
+            print 'generate monitor report: ', result
