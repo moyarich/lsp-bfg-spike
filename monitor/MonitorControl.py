@@ -105,6 +105,10 @@ class Monitor_control():
 
 
 	def scp_data(self, filename):
+		if not os.path.exists(self.report_folder + os.sep + filename):
+			print 'copy file: ', filename, ' is not exists.'
+			return None
+
 		table_name = filename[filename.find('qd'):filename.rindex('_')]
 		if self.mode == 'local':
 			cmd = '''psql -d postgres -c "COPY moni.%s FROM '%s' WITH DELIMITER '|';" ''' % (table_name, self.report_folder + os.sep + filename)
@@ -119,7 +123,6 @@ class Monitor_control():
 			count = 0
 			while (count < 10):
 				time.sleep(count)
-
 				filepath = self.report_folder + os.sep + filename
 				cmd1 = "scp %s gpadmin@%s:%s" % (filepath, self.remote_host, self.seg_tmp_folder)
 				result1 = self.ssh_command(cmd = cmd1)

@@ -74,6 +74,10 @@ class Monitor_seg():
 
 
 	def scp_data(self, filename):
+		if not os.path.exists(filename):
+			print 'copy file: ', filename, ' is not exists.'
+			return None
+
 		if self.mode == 'local':
 			host = self.master_host
 			folder = self.master_folder
