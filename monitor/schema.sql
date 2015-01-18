@@ -39,7 +39,7 @@ CREATE TABLE moni.qd_mem_cpu
 	con_id							INT,
 	cmd								VARCHAR(16),
 	status							VARCHAR(16),
-	rss								DECIMAL(10,2),
+	rss								DECIMAL(8,2),
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
 )
@@ -58,7 +58,7 @@ CREATE TABLE moni.qe_mem_cpu
 	cmd								VARCHAR(16),
 	slice							VARCHAR(16),
 	status							VARCHAR(16),
-	rss								DECIMAL(10,2),
+	rss								DECIMAL(8,2),
 	pmem							DECIMAL(4,1),
 	pcpu							DECIMAL(4,1)
 )

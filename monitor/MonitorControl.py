@@ -196,19 +196,17 @@ class Monitor_control():
 
 		if self.mode == 'remote':
 			cmd = 'ssh gpadmin@%s "mkdir -p %s"' % (self.remote_host, self.seg_tmp_folder)
-			print cmd
 			result = self.ssh_command(cmd = cmd)
-			print result.strip()
 
-			cmd = "scp %s gpadmin@%s:%s" % (self.remote_schema_script, self.remote_host, self.seg_tmp_folder)
-			print cmd
-			result = self.ssh_command(cmd = cmd)
-			print result.strip()
+			#cmd = "scp %s gpadmin@%s:%s" % (self.remote_schema_script, self.remote_host, self.seg_tmp_folder)
+			#print cmd
+			#result = self.ssh_command(cmd = cmd)
+			#print result.strip()
 
-			cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d hawq_cov -f remote_schema.sql"' % (self.remote_host, self.seg_tmp_folder)
-			print cmd
-			result = self.ssh_command(cmd = cmd)
-			print result.strip()
+			#cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d hawq_cov -f remote_schema.sql"' % (self.remote_host, self.seg_tmp_folder)
+			#print cmd
+			#result = self.ssh_command(cmd = cmd)
+			#print result.strip()
 		else:
 			cmd = "psql -d postgres -f %s" % (self.local_schema_script)
 			(s, o) = commands.getstatusoutput(cmd)
@@ -400,6 +398,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		p2 = Process( target = self.get_qd_data, args = () )
 		p1.start()
 		p2.start()
+
 
 #monitor_control = Monitor_control()#(mode = 'remote')
 

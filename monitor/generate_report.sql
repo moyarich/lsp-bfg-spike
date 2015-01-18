@@ -54,7 +54,7 @@ GROUP BY hostname, timeslot, begintime;
 SELECT f_generate_query_stat(); 
 
 
-CREATE OR REPLACE FUNCTION f_liuq(start_id int, end_id int)
+CREATE OR REPLACE FUNCTION f_generate_monitor_report(start_id int, end_id int)
 RETURNS INTEGER
 AS $$
 BEGIN
@@ -70,9 +70,9 @@ BEGIN
   
   DROP TABLE IF EXISTS qe_mem_cpu_per_seg_con CASCADE;
   CREATE TABLE qe_mem_cpu_per_seg_con AS
-  SELECT  run_id, hostname, timeslot, 
-      min(real_time) as begintime,con_id, seg_id,
-      SUM(rss) AS rss, SUM(pmem) AS pmem, SUM(pcpu) AS pcpu
+  SELECT run_id, hostname, timeslot, 
+    min(real_time) as begintime,con_id, seg_id,
+    SUM(rss) AS rss, SUM(pmem) AS pmem, SUM(pcpu) AS pcpu
   FROM qe_mem_cpu
   WHERE run_id >= start_id AND run_id <= end_id
   GROUP BY run_id, hostname, timeslot, con_id, seg_id ;
@@ -106,6 +106,8 @@ BEGIN
 
   INSERT INTO hst.qe_mem_cpu_history select * from hst.qe_mem_cpu;
   TRUNCATE TABLE hst.qe_mem_cpu;
+
+  PERFORM f_generate_query_stat();
   
 RETURN 0;
 END

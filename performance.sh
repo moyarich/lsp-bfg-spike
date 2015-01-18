@@ -11,7 +11,7 @@ source ~/qa.sh
 
 #python -u lsp.py -s tpcds -a > ./tpcds.log 2>&1
 
-python -u lsp.py -s performance1 -m 5 -a > ./performance1.log 2>&1
+python -u lsp.py -s performance1 -m 5 -a -r > ./performance1.log 2>&1
 #sleep 10
 #python -u lsp.py -s performance2 -m 60 -a > ./performance2.log 2>&1
 #sleep 10

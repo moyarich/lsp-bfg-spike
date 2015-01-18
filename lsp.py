@@ -102,12 +102,14 @@ if __name__ == '__main__':
     parser.add_option('-c', '--check', dest='check', action='store_true', default=False, help='Check query result')
     parser.add_option('-f', '--suffix', dest='suffix', action='store_true', default=False, help='Add table suffix')
     parser.add_option('-m', '--monitor', dest='monitor', action='store_true', default=False, help='Monitor resource')
+    parser.add_option('-r', '--report', dest='report', action='store_true', default=False, help='generate monitor report')
     (options, args) = parser.parse_args()
     schedules = options.schedule
     add_database = options.add_option
     gl.check_result = options.check
     gl.suffix = options.suffix
     monitor_flag = options.monitor
+    report_flag = options.report
 
     cs_id = 0
     if schedules is None:
@@ -212,7 +214,11 @@ if __name__ == '__main__':
 
     if monitor_flag and start_flag:
         monitor_control.stop()
-        time.sleep(20)
+        time.sleep(60)
+        if report_flag:
+            sql = 'select hst.f_generate_monitor_report(%s, %s)' % (tr_id,tr_id)
+            result = check.get_result_by_sql(sql = sql)
+            print 'generate monitor repost: ', result
 
     # update backend database to log execution time
     if add_database and start_flag:
@@ -222,7 +228,8 @@ if __name__ == '__main__':
         remotecmd.scp_command(from_user = '', from_host = '', from_file = report_sql_file,
             to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':/tmp/', password = 'changeme')
         cmd = 'source ~/psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
-        remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
+        result = remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
+        print result
 
         # retrieve test report from backend database for pulse report purpose`
         result_file = os.path.join(report_directory, 'result.txt')
