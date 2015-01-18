@@ -117,7 +117,7 @@ class Monitor_control():
 				print o.strip()
 		else:
 			count = 0
-			while (count < 15):
+			while (count < 10):
 				time.sleep(count)
 
 				filepath = self.report_folder + os.sep + filename
@@ -141,7 +141,7 @@ class Monitor_control():
 				else:
 					count += 1
 			
-			if count == 15:
+			if count == 10:
 				print 'copy file %s error for %d times, the last time error is below: '% (filename, count)
 				print cmd1, '\n', result1
 				print cmd2
@@ -256,7 +256,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 		
 		stop_count = 0
-		while(os.path.exists(self.run_lock) and stop_count < self.stop_time):
+		while(os.path.exists(self.run_lock)): # and stop_count < self.stop_time):
 			timeslot = (file_no - 1) * self.timeout + count
 			result = eval(function + '(timeslot)')
 			if result is None:
@@ -279,10 +279,10 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		time.sleep(15)
 		self.scp_data(filename = filename)
 		
-		if stop_count == self.stop_time:
-			print '%s hava no content for %d seconds and stop.' % (function[10:], self.stop_time)
-		else:
-			print '%s normally stop.' % (function[10:])
+		#if stop_count == self.stop_time:
+		#	print '%s hava no content for %d seconds and stop.' % (function[10:], self.stop_time)
+		#else:
+		print '%s normally stop.' % (function[10:])
 		print '%s: '% (function[10:]), file_no, ' files'
 
 	# only record current query in memory
@@ -331,7 +331,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
 
 		stop_count = 0
-		while(os.path.exists(self.run_lock) and stop_count < self.stop_time):
+		while(os.path.exists(self.run_lock)):
 			if count == self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
 				p1.start()
@@ -371,10 +371,10 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			time.sleep(15)
 			self.scp_data(filename = filename)
 		 
-		if stop_count == self.stop_time:
-			print 'get_qd_info have no content for %s seconds and stop.' % (self.stop_time)
-		else:
-			print 'get_qd_info normally stop.'
+		#if stop_count == self.stop_time:
+		#	print 'get_qd_info have no content for %s seconds and stop.' % (self.stop_time)
+		#else:
+		print 'get_qd_info normally stop.'
 		print 'qd_info: ', file_no, ' files'
 
 

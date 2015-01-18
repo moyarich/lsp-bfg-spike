@@ -54,10 +54,11 @@ GROUP BY hostname, timeslot, begintime;
 SELECT f_generate_query_stat(); 
 
 
-CREATE OR REPLACE FUNCTION f_generate_monitor_report(start_id int, end_id int)
+CREATE OR REPLACE FUNCTION hst.f_generate_monitor_report(start_id int, end_id int)
 RETURNS INTEGER
 AS $$
 BEGIN
+  set search_path = hst;
   TRUNCATE test_result_info;
   INSERT INTO test_result_info
   SELECT 

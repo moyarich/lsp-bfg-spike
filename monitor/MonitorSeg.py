@@ -170,7 +170,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		count = 1   # control scp data with self.timeout
 		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 		
-		while(os.path.exists('run.lock') and stop_count < self.stop_time ):
+		while(os.path.exists('run.lock')):
 			timeslot = (file_no - 1) * self.timeout + count
 			result = eval(function + '(timeslot)')
 			if result is None:
@@ -193,10 +193,10 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		time.sleep(15)
 		self.scp_data(filename = filename)
 
-		if stop_count == self.stop_time:
-			print '%s hava no content for %d seconds and stop.' % (function[10:], self.stop_time)
-		else:
-			print '%s normally stop.' % (function[10:])
+		#if stop_count == self.stop_time:
+		#	print '%s hava no content for %d seconds and stop.' % (function[10:], self.stop_time)
+		#else:
+		print '%s normally stop.' % (function[10:])
 		print '%s: '% (function[10:]), file_no, ' files'
 
 		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (self.master_host, self.master_folder, self.hostname)
