@@ -247,7 +247,8 @@ if __name__ == '__main__':
             Report(result_file , msg)
 
         if monitor_flag and report_flag:
-            sql = 'select hst.f_generate_monitor_report(%s, %s);' % (tr_id, tr_id)
+            tr_id1 = int(tr_id.strip()) - 3
+            sql = 'select hst.f_generate_monitor_report(%d, %s);' % (tr_id1, tr_id)
 	    print sql
             result = check.get_result_by_sql(sql = sql)
             print 'generate monitor report: ', result

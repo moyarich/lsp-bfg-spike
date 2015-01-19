@@ -1,6 +1,5 @@
 #workloads_list:  tpch_parquet_10gpn_snappy_part, tpch_parquet_500gpn_snappy_part, tpch_row_10gpn_quicklz1_nopart, tpch_row_500gpn_quicklz1_nopart
-workloads_list: tpch_row_200gpn_quicklz1_nopart
-#, xmarq_row_200gpn_quicklz1_part
+workloads_list: xmarq_row_200gpn_quicklz1_part
 
 workloads_mode: sequential
 #workloads_mode: concurrent
