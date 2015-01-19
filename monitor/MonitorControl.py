@@ -229,8 +229,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			#print 'return code: ' + str(status) + ' output: ' + output + ' in qd_mem_cpu'
-			return None
+			print timeslot, ': return code = ', status, ' output = ', output, ' in qd_mem_cpu'
 		
 		line_item = output.splitlines()
 		output_string = ''
@@ -259,13 +258,9 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 		
 		stop_count = 0
-		while(os.path.exists(self.run_lock)): # and stop_count < self.stop_time):
+		while(os.path.exists(self.run_lock)): 
 			timeslot = (file_no - 1) * self.timeout + count
 			result = eval(function + '(timeslot)')
-			if result is None:
-				stop_count = stop_count + 1
-				time.sleep(1)
-				continue
 
 			if count > self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )

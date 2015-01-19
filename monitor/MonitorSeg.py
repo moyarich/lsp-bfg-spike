@@ -140,8 +140,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		#print cmd
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			print 'return code: ' + str(status) + ' output: ' + output + ' in qe_mem_cpu'
-			return None
+			print timeslot, ': return code = ', status, ' output = ', output, ' in qe_mem_cpu'
 		
 		line_item = output.splitlines()
 		now_time = str(datetime.now())
@@ -177,10 +176,6 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		while(os.path.exists('run.lock')):
 			timeslot = (file_no - 1) * self.timeout + count
 			result = eval(function + '(timeslot)')
-			if result is None:
-				stop_count = stop_count + 1
-				time.sleep(1)
-				continue
 
 			if count > self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
