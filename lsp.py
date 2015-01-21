@@ -101,15 +101,22 @@ if __name__ == '__main__':
     parser.add_option('-a', '--add', dest='add_option', action='store_true', default=False, help='Add result in backend database')
     parser.add_option('-c', '--check', dest='check', action='store_true', default=False, help='Check query result')
     parser.add_option('-f', '--suffix', dest='suffix', action='store_true', default=False, help='Add table suffix')
-    parser.add_option('-m', '--monitor', dest='monitor', action='store_true', default=False, help='Monitor resource')
-    parser.add_option('-r', '--report', dest='report', action='store_true', default=False, help='generate monitor report')
+    parser.add_option('-m', '--monitor', dest='monitor', action='store', default=0, help='Monitor interval')
+    parser.add_option('-r', '--report', dest='report', action='store', default=0, help='Generate monitor report num')
     (options, args) = parser.parse_args()
     schedules = options.schedule
     add_database = options.add_option
     gl.check_result = options.check
     gl.suffix = options.suffix
-    monitor_flag = options.monitor
-    report_flag = options.report
+    monitor_interval = options.monitor
+    report_num = options.report
+    print report_num
+    print monitor_interval
+    if monitor_interval > 0:
+        print 'interval'
+    if monitor_interval > 0 and report_num > 0:
+        print 'hello'
+    sys.exit(2)
 
     cs_id = 0
     if schedules is None:
@@ -170,11 +177,11 @@ if __name__ == '__main__':
             os.system('mkdir -p %s' % (report_directory + os.sep + 'tmp'))
             report_sql_file = os.path.join(report_directory, 'report.sql')
 
-            if monitor_flag:
+            if monitor_interval > 0:
                 tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
                 if tr_id is None:
                     tr_id = -1
-                monitor_control = Monitor_control(mode = 'remote', interval = int(sys.argv[4]), run_id = tr_id)
+                monitor_control = Monitor_control(mode = 'remote', interval = monitor_interval , run_id = tr_id)
                 p1 = Process(target = monitor_control.start)
                 p1.start()
                 time.sleep(30)
@@ -212,7 +219,7 @@ if __name__ == '__main__':
     duration = end_time - beg_time
     duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
 
-    if monitor_flag and start_flag:
+    if monitor_interval > 0 and start_flag:
         monitor_control.stop()
         time.sleep(60)
 
@@ -237,7 +244,7 @@ if __name__ == '__main__':
         || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
         || '|Test Status|' || test_result \
         from \
-            hst.f_generate_test_report_detail(%s, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');" % (tr_id)
+            hst.f_generate_test_report_detail(%d, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');" % (tr_id)
 
         result = check.get_result_by_sql(sql = sql)
         
@@ -246,9 +253,9 @@ if __name__ == '__main__':
             msg = str(one_tuple).strip()
             Report(result_file , msg)
 
-        if monitor_flag and report_flag:
-            tr_id1 = int(tr_id.strip()) - 3
-            sql = 'select hst.f_generate_monitor_report(%d, %s);' % (tr_id1, tr_id)
+        if monitor_interval > 0 and report_num > 0:
+            start_run_id = tr_id - report_num + 1
+            sql = 'select hst.f_generate_monitor_report(%d, %d, false);' % (start_run_id, tr_id)
 	    print sql
             result = check.get_result_by_sql(sql = sql)
             print 'generate monitor report: ', result
