@@ -110,13 +110,6 @@ if __name__ == '__main__':
     gl.suffix = options.suffix
     monitor_interval = options.monitor
     report_num = options.report
-    print report_num
-    print monitor_interval
-    if monitor_interval > 0:
-        print 'interval'
-    if monitor_interval > 0 and report_num > 0:
-        print 'hello'
-    sys.exit(2)
 
     cs_id = 0
     if schedules is None:
