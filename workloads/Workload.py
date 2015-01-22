@@ -304,13 +304,13 @@ class Workload(object):
             tbl_suffix = tbl_suffix + 'heap'
             sql_suffix = ''
 
-        self.check_condition = "wl_catetory = '%s', wl_data_volume_type = '%s', wl_data_volume_size = %d, wl_appendonly = '%s', wl_disrandomly = '%s', wl_orientation = '%s', wl_row_group_size = %d, wl_page_size = %d,\
-        wl_compression_type = '%s', wl_compression_level = %d, wl_partitions = %d, wl_iteration = %d, wl_concurrency = %d, wl_query_order= '%s'" \
+        self.check_condition = "wl_catetory = '%s' and wl_data_volume_type = '%s' and wl_data_volume_size = %d and wl_appendonly = '%s' and wl_disrandomly = '%s' and wl_orientation = '%s' and wl_row_group_size = %d and wl_page_size = %d and \
+        wl_compression_type = '%s' and wl_compression_level = %d and wl_partitions = %d and wl_iteration = %d and wl_concurrency = %d and wl_query_order= '%s'" \
         % (self.workload_name.split('_')[0].upper(), self.data_volume_type, self.data_volume_size, self.append_only, self.distributed_randomly, self.orientation, self.row_group_size, self.page_size, self.compression_type, self.compression_level,
             self.partitions, self.num_iteration, self.num_concurrency, self.run_workload_mode)
 
-        adj_check_condition = "wl_catetory = '%s', wl_data_volume_type = '%s', wl_data_volume_size = %d, wl_appendonly = '%s', wl_disrandomly = '%s', wl_orientation = '%s', wl_row_group_size = %d, wl_page_size = %d,\
-        wl_compression_type = '%s', wl_compression_level = %d, wl_partitions = %d, wl_iteration = %d, wl_concurrency = %d, wl_query_order= '%s'" \
+        adj_check_condition = "wl_catetory = '%s' and wl_data_volume_type = '%s' and wl_data_volume_size = %d and wl_appendonly = '%s' and wl_disrandomly = '%s' and wl_orientation = '%s' and wl_row_group_size = %d and wl_page_size = %d and \
+        wl_compression_type = '%s' and wl_compression_level = %d and wl_partitions = %d and wl_iteration = %d and wl_concurrency = %d and wl_query_order= '%s'" \
         % (self.workload_name.split('_')[0].upper(), self.data_volume_type, self.data_volume_size, self.append_only, adj_distributed_randomly, self.orientation, self.row_group_size, self.page_size, self.compression_type, self.compression_level,
             self.partitions, self.num_iteration, self.num_concurrency, self.run_workload_mode)
 
