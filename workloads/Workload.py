@@ -391,7 +391,7 @@ class Workload(object):
                 
             self.adj_s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
                                        search_condition = 'cs_id = %d and wl_id = %d and us_id = %d' % (self.cs_id, adj_wl_id, self.us_id))
-            if adj_s_id is None:
+            if self.adj_s_id is None:
                 check.insert_new_record(table_name = 'hst.scenario', col_list = 'cs_id, wl_id, us_id', 
                                         values = '%d, %d, %d' % (self.cs_id, adj_wl_id, self.us_id))
                 self.adj_s_id = check.get_max_id(result_id = 's_id', table_name = 'hst.scenario')

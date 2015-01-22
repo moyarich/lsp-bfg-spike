@@ -375,6 +375,11 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		print 'get_qd_info normally stop.'
 		print 'qd_info: ', file_no, ' files'
 
+		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
+		print cmd
+		(s, o) = commands.getstatusoutput(cmd)
+		print o
+
 
 	def stop(self):
 		os.system('rm -rf %s' % (self.run_lock))

@@ -202,7 +202,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		print cmd
 		os.system(cmd)
 		
-		#os.system('rm -rf /tmp/monitor_report/*')
+		os.system('rm -rf /tmp/monitor_report/*')
 
 
 monitor_seg = Monitor_seg()
