@@ -33,7 +33,7 @@ class Check:
 
     def check_id(self, result_id, table_name, search_condition):
         sql = 'select %s from %s where %s;' % (result_id, table_name, search_condition)
-        print sql
+        print sql, '\n'
         result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         result = str(result).strip()
         if result.isdigit():
@@ -43,7 +43,7 @@ class Check:
 
     def get_max_id(self, result_id, table_name):
         sql = 'select max(%s) from %s ;' % (result_id, table_name)
-        print sql
+        print sql, '\n'
         result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         result = str(result).strip()
         if result.isdigit():
@@ -56,21 +56,21 @@ class Check:
             sql = "Insert into %s values (%s);" % (table_name, values)
         else:
             sql = "Insert into %s (%s) values (%s);" % (table_name, col_list, values)
-        print sql
+        print sql, '\n'
         remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
     def update_record(self, table_name, set_content = '', search_condition = ''):
         sql = "update %s set %s where %s;" % (table_name, set_content, search_condition)
-        print sql
+        print sql, '\n'
         remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         
     def get_result(self, col_list = '',table_list = '', search_condition = ''):
         sql = "select %s from %s %s;" % (col_list, table_list, search_condition)
-        print sql
+        print sql, '\n'
         return remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
     def get_result_by_sql(self, sql = ''):
-        print sql
+        print sql, '\n'
         return remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
 
 check = Check()
