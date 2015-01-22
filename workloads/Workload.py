@@ -60,10 +60,11 @@ class Workload(object):
         self.us_id = 0
         self.tr_id = 0
         self.s_id = 0
+        self.adj_s_id = 0
 
         self.user = user
         
-        # check us_id if exist in backend database
+        # check cs_id if exist in backend database
         if self.cs_id != 0:
             self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
             if self.us_id is None:
@@ -245,23 +246,37 @@ class Workload(object):
         #self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
         self.check_condition = "wl_catetory = '%s'" % (self.workload_name.split('_')[0].upper())
         self.wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
+        # add adj check
+        adj_check_condition = "wl_catetory = '%s'" % (self.workload_name.split('_')[0].upper())
+        adj_wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
 
         self.check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.data_volume_size)
         self.wl_values += ", '%s', %d" % (self.data_volume_type, self.data_volume_size)
+        # add adj check
+        adj_check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.data_volume_size)
+        adj_wl_values += ", '%s', %d" % (self.data_volume_type, self.data_volume_size)
 
         if self.append_only in [None, True]:
             tbl_suffix = tbl_suffix + 'ao'
             sql_suffix = sql_suffix + 'appendonly = true'
-            self.check_condition += " and wl_appendonly = %s" % ( str(self.append_only).upper() )
-            self.wl_values += ", '%s', 'FALSE'" % (str(self.append_only).upper())
             # add distributed randomly
-            #self.check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), str(self.distributed_randomly).upper() )
-            #self.wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), str(self.distributed_randomly).upper())
+            if self.distributed_randomly:
+                adj_distributed_randomly = 'FALSE'
+            else:
+                adj_distributed_randomly = 'TRUE'
+            self.check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), str(self.distributed_randomly).upper() )
+            self.wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), str(self.distributed_randomly).upper())
+            # adj check
+            adj_check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), adj_distributed_randomly)
+            adj_wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), adj_distributed_randomly)
 
             tbl_suffix = tbl_suffix + '_' + self.orientation
             sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
             self.check_condition += " and wl_orientation = '%s'" % (self.orientation)
             self.wl_values += ", '%s'" % (self.orientation)
+            # adj check
+            adj_check_condition += " and wl_orientation = '%s'" % (self.orientation)
+            adj_wl_values += ", '%s'" % (self.orientation)
 
             if self.orientation in ['ROW', 'COLUMN']:
                 self.wl_values += ", NULL, NULL"
@@ -269,6 +284,7 @@ class Workload(object):
                 if self.compression_type is None:
                     tbl_suffix = tbl_suffix + '_nocomp'
                     self.wl_values += ", NULL, NULL"
+                    adj_wl_values += ", NULL, NULL"
 
                 elif self.compression_type == 'QUICKLZ':
                     self.compression_level = 1
@@ -276,6 +292,8 @@ class Workload(object):
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
                     self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
                     self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
+                    adj_check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
+                    adj_wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
                 elif self.compression_type == 'ZLIB':
                     if (self.compression_level is None) or (self.compression_level < 1) or (self.compression_level > 9):
                         self.compression_level = 1
@@ -283,9 +301,12 @@ class Workload(object):
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
                     self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
                     self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
+                    adj_check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
+                    adj_wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
                 else:
                     tbl_suffix = tbl_suffix + '_nocomp'
                     self.wl_values += ", NULL, NULL"
+                    adj_wl_values += ", NULL, NULL"
             else:
                 # PARQUET
                 if self.row_group_size is None or self.page_size is None:
@@ -295,12 +316,16 @@ class Workload(object):
                 sql_suffix = sql_suffix + ', ' + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
                 self.check_condition += " and wl_row_group_size = %d and wl_page_size = %d" % (self.row_group_size, self.page_size)
                 self.wl_values += ", %d, %d" % (self.row_group_size, self.page_size)
+                adj_check_condition += " and wl_row_group_size = %d and wl_page_size = %d" % (self.row_group_size, self.page_size)
+                adj_wl_values += ", %d, %d" % (self.row_group_size, self.page_size)
 
                 if self.compression_type == 'SNAPPY':
                     tbl_suffix = tbl_suffix + '_' + self.compression_type
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type
                     self.check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
                     self.wl_values += ", '%s',  NULL" % (self.compression_type)
+                    adj_check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
+                    adj_wl_values += ", '%s',  NULL" % (self.compression_type)
                 elif self.compression_type == 'GZIP':
                     if (self.compression_level is None) or (self.compression_level < 1) or (self.compression_level > 9):
                         self.compression_level = 1
@@ -308,9 +333,12 @@ class Workload(object):
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
                     self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
                     self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
+                    adj_check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
+                    adj_wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
                 else:
                     tbl_suffix = tbl_suffix + '_nocomp'
                     self.wl_values += ", NULL, NULL"
+                    adj_wl_values += ", NULL, NULL"
 
             if self.partitions > 0:
                 tbl_suffix += '_part'
@@ -318,15 +346,21 @@ class Workload(object):
                 tbl_suffix += '_nopart'
             self.check_condition += " and wl_partitions = %d" % (self.partitions)
             self.wl_values += ', %d' % (self.partitions)
+            adj_check_condition += " and wl_partitions = %d" % (self.partitions)
+            adj_wl_values += ', %d' % (self.partitions)
         
         else:
             tbl_suffix = tbl_suffix + 'heap'
             sql_suffix = ''
-            self.check_condition += " and wl_appendonly = %s and wl_partitions = 0" % ('FALSE')
-            self.wl_values += ", '%s', NULL, NULL, NULL, NULL, NULL, 0" % ('FALSE')
+            self.check_condition += " and wl_appendonly = FALSE and wl_partitions = 0"
+            self.wl_values += ", 'FALSE', 'FALSE', NULL, NULL, NULL, NULL, NULL, 0"
+            adj_check_condition += " and wl_appendonly = FALSE and wl_partitions = 0"
+            adj_wl_values += ", 'FALSE', 'FALSE', NULL, NULL, NULL, NULL, NULL, 0"
         
         self.check_condition += " and wl_iteration = %d and wl_concurrency = %d and wl_query_order = '%s'" % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
         self.wl_values += ", %d, %d, '%s'"  % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
+        adj_check_condition += " and wl_iteration = %d and wl_concurrency = %d and wl_query_order = '%s'" % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
+        adj_wl_values += ", %d, %d, '%s'"  % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
 
         if self.cs_id != 0:
             # check wl_id if exist
@@ -347,6 +381,22 @@ class Workload(object):
             #get tr_id
             self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
 
+            # add adjust scenario check
+            adj_wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = adj_check_condition)
+            if adj_wl_id is None:
+                check.insert_new_record(table_name = 'hst.workload',
+                                        col_list = 'wl_name, wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_disrandomly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order',
+                                        values = adj_wl_values)
+                adj_wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
+                
+            self.adj_s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
+                                       search_condition = 'cs_id = %d and wl_id = %d and us_id = %d' % (self.cs_id, adj_wl_id, self.us_id))
+            if adj_s_id is None:
+                check.insert_new_record(table_name = 'hst.scenario', col_list = 'cs_id, wl_id, us_id', 
+                                        values = '%d, %d, %d' % (self.cs_id, adj_wl_id, self.us_id))
+                self.adj_s_id = check.get_max_id(result_id = 's_id', table_name = 'hst.scenario')
+
+        
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
         
@@ -455,8 +505,8 @@ class Workload(object):
             beg_time = str(beg_time)
             end_time = str(end_time)
             self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
+                % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration, self.adj_s_id))
                               
     def run_workload(self):
         niteration = 1
@@ -532,8 +582,8 @@ class Workload(object):
         end_time = str(end_time)
  
         self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, status, duration))
-        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-            % (self.tr_id, self.s_id, con_id, status, beg_time, end_time, duration))
+        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
+            % (self.tr_id, self.s_id, con_id, status, beg_time, end_time, duration, self.adj_s_id))
         
         self.output('-- Complete vacuum analyze')
 

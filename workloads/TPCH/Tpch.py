@@ -157,8 +157,8 @@ class Tpch(Workload):
             beg_time = str(beg_time)
             end_time = str(end_time)        
             self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, status, duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, con_id, table_name, status, beg_time, end_time, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
+                % (self.tr_id, self.s_id, con_id, table_name, status, beg_time, end_time, duration, self.adj_s_id))
                
         self.output('-- Complete loading data')
 
