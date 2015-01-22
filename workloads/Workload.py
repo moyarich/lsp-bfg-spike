@@ -93,10 +93,10 @@ class Workload(object):
         self.data_volume_size = None
         self.append_only = None
         self.orientation = None
-        self.row_group_size = None
-        self.page_size = None
+        self.row_group_size = -1
+        self.page_size = -1
         self.compression_type = None
-        self.compression_level = None
+        self.compression_level = -1
         self.partitions = 0
         self.distributed_randomly = None
 
@@ -117,7 +117,6 @@ class Workload(object):
         self.num_concurrency = None
         self.num_iteration = None
         self.__get_run_mode(workload_specification)
-
         self.__set_info()
 
     def __prep_folders_and_files(self, workload_directory, report_directory, report_sql_file):
@@ -243,18 +242,6 @@ class Workload(object):
         tbl_suffix = ''
         sql_suffix = ''
         # init tpch specific configuration such as tpch table_settings
-        #self.check_condition = "wl_name = '%s' and wl_catetory = '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
-        self.check_condition = "wl_catetory = '%s'" % (self.workload_name.split('_')[0].upper())
-        self.wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
-        # add adj check
-        adj_check_condition = "wl_catetory = '%s'" % (self.workload_name.split('_')[0].upper())
-        adj_wl_values = "'%s', '%s'" % (self.workload_name, self.workload_name.split('_')[0].upper())
-
-        self.check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.data_volume_size)
-        self.wl_values += ", '%s', %d" % (self.data_volume_type, self.data_volume_size)
-        # add adj check
-        adj_check_condition += " and wl_data_volume_type = '%s' and wl_data_volume_size = %d" % (self.data_volume_type, self.data_volume_size)
-        adj_wl_values += ", '%s', %d" % (self.data_volume_type, self.data_volume_size)
 
         if self.append_only in [None, True]:
             tbl_suffix = tbl_suffix + 'ao'
@@ -264,50 +251,30 @@ class Workload(object):
                 adj_distributed_randomly = 'FALSE'
             else:
                 adj_distributed_randomly = 'TRUE'
-            self.check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), str(self.distributed_randomly).upper() )
-            self.wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), str(self.distributed_randomly).upper())
-            # adj check
-            adj_check_condition += " and wl_appendonly = %s and wl_disrandomly = %s" % ( str(self.append_only).upper(), adj_distributed_randomly)
-            adj_wl_values += ", '%s', '%s'" % (str(self.append_only).upper(), adj_distributed_randomly)
 
             tbl_suffix = tbl_suffix + '_' + self.orientation
             sql_suffix = sql_suffix + ', '+ 'orientation = ' + self.orientation
-            self.check_condition += " and wl_orientation = '%s'" % (self.orientation)
-            self.wl_values += ", '%s'" % (self.orientation)
-            # adj check
-            adj_check_condition += " and wl_orientation = '%s'" % (self.orientation)
-            adj_wl_values += ", '%s'" % (self.orientation)
 
             if self.orientation in ['ROW', 'COLUMN']:
-                self.wl_values += ", NULL, NULL"
-                adj_wl_values += ", NULL, NULL"
+                # group size, page_size
+                self.page_size = -1
+                self.row_group_size = -1
 
                 if self.compression_type is None:
                     tbl_suffix = tbl_suffix + '_nocomp'
-                    self.wl_values += ", NULL, NULL"
-                    adj_wl_values += ", NULL, NULL"
-
+                    self.compression_type = 'None'
+                    self.compression_level = -1
                 elif self.compression_type == 'QUICKLZ':
                     self.compression_level = 1
                     tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
-                    self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
-                    self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
-                    adj_check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
-                    adj_wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
                 elif self.compression_type == 'ZLIB':
                     if (self.compression_level is None) or (self.compression_level < 1) or (self.compression_level > 9):
                         self.compression_level = 1
                     tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
-                    self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
-                    self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
-                    adj_check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
-                    adj_wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
                 else:
                     tbl_suffix = tbl_suffix + '_nocomp'
-                    self.wl_values += ", NULL, NULL"
-                    adj_wl_values += ", NULL, NULL"
             else:
                 # PARQUET
                 if self.row_group_size is None or self.page_size is None:
@@ -315,53 +282,45 @@ class Workload(object):
                     self.page_size = 1048576
 
                 sql_suffix = sql_suffix + ', ' + 'pagesize = %s, rowgroupsize = %s' % (self.page_size, self.row_group_size)
-                self.check_condition += " and wl_row_group_size = %d and wl_page_size = %d" % (self.row_group_size, self.page_size)
-                self.wl_values += ", %d, %d" % (self.row_group_size, self.page_size)
-                adj_check_condition += " and wl_row_group_size = %d and wl_page_size = %d" % (self.row_group_size, self.page_size)
-                adj_wl_values += ", %d, %d" % (self.row_group_size, self.page_size)
 
                 if self.compression_type == 'SNAPPY':
+                    self.compression_level = -1
                     tbl_suffix = tbl_suffix + '_' + self.compression_type
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type
-                    self.check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
-                    self.wl_values += ", '%s',  NULL" % (self.compression_type)
-                    adj_check_condition += " and wl_compression_type = '%s'" % (self.compression_type)
-                    adj_wl_values += ", '%s',  NULL" % (self.compression_type)
                 elif self.compression_type == 'GZIP':
                     if (self.compression_level is None) or (self.compression_level < 1) or (self.compression_level > 9):
                         self.compression_level = 1
                     tbl_suffix = tbl_suffix + '_' + self.compression_type + str(self.compression_level)
                     sql_suffix = sql_suffix + ', ' + 'compresstype = ' + self.compression_type  + ', ' + 'compresslevel = ' + str(self.compression_level)
-                    self.check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
-                    self.wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
-                    adj_check_condition += " and wl_compression_type = '%s' and wl_compression_level = %d" % (self.compression_type, self.compression_level)
-                    adj_wl_values += ", '%s', %d" % (self.compression_type, self.compression_level)
                 else:
                     tbl_suffix = tbl_suffix + '_nocomp'
-                    self.wl_values += ", NULL, NULL"
-                    adj_wl_values += ", NULL, NULL"
 
             if self.partitions > 0:
                 tbl_suffix += '_part'
             else:
                 tbl_suffix += '_nopart'
-            self.check_condition += " and wl_partitions = %d" % (self.partitions)
-            self.wl_values += ', %d' % (self.partitions)
-            adj_check_condition += " and wl_partitions = %d" % (self.partitions)
-            adj_wl_values += ', %d' % (self.partitions)
         
         else:
             tbl_suffix = tbl_suffix + 'heap'
             sql_suffix = ''
-            self.check_condition += " and wl_appendonly = FALSE and wl_partitions = 0"
-            self.wl_values += ", 'FALSE', 'FALSE', NULL, NULL, NULL, NULL, NULL, 0"
-            adj_check_condition += " and wl_appendonly = FALSE and wl_partitions = 0"
-            adj_wl_values += ", 'FALSE', 'FALSE', NULL, NULL, NULL, NULL, NULL, 0"
-        
-        self.check_condition += " and wl_iteration = %d and wl_concurrency = %d and wl_query_order = '%s'" % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
-        self.wl_values += ", %d, %d, '%s'"  % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
-        adj_check_condition += " and wl_iteration = %d and wl_concurrency = %d and wl_query_order = '%s'" % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
-        adj_wl_values += ", %d, %d, '%s'"  % (self.num_iteration, self.num_concurrency, self.run_workload_mode)
+
+        self.check_condition = "wl_catetory = '%s', wl_data_volume_type = '%s', wl_data_volume_size = %d, wl_appendonly = '%s', wl_disrandomly = '%s', wl_orientation = '%s', wl_row_group_size = %d, wl_page_size = %d,\
+        wl_compression_type = '%s', wl_compression_level = %d, wl_partitions = %d, wl_iteration = %d, wl_concurrency = %d, wl_query_order= '%s'" \
+        % (self.workload_name.split('_')[0].upper(), self.data_volume_type, self.data_volume_size, self.append_only, self.distributed_randomly, self.orientation, self.row_group_size, self.page_size, self.compression_type, self.compression_level,
+            self.partitions, self.num_iteration, self.num_concurrency, self.run_workload_mode)
+
+        adj_check_condition = "wl_catetory = '%s', wl_data_volume_type = '%s', wl_data_volume_size = %d, wl_appendonly = '%s', wl_disrandomly = '%s', wl_orientation = '%s', wl_row_group_size = %d, wl_page_size = %d,\
+        wl_compression_type = '%s', wl_compression_level = %d, wl_partitions = %d, wl_iteration = %d, wl_concurrency = %d, wl_query_order= '%s'" \
+        % (self.workload_name.split('_')[0].upper(), self.data_volume_type, self.data_volume_size, self.append_only, adj_distributed_randomly, self.orientation, self.row_group_size, self.page_size, self.compression_type, self.compression_level,
+            self.partitions, self.num_iteration, self.num_concurrency, self.run_workload_mode)
+
+        self.wl_values = "'%s', '%s', '%s', %d, '%s', '%s', '%s', %d, %d, '%s', %d, %d, %d, %d, '%s'" \
+        % (self.workload_name, self.workload_name.split('_')[0].upper(), self.data_volume_type, self.data_volume_size, self.append_only, self.distributed_randomly, self.orientation, self.row_group_size, self.page_size, self.compression_type, self.compression_level,
+            self.partitions, self.num_iteration, self.num_concurrency, self.run_workload_mode)
+
+        adj_wl_values = "'%s', '%s', '%s', %d, '%s', '%s', '%s', %d, %d, '%s', %d, %d, %d, %d, '%s'" \
+        % (self.workload_name, self.workload_name.split('_')[0].upper(), self.data_volume_type, self.data_volume_size, self.append_only, adj_distributed_randomly, self.orientation, self.row_group_size, self.page_size, self.compression_type, self.compression_level,
+            self.partitions, self.num_iteration, self.num_concurrency, self.run_workload_mode)
 
         if self.cs_id != 0:
             # check wl_id if exist
@@ -400,6 +359,8 @@ class Workload(object):
         
         self.tbl_suffix = tbl_suffix.lower()
         self.sql_suffix = sql_suffix
+
+        
         
     def setup(self):
         '''Setup prerequisites for workload'''
