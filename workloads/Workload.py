@@ -64,7 +64,7 @@ class Workload(object):
 
         self.user = user
         
-        # check cs_id if exist in backend database
+        # check user_id if exist in backend database
         if self.cs_id != 0:
             self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
             if self.us_id is None:
@@ -280,6 +280,7 @@ class Workload(object):
 
             if self.orientation in ['ROW', 'COLUMN']:
                 self.wl_values += ", NULL, NULL"
+                adj_wl_values += ", NULL, NULL"
 
                 if self.compression_type is None:
                     tbl_suffix = tbl_suffix + '_nocomp'

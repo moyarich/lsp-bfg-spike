@@ -228,7 +228,8 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			print timeslot, ': return code = ', status, ' output = ', output, ' in qd_mem_cpu'
+			pass
+			#print timeslot, ': return code = ', status, ' output = ', output, ' in qd_mem_cpu'
 		
 		line_item = output.splitlines()
 		output_string = ''
@@ -350,7 +351,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					print 'time error ' + str(line)
+					#print 'time error ' + str(line)
 					continue
 
 				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
