@@ -18,7 +18,7 @@ workloads_content:
           compression_type: QUICKLZ
           compression_level: 1
           partitions: 128
-          distributed_randomly: true
+          distributed_randomly: false
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -37,7 +37,7 @@ workloads_content:
           page_size: 1048576
           compression_type: SNAPPY
           partitions: 0
-          distributed_randomly: true
+          distributed_randomly: false
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
