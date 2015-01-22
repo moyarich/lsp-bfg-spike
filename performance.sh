@@ -11,7 +11,7 @@ source ~/qa.sh
 
 #gpconfig -c split_read_size_mb -v 512 --skipvalidation
 #gpstop -u
-python -u lsp.py -s performance1 -m 5 -a > ./performance1.log 2>&1
+python -u lsp.py -s performance1 -a > ./performance1.log 2>&1
 #sleep 10
 #set split_read_size_mb = 8192;
 #gpstop -ar

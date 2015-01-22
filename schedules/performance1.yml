@@ -1,5 +1,4 @@
-workloads_list: tpch_row_10gpn_nocomp_nopart
-#, tpch_parquet_10gpn_nocomp_part
+workloads_list: tpch_row_10gpn_nocomp_nopart, tpch_parquet_10gpn_nocomp_part
 
 workloads_mode: sequential
 
@@ -17,8 +16,8 @@ workloads_content:
           orientation: ROW
           partitions: 0
           distributed_randomly: false
-      load_data_flag: true
-      run_workload_flag: true
+      load_data_flag: false
+      run_workload_flag: false
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
@@ -34,9 +33,9 @@ workloads_content:
           row_group_size: 8388608
           page_size: 1048576
           partitions: 128
-          distributed_randomly: true
-      load_data_flag: true
-      run_workload_flag: true
+          distributed_randomly: false
+      load_data_flag: false
+      run_workload_flag: false
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
