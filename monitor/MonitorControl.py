@@ -20,14 +20,13 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 120, stop_time = 600, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
+	def __init__(self, mode = 'local', interval = 5, timeout = 120, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
 		assert mode in ['local', 'remote']
 		self.mode = mode
-		self.interval = interval
-		self.timeout = timeout
-		self.stop_time = stop_time
+		self.interval = int(interval)
+		self.timeout = int(timeout)
 		self.remote_host = remote_host
-		self.run_id = run_id
+		self.run_id = int(run_id)
 		
 		self.query_record = {}
 		self.current_query_record = []
@@ -257,7 +256,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		file_no = 1
 		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 		
-		stop_count = 0
 		while(os.path.exists(self.run_lock)): 
 			timeslot = (file_no - 1) * self.timeout + count
 			result = eval(function + '(timeslot)')
@@ -270,16 +268,12 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 
 			self.report(filename = self.report_folder + os.sep + filename, msg = result)
-			stop_count = 0
 			count += 1
 			time.sleep(self.interval)
 
 		time.sleep(15)
 		self.scp_data(filename = filename)
-		
-		#if stop_count == self.stop_time:
-		#	print '%s hava no content for %d seconds and stop.' % (function[10:], self.stop_time)
-		#else:
+
 		print '%s normally stop.' % (function[10:])
 		print '%s: '% (function[10:]), file_no, ' files'
 
@@ -328,7 +322,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		file_no = 1
 		filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
 
-		stop_count = 0
 		while(os.path.exists(self.run_lock)):
 			if count == self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
@@ -339,14 +332,12 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 			result = self._get_qd_info()
 			if result is None:
-				stop_count += 1
 				time.sleep(1)
 				continue
 
 			if result != '':
 				self.report(filename = self.report_folder + os.sep + filename, msg = result)
 				count += 1
-			stop_count = 0
 			time.sleep(interval)
 
 		now_time = datetime.now()
@@ -369,9 +360,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			time.sleep(15)
 			self.scp_data(filename = filename)
 		 
-		#if stop_count == self.stop_time:
-		#	print 'get_qd_info have no content for %s seconds and stop.' % (self.stop_time)
-		#else:
 		print 'get_qd_info normally stop.'
 		print 'qd_info: ', file_no, ' files'
 
@@ -382,18 +370,14 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 
 	def stop(self):
-		os.system('rm -rf %s' % (self.run_lock))
-
-		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
-		print cmd
-		(s, o) = commands.getstatusoutput(cmd)
-		print o
+		while( os.path.exists(self.run_lock) ):
+			os.system('rm -rf %s' % (self.run_lock))
 
 
 	def start(self):
 		self.setup()
 
-		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.stop_time, self.run_id)
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
 		(s, o) = commands.getstatusoutput(cmd)
 		print o
 

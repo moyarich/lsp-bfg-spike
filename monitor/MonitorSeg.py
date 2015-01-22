@@ -23,8 +23,7 @@ class Monitor_seg():
 		self.remote_host = sys.argv[5]
 		self.interval = int(sys.argv[6])
 		self.timeout = int(sys.argv[7])
-		self.stop_time = int(sys.argv[8])
-		self.run_id = int(sys.argv[9])
+		self.run_id = int(sys.argv[8])
 		
 		self.pwd = os.getcwd()
 		(s, o) = commands.getstatusoutput('hostname')
@@ -168,7 +167,6 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	
 	
 	def get_qe_data(self, function = 'self._get_qe_mem_cpu'):
-		stop_count = 0
 		file_no = 1
 		count = 1   # control scp data with self.timeout
 		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
@@ -185,24 +183,20 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 				filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 			
 			self.report(filename = filename, msg = result)
-			stop_count = 0
 			count += 1
 			time.sleep(self.interval)
 
 		time.sleep(15)
 		self.scp_data(filename = filename)
 
-		#if stop_count == self.stop_time:
-		#	print '%s hava no content for %d seconds and stop.' % (function[10:], self.stop_time)
-		#else:
 		print '%s normally stop.' % (function[10:])
 		print '%s: '% (function[10:]), file_no, ' files'
 
 		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (self.master_host, self.master_folder, self.hostname)
 		print cmd
 		os.system(cmd)
-		
-		os.system('rm -rf /tmp/monitor_report/*')
+		os.system('rm -rf run.lock')
+		#os.system('rm -rf /tmp/monitor_report/*')
 
 
 monitor_seg = Monitor_seg()

@@ -33,7 +33,7 @@ class Check:
 
     def check_id(self, result_id, table_name, search_condition):
         sql = 'select %s from %s where %s;' % (result_id, table_name, search_condition)
-       # print sql
+        print sql
         result = remote_psql_file(sql = sql, user = self.user, host = self.host, password = self.password)
         result = str(result).strip()
         if result.isdigit():
