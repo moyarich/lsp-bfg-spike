@@ -1,4 +1,4 @@
-workloads_list: xmarq_row_200gpn_quicklz1_part, xmarq_parquet_200gpn_snappy_nopart
+workloads_list: xmarq_row_200gpn_quicklz1_part, xmarq_parquet_200gpn_snappy_nopart,xmarq_row_200gpn_quicklz1_part_random, xmarq_parquet_200gpn_snappy_nopart_random
 
 workloads_mode: sequential
 #workloads_mode: concurrent
@@ -38,6 +38,43 @@ workloads_content:
           compression_type: SNAPPY
           partitions: 0
           distributed_randomly: false
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: xmarq_row_200gpn_quicklz1_part_random
+      database_name: tpch_row_200gpn_quicklz1_part_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: xmarq_parquet_200gpn_snappy_nopart_random
+      database_name: tpch_parquet_200gpn_snappy_nopart_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+          partitions: 0
+          distributed_randomly: true
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL

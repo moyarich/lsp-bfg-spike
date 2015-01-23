@@ -1,7 +1,8 @@
-workloads_list: tpch_row_200gpn_quicklz1_part,tpch_parquet_200gpn_snappy_nopart,xmarq_row_200gpn_quicklz1_part,xmarq_parquet_200gpn_snappy_nopart
+workloads_list: tpch_row_200gpn_quicklz1_part, tpch_row_200gpn_quicklz1_part_random
+#tpch_parquet_200gpn_snappy_nopart,xmarq_row_200gpn_quicklz1_part,xmarq_parquet_200gpn_snappy_nopart
 
-#workloads_mode: sequential
-workloads_mode: concurrent
+workloads_mode: sequential
+#workloads_mode: concurrent
 
 cluster_name: HAWQ main performance on Geneva cluster
 
@@ -22,7 +23,25 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 3
+      num_concurrency: 8
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_random
+      database_name: tpch_row_200gpn_quicklz1_part_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 8
       num_iteration: 1
 
     - workload_name: tpch_parquet_200gpn_snappy_nopart
