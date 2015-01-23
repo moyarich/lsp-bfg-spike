@@ -237,7 +237,7 @@ if __name__ == '__main__':
         || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
         || '|Test Status|' || test_result \
         from \
-            hst.f_generate_test_report_detail(%d, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');" % (tr_id)
+            hst.f_generate_test_report_detail(%d, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946');" % (tr_id)
 
         result = check.get_result_by_sql(sql = sql)
         
