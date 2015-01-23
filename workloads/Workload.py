@@ -167,7 +167,7 @@ class Workload(object):
             sys.exit(2)
 
         # get ans directory base on self.scale_factor
-        self.ans_directory = self.workload_directory + os.sep + 'queries_ans_%dg' % (self.scale_factor)
+        self.ans_directory = self.workload_directory + os.sep + 'queries_ans' + os.sep + 'queries_ans_%dg' % (self.scale_factor)
         if not os.path.exists(self.ans_directory):
             self.output('%s ans_directory:%s does not exists' % (self.workload_name, self.ans_directory))
 
