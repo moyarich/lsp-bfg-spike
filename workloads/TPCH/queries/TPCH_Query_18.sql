@@ -4,7 +4,7 @@ select
  o_orderkey,
  o_orderdate,
  o_totalprice,
- sum(l_quantity)
+ sum(l_quantity) as total_quantity
 from
  customer_TABLESUFFIX,
  orders_TABLESUFFIX,
@@ -29,5 +29,9 @@ group by
  o_totalprice
 order by
  o_totalprice desc,
- o_orderdate
+ total_quantity desc,
+ o_orderdate,
+ c_name,
+ c_custkey,
+ o_orderkey
 LIMIT 100;
