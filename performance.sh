@@ -19,5 +19,5 @@ python -u lsp.py -s performance2 -m 30 -a -c > ./performance2.log 2>&1
 sleep 10
 python -u lsp.py -s performance3 -m 10 -a > ./performance3.log 2>&1
 sleep 10
-python -u lsp.py -s performance4 -m 60 -a -r 4 > ./performance4.log 2>&1
+python -u lsp.py -s performance4 -m 60 -a -c -r 4 > ./performance4.log 2>&1
 #python -u lsp.py -s performance1,performance2,performance3 -a > ./performance.log 2>&1
