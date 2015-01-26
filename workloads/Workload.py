@@ -301,7 +301,7 @@ class Workload(object):
                 tbl_suffix += '_nopart'
         
         else:
-            print 'heap table'
+            print 'not support heap table'
             sys.exit(2)
             tbl_suffix = tbl_suffix + 'heap'
             sql_suffix = ''
@@ -423,12 +423,12 @@ class Workload(object):
                     if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1:
                         status = 'SUCCESS'
                         # generate output and md5 file
-                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'w') as f:
+                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'w') as f:
                             f.write(str(result[0].split('***')[0]))
-                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.output', 'r') as f:
+                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'r') as f:
                             result = f.read()
                             md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
-                        with open(self.result_directory + os.sep + qf_name.split('.')[0] + '.md5', 'w') as f:
+                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5', 'w') as f:
                             f.write(md5code)
                         
                         if gl.check_result:
@@ -436,11 +436,11 @@ class Workload(object):
                             md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
                             if os.path.exists(ans_file):
                                 self.output('Check query result use ans file')
-                                if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.output'):
+                                if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output'):
                                     status = 'ERROR'
                             elif os.path.exists(md5_file):
                                 self.output('Check query result use md5 file')
-                                if not self.check_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + qf_name.split('.')[0] + '.md5'):
+                                if not self.check_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5'):
                                     status = 'ERROR'
                             else:
                                 self.output('No answer file')

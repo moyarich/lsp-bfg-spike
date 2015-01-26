@@ -28,7 +28,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
+      num_concurrency: 2
       num_iteration: 1
 
     - workload_name: tpch_heap
