@@ -8,6 +8,8 @@ source ~/qa.sh
 # python -u lsp.py -s performance_full_regression_single_stream_tpch -a > ./performance_full_regression_tpch.log 2>&1
 
 # python -u lsp.py -s performance_sanity -a > ./performance_sanity.log 2>&1
+ps -ef | grep postgres > ps.log 2>&1
+echo $GPHOME >> ps.log 2>&1
 gpconfig -c hash_dist_init_segment_num -v 64 --skipvalidation > gpconfig1.log 2>&1
 gpstop -ar > gpconfig2.log 2>&1
 #gpconfig -c split_read_size_mb -v 512 --skipvalidation
