@@ -1,4 +1,5 @@
-workloads_list: tpch_row_200gpn_quicklz1_part, tpch_parquet_200gpn_snappy_nopart
+workloads_list: tpch_row_200gpn_quicklz1_part
+#, tpch_parquet_200gpn_snappy_nopart
 #, tpch_row_200gpn_quicklz1_part_random, tpch_parquet_200gpn_snappy_nopart_random
 
 workloads_mode: sequential
