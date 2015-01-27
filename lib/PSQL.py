@@ -83,8 +83,8 @@ class PSQL:
         if dbname == None:
             dbname = 'postgres'
             
-        if username == None:
-            username = 'gpadmin'
+        #if username == None:
+            #username = 'gpadmin'
           #  try:
           #      username = os.environ['PGUSER']
           #  except Exception, e:
@@ -133,9 +133,12 @@ class PSQL:
         else:
             ofile = '> %s 2>&1' % ofile
 
-        return shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
-                                (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), 
-                                 timeout=timeout)
+        if username == None:
+            return shell.run_timeout('%s psql -d %s %s %s %s %s %s %s' %
+                        (PGOPTIONS, dbname, host, port, flag, arg, ofile, background), timeout=timeout)
+        else:
+            return shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
+                        (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), timeout=timeout)
 
 
     def runcmd(self, cmd, dbname = None, ofile = '-', flag = '', username = None, password = None,
