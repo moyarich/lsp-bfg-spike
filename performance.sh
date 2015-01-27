@@ -12,7 +12,7 @@ gpconfig -c hash_dist_init_segment_num -v 64 --skipvalidation > gpconfig1.log 2>
 gpstop -ar > gpconfig2.log 2>&1
 #gpconfig -c split_read_size_mb -v 512 --skipvalidation
 #gpstop -u
-python -u lsp.py -s performance1 -a -c > ./performance1.log 2>&1
+#python -u lsp.py -s performance1 -a -c > ./performance1.log 2>&1
 #sleep 10
 #set split_read_size_mb = 8192;
 #gpstop -ar
