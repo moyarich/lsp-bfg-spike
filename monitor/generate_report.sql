@@ -6,6 +6,7 @@ CREATE TABLE test_result_info
 (wl_name varchar(512),
  action_type varchar(50),
  action_target varchar(128),
+ wl_concurrency int,
  stream int,
  start_time  timestamp with time zone,
  end_time timestamp with time zone,
@@ -58,7 +59,7 @@ Data Preparion
 5. Generate QD/QE for query base 
 
 ---------------------
-DROP FUNCTION if exists hst.f_monitordata_transform(int, int, boolean);
+DROP FUNCTION if exists hst.f_monitordata_transform(int, int);
 CREATE OR REPLACE FUNCTION hst.f_monitordata_transform(start_id int, end_id int)
 RETURNS INTEGER
 AS $$
@@ -154,7 +155,7 @@ BEGIN
       TRUNCATE query_seg_stat_info;
       TRUNCATE query_master_stat_info;
       SELECT COUNT(*) INTO v_count FROM test_result_info;
-      OPEN qe_cur FOR SELECT * FROM test_result_info;
+      OPEN qe_cur FOR SELECT wl_name, case when action_type = 'Loading' then action_type || '_' || action_target else action_target end, stream, start_time, end_time, con_id FROM test_result_info;
       WHILE v_i <= v_count loop
          FETCH qe_cur INTO v_wl_name, v_query_name, v_stream, v_start_time, v_end_time, v_con_id;
          INSERT INTO query_seg_stat_info 
@@ -181,7 +182,7 @@ BEGIN
                        and qe.con_id = v_con_id
                     GROUP BY qe.hostname||'-'||qe.seg_id) AS qes;
              INSERT INTO query_master_stat_info 
-             SELECT  wl_name, query_name,stream,
+             SELECT  v_wl_name, v_query_name, v_stream,
                      max(qd.pmem) as pmem, 
                      max(qd.pcpu) as pcpu, 
                      max(qd.rss) as rss 
@@ -196,7 +197,6 @@ $$ LANGUAGE PLPGSQL;
 SELECT f_generate_query_stat();
 SELECT * FROM query_seg_stat_info;
 SELECT * FROM query_master_stat_info;
-
 
 
 
@@ -242,9 +242,9 @@ BEGIN
                               MAX(CASE WHEN qde.hostname = 'bcn-w15' THEN qde.rss ELSE 0 END) as w15, 
                               MAX(CASE WHEN qde.hostname = 'bcn-w16' THEN qde.rss ELSE 0 END) as w16, 
                               min(qde.begintime), 
-                               3200
-	         FROM qde_mem_cpu_per_node as qde
-                 WHERE qde.timeslot != v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time 
+                               32000
+	             FROM qde_mem_cpu_per_node as qde
+                 WHERE qde.timeslot = v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time 
                  GROUP BY qde.timeslot;
 
                  INSERT INTO 	qde_monitorinfo 
@@ -295,7 +295,7 @@ BEGIN
                               MAX(CASE WHEN qde.hostname = 'bcn-w15' THEN qde.pcpu ELSE 0 END) as w15, 
                               MAX(CASE WHEN qde.hostname = 'bcn-w16' THEN qde.pcpu ELSE 0 END) as w16, 
                               min(qde.begintime),
-                              3200
+                              32000
 	         FROM qde_mem_cpu_per_node as qde
 	         WHERE qde.timeslot = v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
                  GROUP BY qde.timeslot;
@@ -348,7 +348,7 @@ BEGIN
   PERFORM f_generate_query_stat();
   PERFORM f_get_host_monitor_info();
   IF isclear THEN
-    INSERT INTO hst.qd_info_history select * from hst.qd_info WHERE run_id in (116,117,118,119);
+    INSERT INTO hst.qd_info_history select * from hst.qd_info WHERE run_id between start_id and end_id;
     TRUNCATE TABLE hst.qd_info;
 
     INSERT INTO hst.qd_mem_cpu_history select * from hst.qd_mem_cpu;
@@ -376,7 +376,15 @@ TRUNCATE TABLE hst.qd_mem_cpu_history;
 INSERT INTO hst.qe_mem_cpu select * from hst.qe_mem_cpu_history WHERE run_id in (116,117,118,119);
 TRUNCATE TABLE hst.qe_mem_cpu_history;
 
+drop table if exists hawq1212_query_master_stat_info;
+drop table if exists hawq1212_query_seg_stat_info;
+drop table if exists hawq1212_qde_monitorinfo;
+drop table if exists hawq1212_test_result_info;
 
+create table hawq1212_query_master_stat_info as select * from query_master_stat_info;
+create table hawq1212_query_seg_stat_info as select * from query_seg_stat_info;
+create table hawq1212_qde_monitorinfo as select * from qde_monitorinfo;
+create table hawq1212_test_result_info as select * from test_result_info;
 
 
 
