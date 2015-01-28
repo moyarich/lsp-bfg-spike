@@ -502,7 +502,8 @@ class Workload(object):
         con_id = -1
         if self.continue_flag:
             if self.load_data_flag:
-                sql = 'VACUUM ANALYZE;'
+                #sql = 'VACUUM ANALYZE;'
+		sql = 'ANALYZE;'
                 self.output(sql)
                 sql_filename = 'vacuum.sql'
                 # get con_id
