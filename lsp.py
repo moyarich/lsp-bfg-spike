@@ -252,3 +252,15 @@ if __name__ == '__main__':
             print sql
             result = check.get_result_by_sql(sql = sql)
             print 'generate monitor report: ', result
+
+        if report_num > 0:
+            start_run_id = int(tr_id) - int(report_num) + 1
+            sql = "select wl_name, action_type,test_statistic,actual_total_execution_time,baseline_total_execution_time,deviation \
+            from hst.f_generate_test_report_summary(%d, %d, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946') where wl_name not like '%RWITHD%' order by tr_id, s_id,action_type;" % (start_run_id, tr_id)
+            
+            result = check.get_result_by_sql(sql = sql)
+            result = str(result).strip().split('\r\n')
+            
+            for one_tuple in result:
+                msg = str(one_tuple).strip()
+                Report('./report/summary_report.txt' , msg)
