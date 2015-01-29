@@ -21,8 +21,8 @@ workloads_content:
           compression_level: 1
           partitions: 128
           distributed_randomly: false
-      load_data_flag: true
-      run_workload_flag: true
+      load_data_flag: false
+      run_workload_flag: false
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1
