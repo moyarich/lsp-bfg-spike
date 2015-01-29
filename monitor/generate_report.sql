@@ -441,3 +441,44 @@ create table hawq1212_test_result_info as select * from test_result_info;
 
 
 
+DROP FUNCTION IF EXISTS f_get_scenario_info(test_run_id INT);
+CREATE OR REPLACE FUNCTION f_get_scenario_info(test_run_id INT)
+RETURNS TEXT
+AS $$
+DECLARE
+        qe_cur REFCURSOR;
+        v_count int;
+        v_i int;
+        v_sid varchar(10);
+        v_query_str varchar(1000);
+        v_ctl_string varchar(1000);
+BEGIN
+    DROP TABLE if exists hst.parameter_tuning;
+        v_ctl_string = 'CREATE TABLE hst.parameter_tuning (wl_name varchar(512), action_type varchar(128), action_target varchar(512), ';
+        v_query_str = 'INSERT INTO hst.parameter_tuning SELECT action_type, action_target,';
+        v_i = 1;
+        SELECT count(DISTINCT s_id) into v_count from test_result where tr_id = 156;
+        OPEN qe_cur FOR SELECT DISTINCT s_id::varchar(10) FROM  test_result where tr_id = 156;
+        WHILE v_i <= v_count loop
+            FETCH qe_cur INTO v_sid;
+            v_ctl_string = v_ctl_string ||'P'|| v_i::char(1) || ' int' ;
+            v_query_str = v_query_str || 'MAX(CASE WHEN ts.s_id =' || v_sid || ' THEN ts.duration ELSE 0 END) ' ;
+            IF (v_i <> v_count) THEN
+                  v_query_str = v_query_str || ',';
+                  v_ctl_string = v_ctl_string || ',';
+            END IF;
+
+            v_i = v_i + 1;
+        END LOOP;
+        CLOSE qe_cur;
+        v_query_str = v_query_str  || ' FROM hst.f_precompute_test_result(156) AS ts GROUP BY action_type, action_target order by action_type, action_target ;';
+        v_ctl_string = v_ctl_string || ');';
+        EXECUTE v_ctl_string;
+        EXECUTE v_query_str;
+        RETURN v_ctl_string;
+END
+$$ LANGUAGE PLPGSQL;
+
+
+select  f_get_scenario_info(1);   
+
