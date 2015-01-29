@@ -113,12 +113,14 @@ BEGIN
   TRUNCATE qde_mem_cpu_per_node;
   INSERT INTO qde_mem_cpu_per_node
     SELECT hostname, 'QE' as role, timeslot, begintime,
-      SUM(rss) AS rss, SUM(pmem) AS pmem, SUM(pcpu) AS pcpu
+      SUM(rss) AS rss, SUM(pmem) AS pmem, SUM(pcpu) AS pcpu,
+      COUNT(*) AS segnum
     FROM qe_mem_cpu_per_seg_con
     GROUP BY hostname,timeslot, begintime
     UNION
     SELECT hostname, 'QD' as role, timeslot, begintime,
-      sum(rss), sum(pmem), sum(pcpu)
+      sum(rss), sum(pmem), sum(pcpu),
+      COUNT(*) AS segnum
     FROM qd_mem_cpu_per_con
     GROUP BY hostname, timeslot, begintime;
 
@@ -324,6 +326,57 @@ BEGIN
                               0
 	         FROM qde_mem_cpu_per_node as qde
 	         WHERE qde.timeslot != v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
+                 GROUP BY qde.timeslot;
+                          INSERT INTO    qde_monitorinfo
+                 SELECT v_wl_name, v_query_name, 'segnum',
+                               qde.timeslot,
+                                MAX(CASE WHEN qde.hostname = 'bcn-mst1' THEN qde.segnum ELSE 0 END) as mst1,
+                                 MAX(CASE WHEN qde.hostname = 'bcn-w1' THEN qde.segnum ELSE 0 END) as w1,
+                                 MAX(CASE WHEN qde.hostname = 'bcn-w2' THEN qde.segnum ELSE 0 END) as w2,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w3' THEN qde.segnum ELSE 0 END) as w3,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w4' THEN qde.segnum ELSE 0 END) as w4,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w5' THEN qde.segnum ELSE 0 END) as w5,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w6' THEN qde.segnum ELSE 0 END) as w6,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w7' THEN qde.segnum ELSE 0 END) as w7,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w8' THEN qde.segnum ELSE 0 END) as w8,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w9' THEN qde.segnum ELSE 0 END) as w9,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w10' THEN qde.segnum ELSE 0 END) as w10,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w11' THEN qde.segnum ELSE 0 END) as w11,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w12' THEN qde.segnum ELSE 0 END) as w12,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w13' THEN qde.segnum ELSE 0 END) as w13,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w14' THEN qde.segnum ELSE 0 END) as w14,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w15' THEN qde.segnum ELSE 0 END) as w15,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w16' THEN qde.segnum ELSE 0 END) as w16,
+                              min(qde.begintime),
+                               32000
+                 FROM qde_mem_cpu_per_node as qde
+                 WHERE qde.timeslot = v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
+                 GROUP BY qde.timeslot;
+
+                 INSERT INTO    qde_monitorinfo
+                 SELECT v_wl_name, v_query_name, 'segnum',
+                               qde.timeslot,
+                                MAX(CASE WHEN qde.hostname = 'bcn-mst1' THEN qde.segnum ELSE 0 END) as mst1,
+                                 MAX(CASE WHEN qde.hostname = 'bcn-w1' THEN qde.segnum ELSE 0 END) as w1,
+                                 MAX(CASE WHEN qde.hostname = 'bcn-w2' THEN qde.segnum ELSE 0 END) as w2,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w3' THEN qde.segnum ELSE 0 END) as w3,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w4' THEN qde.segnum ELSE 0 END) as w4,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w5' THEN qde.segnum ELSE 0 END) as w5,
+                                MAX(CASE WHEN qde.hostname = 'bcn-w6' THEN qde.segnum ELSE 0 END) as w6,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w7' THEN qde.segnum ELSE 0 END) as w7,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w8' THEN qde.segnum ELSE 0 END) as w8,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w9' THEN qde.segnum ELSE 0 END) as w9,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w10' THEN qde.segnum ELSE 0 END) as w10,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w11' THEN qde.segnum ELSE 0 END) as w11,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w12' THEN qde.segnum ELSE 0 END) as w12,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w13' THEN qde.segnum ELSE 0 END) as w13,
+                               MAX(CASE WHEN qde.hostname = 'bcn-w14' THEN qde.segnum ELSE 0 END) as w14,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w15' THEN qde.segnum ELSE 0 END) as w15,
+                              MAX(CASE WHEN qde.hostname = 'bcn-w16' THEN qde.segnum ELSE 0 END) as w16,
+                              min(qde.begintime),
+                               0
+             FROM qde_mem_cpu_per_node as qde
+             WHERE qde.timeslot != v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
                  GROUP BY qde.timeslot;
 
     v_i = v_i + 1;
