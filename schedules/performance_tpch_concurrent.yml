@@ -1,0 +1,116 @@
+workloads_list: tpch_row_200gpn_quicklz1_part_8c, tpch_row_200gpn_quicklz1_part_random_8c
+#tpch_row_200gpn_quicklz1_part_4c, tpch_row_200gpn_quicklz1_part_random_4c,tpch_row_200gpn_quicklz1_part_2c, tpch_row_200gpn_quicklz1_part_random_2c
+workloads_mode: sequential
+#workloads_mode: concurrent
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_8c
+      database_name: tpch_row_200gpn_quicklz1_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: false
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 8
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_random_8c
+      database_name: tpch_row_200gpn_quicklz1_part_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 8
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_4c
+      database_name: tpch_row_200gpn_quicklz1_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: false
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 4
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_random_4c
+      database_name: tpch_row_200gpn_quicklz1_part_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 4
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_2c
+      database_name: tpch_row_200gpn_quicklz1_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: false
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 2
+      num_iteration: 1
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_random_2c
+      database_name: tpch_row_200gpn_quicklz1_part_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 2
+      num_iteration: 1

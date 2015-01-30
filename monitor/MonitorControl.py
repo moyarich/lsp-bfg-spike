@@ -162,7 +162,7 @@ class Monitor_control():
 		sys.exit(2)
 
 	def _get_seg_list(self, hostfile = 'hostfile_seg'):
-		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where content <> -1 and role = 'p';" '''
+		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where role = 'p';" '''
 		(status, output) = commands.getstatusoutput(cmd)
 		
 		if status != 0:

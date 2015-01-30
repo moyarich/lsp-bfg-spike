@@ -81,7 +81,7 @@ class Config:
 
     def getMasterHostName(self):
         
-        (ok, out) = psql.run(flag='-q -t', cmd="select distinct hostname from gp_segment_configuration where content = -1 and role = 'p'", ofile='-', dbname='template1') 
+        (ok, out) = psql.run(flag='-q -t', cmd="select distinct hostname from gp_segment_configuration where role = 'm'", ofile='-', dbname='template1') 
 
         if not ok:
             sys.exit('Unable to select gp_segment_configuration')
@@ -90,7 +90,7 @@ class Config:
 
     def getSegHostNames(self):
         
-        (ok, out) = psql.run(flag='-q -t', cmd='select distinct hostname from gp_segment_configuration where content <> -1 order by hostname', ofile='-', dbname='template1') 
+        (ok, out) = psql.run(flag='-q -t', cmd="select distinct hostname from gp_segment_configuration where role = 'p' order by hostname;", ofile='-', dbname='template1') 
 
         if not ok:
             sys.exit('Unable to select gp_segment_configuration')
@@ -99,7 +99,7 @@ class Config:
    
     def getMastermirrorHostname(self):
         '''Returns hostname of the standby master '''
-        (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where content = -1 and role = 'm'", ofile='-', dbname='template1')
+        (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where role = 's'", ofile='-', dbname='template1')
 
         if not ok:
             sys.exit('Unable to select gp_segment_configuration')
@@ -173,7 +173,7 @@ class Config:
 
     # ramans2: 20110506: Return number of segments
     def getCountSegments(self):
-        (ok, out) = psql.run(dbname='template1', cmd="select count(*) from gp_segment_configuration where content != -1 and role = 'p' and status = 'u'",
+        (ok, out) = psql.run(dbname='template1', cmd="select count(*) from gp_segment_configuration where role = 'p';",
                              ofile='-', flag='-q -t')
         for line in out:
             return line
