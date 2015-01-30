@@ -522,12 +522,17 @@ $$ LANGUAGE PLPGSQL;
 
 
 CREATE OR REPLACE FUNCTION hst.f_generate_test_report_summary_internal(test_report_table TEXT)
-RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2), overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
+RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, 
+              improvenum int, passnum int, failurenum int, skipnum int, errornum int,
+              actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2), overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
 AS $$
 BEGIN
     CREATE TEMP TABLE tmp_test_report_summary ON COMMIT DROP AS
     SELECT ts.tr_id, ts.s_id, ts.wl_name, ts.action_type,
            ('Detail(IMPROVEMENT: ' || SUM(ts.improve_status)::TEXT || '; PASS: ' || SUM(ts.success_status)::TEXT || '; FAILURE: ' || SUM(failure_status)::TEXT || '; SKIP: ' || SUM(ts.skip_status)::TEXT || '; ERROR: ' || SUM(ts.error_status)::TEXT)  || ')' AS test_statistic,
+           SUM(ts.improve_status)::int as improvenum, SUM(ts.success_status)::int as passnum,
+           SUM(ts.failure_status)::int as failurenum, SUM(ts.skip_status)::int as skipnum,
+           SUM(ts.error_status)::int as errornum, 
            SUM(ts.actual_execution_time)::DECIMAL(18,2) AS actual_total_execution_time,  
            SUM(ts.revised_baseline_execution_time)::DECIMAL(18,2) AS baseline_total_execution_time,  
            CASE WHEN SUM(ts.revised_baseline_execution_time) < 0.001 THEN NULL
@@ -550,7 +555,8 @@ BEGIN
 
     RETURN QUERY
         SELECT ts.tr_id, ts.s_id, ts.wl_name, ts.action_type,
-               ('Overall:' || ts.overall_test_result || ';' || E'\n' || ts.test_statistic) AS test_statistic,
+               ('Overall:' || ts.overall_test_result || ';     '|| ts.test_statistic) AS test_statistic,
+               ts.improvenum, ts.passnum, ts.failurenum, ts.skipnum, ts.errornum,
                 ts.actual_total_execution_time , ts.baseline_total_execution_time, ts.deviation,
                ts.overall_test_result, ts.detail_result,
                CASE WHEN ts.overall_test_result IN ('SKIP', 'ERROR') THEN ts.overall_test_result
@@ -563,7 +569,9 @@ $$ LANGUAGE PLPGSQL;
 
 
 CREATE OR REPLACE FUNCTION hst.f_generate_test_report_summary(test_run_id INT, baseline_hdfs_version TEXT, baseline_hawq_version TEXT)
-RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2),  overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
+RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, 
+improvenum int, passnum int, failurenum int, skipnum int, errornum int,
+actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2),  overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
 AS $$
 DECLARE
     test_report_table TEXT;
@@ -577,7 +585,9 @@ $$ LANGUAGE PLPGSQL;
 
 
 CREATE OR REPLACE FUNCTION hst.f_generate_test_report_summary(test_run_id_actual INT, test_run_id_baseline INT)
-RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2),  overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
+RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, 
+improvenum int, passnum int, failurenum int, skipnum int, errornum int,
+actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2),  overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
 AS $$
 DECLARE
     test_report_table TEXT;
@@ -591,7 +601,9 @@ $$ LANGUAGE PLPGSQL;
 
 
 CREATE OR REPLACE FUNCTION hst.f_generate_test_report_summary(baseline1_hdfs_version TEXT, baseline1_hawq_version TEXT, baseline2_hdfs_version TEXT, baseline2_hawq_version TEXT)
-RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2),  overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
+RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, 
+improvenum int, passnum int, failurenum int, skipnum int, errornum int,
+actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2),  overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
 AS $$
 DECLARE
     test_report_table TEXT;
