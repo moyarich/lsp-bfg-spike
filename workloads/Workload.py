@@ -503,7 +503,7 @@ class Workload(object):
         if self.continue_flag:
             if self.load_data_flag:
                 #sql = 'VACUUM ANALYZE;'
-		sql = 'ANALYZE;'
+                sql = 'ANALYZE;'
                 self.output(sql)
                 sql_filename = 'vacuum.sql'
                 # get con_id
@@ -517,11 +517,11 @@ class Workload(object):
                 beg_time = datetime.now()
                 (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + sql_filename, dbname = self.database_name, username = self.user, flag = '-t -A')
                 end_time = datetime.now()
-                con_id = int(result[0].split('***')[1].split('|')[2].strip())
                 self.output(result[0].split('***')[0])
 
                 if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
                     status = 'SUCCESS'
+                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
                 else:
                     status = 'ERROR'
                     self.continue_flag = False
