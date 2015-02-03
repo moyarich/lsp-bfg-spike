@@ -175,9 +175,10 @@ if __name__ == '__main__':
                 if tr_id is None:
                     tr_id = -1
                 monitor_control = Monitor_control(mode = 'remote', interval = monitor_interval , run_id = tr_id)
-                p1 = Process(target = monitor_control.start)
-                p1.start()
-                time.sleep(30)
+                monitor_control.start()
+                #p1 = Process(target = monitor_control.start)
+                #p1.start()
+                #time.sleep(30)
 
         # parse list of the workloads for execution
         workloads_list = schedule_parser['workloads_list']
