@@ -567,6 +567,21 @@ BEGIN
 END
 $$ LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION hst.f_generate_test_report_summary(start_run_id INT,end_run_id INT,  baseline_hdfs_version TEXT, baseline_hawq_version TEXT)
+RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT,
+improvenum int, passnum int, failurenum int, skipnum int, errornum int,
+actual_total_execution_time DECIMAL(18,2), baseline_total_execution_time DECIMAL(18,2), deviation DECIMAL(18,2),  overral_test_result TEXT, detail_result TEXT, test_result_all TEXT)
+AS $$
+DECLARE
+    test_report_table TEXT;
+BEGIN
+    CREATE TEMP TABLE test_report_table ON COMMIT DROP AS
+    SELECT * FROM hst.f_generate_test_report_detail(start_run_id, end_run_id, baseline_hdfs_version, baseline_hawq_version);
+
+    RETURN QUERY SELECT * FROM hst.f_generate_test_report_summary_internal(test_report_table);
+END
+$$ LANGUAGE PLPGSQL;
+
 
 CREATE OR REPLACE FUNCTION hst.f_generate_test_report_summary(test_run_id INT, baseline_hdfs_version TEXT, baseline_hawq_version TEXT)
 RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), test_statistic TEXT, 
@@ -649,6 +664,7 @@ GRANT ALL ON FUNCTION hst.f_generate_test_report_detail(baseline1_hdfs_version T
 
 GRANT ALL ON FUNCTION hst.f_generate_test_report_summary_internal(test_report_table TEXT) TO hawq_cov;
 GRANT ALL ON FUNCTION hst.f_generate_test_report_summary(test_run_id INT, baseline_hdfs_version TEXT, baseline_hawq_version TEXT) TO hawq_cov;
+GRANT ALL ON FUNCTION hst.f_generate_test_report_summary(start_run_id INT, end_run_id INT, baseline_hdfs_version TEXT, baseline_hawq_version TEXT) TO hawq_cov;
 GRANT ALL ON FUNCTION hst.f_generate_test_report_summary(test_run_id_actual INT, test_run_id_baseline INT) TO hawq_cov;
 GRANT ALL ON FUNCTION hst.f_generate_test_report_summary(baseline1_hdfs_version TEXT, baseline1_hawq_version TEXT, baseline2_hdfs_version TEXT, baseline2_hawq_version TEXT) TO hawq_cov;
 
