@@ -138,6 +138,7 @@ if __name__ == '__main__':
         if not start_flag:            
             start_flag = True
             # add test run information in backend database if lsp not run in standalone mode,such as build_id, build_url, hawq_version, hdfs_version
+            tr_id = -1
             if add_database:
                 output = commands.getoutput('cat ~/qa.sh')
                 try:
@@ -163,17 +164,16 @@ if __name__ == '__main__':
                 check.insert_new_record(table_name = 'hst.test_run', 
                     col_list = 'pulse_build_id, pulse_build_url, hdfs_version, hawq_version, start_time', 
                     values = "'%s', '%s', '%s', '%s', '%s'" % (build_id, build_url, hdfs_version, hawq_version, str(beg_time)))
+                
+                tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))               
             
             # prepare report directory with times and the report.sql file
             report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
             os.system('mkdir -p %s' % (report_directory))
-            os.system('mkdir -p %s' % (report_directory + os.sep + 'tmp'))
+            #os.system('mkdir -p %s' % (report_directory + os.sep + 'tmp'))
             report_sql_file = os.path.join(report_directory, 'report.sql')
 
             if monitor_interval > 0:
-                tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
-                if tr_id is None:
-                    tr_id = -1
                 monitor_control = Monitor_control(mode = 'remote', interval = monitor_interval , run_id = tr_id)
                 monitor_control.start()
                 #p1 = Process(target = monitor_control.start)
