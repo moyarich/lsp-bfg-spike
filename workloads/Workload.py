@@ -7,16 +7,6 @@ import random
 import hashlib
 from multiprocessing import Process, Queue, Value , Array
 
-# pkgs = [('lib.PSQL', 'psql', 'lib/PSQL.py'), ('lib.utils.Check', 'check', 'lib/utils/Check.py'), \
-#         ('lib.Config', 'config', 'lib/Config.py'), \
-#         ('utils.Log', 'Log', 'lib/utils/Log.py'), ('utils.Report', 'Report', 'lib/utils/Report.py')]
-
-#for pkg in pkgs:
-#    try:
-#        exec('from %s import %s ' % (pkg[0], pkg[1]))
-#    except Import Error:
-#        sys.stderr.write('Workload need %s in %s' % ([pkg[1], pkg[2]))
-
 try:
     from lib.PSQL import psql
 except ImportError:
@@ -54,6 +44,7 @@ except ImportError:
     sys.exit(2)
 
 class Workload(object):
+
     def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user):
         # initialize common variables
         self.cs_id = cs_id
@@ -92,13 +83,13 @@ class Workload(object):
         self.data_volume_type = None
         self.data_volume_size = None
         self.append_only = None
+        self.distributed_randomly = None
         self.orientation = None
         self.row_group_size = -1
         self.page_size = -1
         self.compression_type = None
         self.compression_level = -1
         self.partitions = 0
-        self.distributed_randomly = None
 
         self.scale_factor = None
         self.ans_directory = ''
@@ -115,6 +106,7 @@ class Workload(object):
         self.run_workload_flag = None
         self.run_workload_mode = None
         self.num_concurrency = None
+        self.stream_mode = None
         self.num_iteration = None
         self.__get_run_mode(workload_specification)
         self.__set_info()
@@ -137,8 +129,8 @@ class Workload(object):
 
         # get report.sql file and tmp folder
         self.report_sql_file = report_sql_file
-        self.tmp_folder = report_sql_file.replace('report.sql', 'tmp')
-        self.tmp_folder = self.tmp_folder + os.sep + self.workload_name + '_' + self.user
+        #self.tmp_folder = report_sql_file.replace('report.sql', 'tmp')
+        self.tmp_folder = self.report_directory + os.sep + 'tmp'
         os.system('mkdir -p %s' % (self.tmp_folder))
         
     def __get_table_settings(self, workload_specification):
@@ -203,8 +195,7 @@ class Workload(object):
         if 'distributed_randomly' in ts_keys:
             self.distributed_randomly = ts['distributed_randomly']
             assert self.distributed_randomly in [True, False]
-
-       
+ 
     def __get_run_mode(self, workload_specification):
         
         try:
@@ -232,6 +223,12 @@ class Workload(object):
             self.num_concurrency = int(str(workload_specification['num_concurrency']).strip())
         except Exception, e:
             self.num_concurrency = 1
+
+        try:
+            self.stream_mode = workload_specification['stream_mode']
+        except Exception, e:
+            self.stream_mode = False
+        assert self.run_workload_flag in [True, False]
 
         try:
             self.num_iteration = int(str(workload_specification['num_iteration']).strip())
@@ -376,10 +373,12 @@ class Workload(object):
                 f.write('diff %s %s' % (ans_file, result_file) + '\n' + output)
             return False
 
+    
     def load_data(self):
         '''Load data for workload'''
         pass
 
+    
     def run_queries(self, iteration, stream, query_files = ''):
         queries_directory = self.workload_directory + os.sep + 'queries'
         if not os.path.exists(queries_directory):
@@ -407,8 +406,9 @@ class Workload(object):
                     query = query.replace('SQLSUFFIX', self.sql_suffix)
 
                     # get con_id use this query
-                    sql_filename = '%' + '%d_%d_' % (iteration, stream) + qf_name + '%'
-                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % ('%d_%d_' % (iteration, stream) + qf_name , sql_filename)
+                    unique_string1 = '%s_%s_%d_%d_' % (self.workload_name, self.user, iteration, stream) + qf_name
+                    unique_string2 = '%' + unique_string1 + '%'
+                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
 
                     with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
                         f.write(query)
@@ -497,71 +497,18 @@ class Workload(object):
             self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
 
-    def vacuum_analyze(self):
-        self.output('-- Start vacuum analyze')     
-        con_id = -1
-        if self.continue_flag:
-            if self.load_data_flag:
-                #sql = 'VACUUM ANALYZE;'
-                sql = 'ANALYZE;'
-                self.output(sql)
-                sql_filename = 'vacuum.sql'
-                # get con_id
-                sql_file = '%' + sql_filename + '%'
-                get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (sql_filename , sql_file)
-                
-                with open(self.tmp_folder + os.sep + sql_filename, 'w') as f:
-                    f.write(sql)
-                    f.write(get_con_id_sql)
-
-                beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + sql_filename, dbname = self.database_name, username = self.user, flag = '-t -A')
-                end_time = datetime.now()
-                self.output(result[0].split('***')[0])
-
-                if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
-                    status = 'SUCCESS'
-                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
-                else:
-                    status = 'ERROR'
-                    self.continue_flag = False
-            else:
-                status = 'SKIP'
-                beg_time = datetime.now()
-                end_time = beg_time
-        else:
-            status = 'ERROR'
-            beg_time = datetime.now()
-            end_time = beg_time
-
-        duration = end_time - beg_time
-        duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
-        beg_time = str(beg_time)
-        end_time = str(end_time)
- 
-        self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, status, duration))
-        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
-            % (self.tr_id, self.s_id, con_id, status, beg_time, end_time, duration, self.adj_s_id))
-        
-        self.output('-- Complete vacuum analyze')
-
-    def clean_up(self):
-        pass
-
-    def execute(self):
-        pass
-
+    
     def run_queries_by_stream(self, iteration, stream):
-        queries_directory = self.workload_directory + os.sep + 'queries'
-        queries_finish_dir = self.workload_directory + os.sep + 'queries_finish'
-        lock_file = self.workload_directory + os.sep + 'queries' + os.sep + 'run.lock'
+        queries_directory = self.report_directory + os.sep + 'queries_stream'
+        queries_finish_dir = self.report_directory + os.sep + 'queries_finish'
+        lock_file = self.report_directory + os.sep + 'queries_stream' + os.sep + 'run.lock'
         if not os.path.exists(queries_directory):
             print 'Not find the queries_directory for %s' % (self.workload_name)
             sys.exit(2)
 
         while(1):
-            result = os.system('rm %s' % (lock_file) )
-            if result != 0:
+            (status, output) = commands.getstatusoutput( 'rm %s' % (lock_file) )
+            if status != 0:
                 time.sleep(1)
                 continue
 
@@ -574,19 +521,18 @@ class Workload(object):
             if len(query_files) != 0:
                 qf_name = query_files[0]
             else:
-                print '%d is finish. ' %(stream)
+                self.output('Stream%d is finish. ' %(stream))
                 os.system( 'touch %s' % (lock_file))
                 break
-            #os.system('mv %s/%s %s' % (queries_directory, qf_name, queries_finish_dir))
-            #os.system('touch %s' %(lock_file))
 
             con_id = -1
+            with open(os.path.join(queries_directory, qf_name), 'r') as f:
+                query = f.read()
+                os.system('mv %s/%s %s' % (queries_directory, qf_name, queries_finish_dir))
+                os.system('touch %s' %(lock_file))
+            
             if self.continue_flag:
                 if self.run_workload_flag:
-                    with open(os.path.join(queries_directory, qf_name),'r') as f:
-                        query = f.read()
-                        os.system('mv %s/%s %s' % (queries_directory, qf_name, queries_finish_dir))
-                        os.system('touch %s' %(lock_file))
                     if gl.suffix:
                         query = query.replace('TABLESUFFIX', self.tbl_suffix)
                     else:
@@ -594,8 +540,9 @@ class Workload(object):
                     query = query.replace('SQLSUFFIX', self.sql_suffix)
 
                     # get con_id use this query
-                    sql_filename = '%' + '%d_%d_' % (iteration, stream) + qf_name + '%'
-                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % ('%d_%d_' % (iteration, stream) + qf_name , sql_filename)
+                    unique_string1 = '%s_%s_%d_%d_' % (self.workload_name, self.user, iteration, stream) + qf_name
+                    unique_string2 = '%' + unique_string1 + '%'
+                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
 
                     with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
                         f.write(query)
@@ -604,12 +551,12 @@ class Workload(object):
                     self.output(query)
 
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, flag = '-t -A')
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, flag = '-t -A', username = self.user)
                     end_time = datetime.now()
-                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
                     
                     if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1:
                         status = 'SUCCESS'
+                        con_id = int(result[0].split('***')[1].split('|')[2].strip())
                         # generate output and md5 file
                         with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'w') as f:
                             f.write(str(result[0].split('***')[0]))
@@ -652,14 +599,14 @@ class Workload(object):
             self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
             self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
                 % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration, self.adj_s_id))
-            #time.sleep(1)
-                              
+            #time.sleep(0.1)                       
     
     def run_workload_by_stream(self):
-        os.system( 'mkdir -p %s' % (self.workload_directory + os.sep + 'queries_finish') )
-        os.system( 'touch %s' % (self.workload_directory + os.sep + 'queries' + os.sep + 'run.lock') )
+        os.system( 'mkdir -p %s; mkdir -p %s' % ( self.report_directory+ os.sep + 'queries_stream', self.report_directory + os.sep + 'queries_finish') )
+        os.system( 'cp %s/* %s' % (self.workload_directory + os.sep + 'queries', self.report_directory + os.sep + 'queries_stream') )
+        os.system( 'touch %s' % (self.report_directory + os.sep + 'queries_stream' + os.sep + 'run.lock') )
         niteration = 1
-        while niteration <= 1: #self.num_iteration:
+        while niteration <= self.num_iteration:
             self.output('-- Start iteration %d' % (niteration))
             AllWorkers = []
             nconcurrency = 1
@@ -681,11 +628,91 @@ class Workload(object):
 
                 if len(AllWorkers) == 0:
                     self.should_stop = True
-                    continue
-
-                if len(AllWorkers) != 0:
+                else:
                     time.sleep(2)
 
+            cmd = 'mv %s/* %s' % (self.report_directory + os.sep + 'queries_finish', self.report_directory + os.sep + 'queries_stream')
+            os.system(cmd)
+            self.output(cmd)
             self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
-        os.system('mv %s/* %s' % (self.workload_directory + os.sep + 'queries_finish', self.workload_directory + os.sep + 'queries'))
+
+        cmd = 'rm -rf %s %s' % (self.report_directory + os.sep + 'queries_finish', self.report_directory + os.sep + 'queries_stream')
+        os.system(cmd)
+        self.output(cmd)  
+
+    def vacuum_analyze(self):
+        self.output('-- Start vacuum analyze')     
+        con_id = -1
+        if self.continue_flag:
+            if self.load_data_flag:
+                sql = 'VACUUM ANALYZE;'
+                self.output(sql)
+                sql_filename = 'vacuum.sql'
+                # get con_id
+                sql_file = '%' + sql_filename + '%'
+                get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (sql_filename , sql_file)
+                
+                with open(self.tmp_folder + os.sep + sql_filename, 'w') as f:
+                    f.write(sql)
+                    f.write(get_con_id_sql)
+
+                beg_time = datetime.now()
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + sql_filename, dbname = self.database_name, username = self.user, flag = '-t -A')
+                end_time = datetime.now()
+                self.output(result[0].split('***')[0])
+
+                if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
+                    status = 'SUCCESS'
+                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
+                else:
+                    status = 'ERROR'
+                    self.continue_flag = False
+            else:
+                status = 'SKIP'
+                beg_time = datetime.now()
+                end_time = beg_time
+        else:
+            status = 'ERROR'
+            beg_time = datetime.now()
+            end_time = beg_time
+
+        duration = end_time - beg_time
+        duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
+        beg_time = str(beg_time)
+        end_time = str(end_time)
+ 
+        self.output('   VACUUM ANALYZE   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (1, 1, status, duration))
+        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Vacuum_analyze', 'Vacuum_analyze', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
+            % (self.tr_id, self.s_id, con_id, status, beg_time, end_time, duration, self.adj_s_id))
+        
+        self.output('-- Complete vacuum analyze')
+
+    
+    def clean_up(self):
+        pass
+
+
+    def execute(self):
+        self.output('-- Start running workload %s' % (self.workload_name))
+
+        # setup
+        self.setup()
+
+        # load data
+        self.load_data()
+
+        # vacuum_analyze
+        self.vacuum_analyze()
+
+        # run workload concurrently and loop by iteration
+        if self.stream_mode:
+            self.run_workload_by_stream()
+        else:
+            self.run_workload()
+
+        # clean up 
+        self.clean_up()
+        
+        self.output('-- Complete running workload %s' % (self.workload_name))
+        

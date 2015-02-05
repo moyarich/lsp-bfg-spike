@@ -26,9 +26,6 @@ class Tpch(Workload):
         # init base common setting such as dbname, load_data, run_workload , niteration etc
         Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
 
-    def setup(self):
-        pass
-
     def get_partition_suffix(self, num_partitions = 128, table_name = ''):
         beg_date = date(1992, 01, 01)
         end_date = date(1998, 12, 31)
@@ -98,7 +95,7 @@ class Tpch(Workload):
 
         if self.load_data_flag:
             cmd = 'drop database if exists %s;' % (self.database_name)
-            (ok, output) = psql.runcmd(cmd = cmd)
+            (ok, output) = psql.runcmd(cmd = cmd, username = 'gpadmin')
             if not ok:
                 print cmd
                 print '\n'.join(output)
@@ -123,9 +120,12 @@ class Tpch(Workload):
                     with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
                         cmd = f.read()
                     cmd = self.replace_sql(sql = cmd, table_name = table_name)
+                    
                     # get con_id use this query
-                    sql_filename = '%' + table_name + '.sql%'
-                    get_con_id_sql = "select '***', '%s.sql', sess_id from pg_stat_activity where current_query like '%s';" % (table_name, sql_filename)
+                    unique_string1 = '%s_%s_' % (self.workload_name, self.user) + table_name
+                    unique_string2 = '%' + unique_string1 + '%'
+                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
+
                     with open(self.tmp_folder + os.sep + table_name + '.sql', 'w') as f:
                         f.write(cmd)
                         f.write(get_con_id_sql)
@@ -136,10 +136,10 @@ class Tpch(Workload):
                     end_time = datetime.now()
                     self.output(result[0].split('***')[0])
                     #self.output('\n'.join(result))
-                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
-
+                    
                     if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
                         status = 'SUCCESS'
+                        con_id = int(result[0].split('***')[1].split('|')[2].strip())
                     else:
                         status = 'ERROR'
                         self.continue_flag = False
@@ -162,24 +162,3 @@ class Tpch(Workload):
                
         self.output('-- Complete loading data')
 
-            
-    
-    def execute(self):
-        self.output('-- Start running workload %s' % (self.workload_name))
-
-        # setup
-        self.setup()
-
-        # load data
-        self.load_data()
-
-        # vacuum_analyze
-        self.vacuum_analyze()
-
-        # run workload concurrently and loop by iteration
-        self.run_workload()
-
-        # clean up 
-        self.clean_up()
-        
-        self.output('-- Complete running workload %s' % (self.workload_name))
