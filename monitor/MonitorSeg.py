@@ -203,5 +203,5 @@ if __name__ == "__main__" :
 	cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
 	print str(os.getpid()) + ': ', cmd
 	os.system(cmd)
-	os.system('rm -rf /tmp/monitor_report/*')
+	#os.system('rm -rf /tmp/monitor_report/*')
 	
