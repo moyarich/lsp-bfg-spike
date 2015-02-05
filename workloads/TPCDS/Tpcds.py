@@ -91,8 +91,6 @@ class Tpcds(Workload):
         self.tmp_tpcds_folder = '/data/tmp/tpcds_loading/'
         self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
 
-    def setup(self):
-        pass
         
     def load_data(self):
         self.output('\n-- Start loading data')
@@ -239,8 +237,8 @@ class Tpcds(Workload):
             sys.exit(2)
        
     def _data_gen_segment(self):
-        total_paralle = self.nsegs
-        seg_num = self.nsegs / self.seg_host_num
+        total_paralle = self.nsegs * 4
+        seg_num = self.nsegs * 4 / self.seg_host_num
         count = 1
         for cur_host in self.seg_hostname_list:
             self.output('generate script for %s' % (cur_host))
@@ -288,7 +286,7 @@ class Tpcds(Workload):
     def load_loading(self, tables):
         self.output('\n--Start gpfdist')
         self._start_gpfdist()
-        cmd = "gpssh -f %s -e 'ps -ef | grep gpfdist'" % (self.hostfile_seg)   
+        cmd = "gpssh -f %s -e 'ps -ef | grep gpfdist | grep -v grep'" % (self.hostfile_seg)   
         (status, output) = commands.getstatusoutput(cmd)
         self.output(output)
 
@@ -332,23 +330,32 @@ class Tpcds(Workload):
         self.output('\n--Start loading data into tables')
         # run all sql in each loading data file
         for table_name in tables:
+            con_id = -1
             if self.continue_flag:
                 with open(os.path.join(data_directory, table_name + '.sql'), 'r') as f:
                     cmd = f.read()
                 cmd = self.replace_sql(sql = cmd, table_name = table_name)
                 location = "LOCATION(" + ','.join(gpfdist_map[table_name]) + ")"
                 cmd = cmd.replace('LOCATION', location)
+
+                # get con_id use this query
+                unique_string1 = '%s_%s_' % (self.workload_name, self.user) + table_name
+                unique_string2 = '%' + unique_string1 + '%'
+                get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
+
                 with open(self.tmp_folder + os.sep + table_name + '.sql', 'w') as f:
                     f.write(cmd)
+                    f.write(get_con_id_sql)
 
                 self.output(cmd)    
                 beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name)
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = self.user, flag = '-t -A')
                 end_time = datetime.now()
-                self.output('\n'.join(result))
+                self.output(result[0].split('***')[0])
                 
                 if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1: 
-                    status = 'SUCCESS'    
+                    status = 'SUCCESS'
+                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
                 else:
                     status = 'ERROR'
                     beg_time = datetime.now()
@@ -365,8 +372,8 @@ class Tpcds(Workload):
             end_time = str(end_time).split('.')[0]
             
             self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, status, duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-                % (self.tr_id, self.s_id, table_name, status, beg_time, end_time, duration))
+            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Loading', '%s', 1, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
+                % (self.tr_id, self.s_id, con_id, table_name, status, beg_time, end_time, duration, self.adj_s_id))
 
     def _start_gpfdist(self):       
         # find port 
@@ -399,7 +406,6 @@ class Tpcds(Workload):
         return defaultPort
     
 
-
     def clean_up(self):
         self.output('\n--Stop gpfdist')
         self._stop_gpfdist()
@@ -424,7 +430,6 @@ class Tpcds(Workload):
             sys.exit(2)
         else:
             self.output('delete data folder succeed.')
-
 
 
     def replace_sql(self, sql, table_name):
@@ -454,24 +459,3 @@ class Tpcds(Workload):
             sql = sql.replace(partitions_string, '') 
 
         return sql
-    
-    def execute(self):
-        self.output('-- Start running workload %s' % (self.workload_name))
-
-        # setup
-        self.setup()
-
-        # load data
-        self.load_data()
-
-        # vacuum_analyze
-        self.vacuum_analyze()
-
-        # run workload concurrently and loop by iteration
-        self.run_workload()
-
-        # clean up 
-        self.clean_up()
-        
-        self.output('-- Complete running workload %s' % (self.workload_name))
-
