@@ -49,7 +49,7 @@ class Monitor_control():
 		
 	def report(self, filename, msg, mode = 'a'):
 		if msg != '':
-		    fp = open(filename, mode)  
+		    fp = open(filename, mode)
 		    fp.write(msg)
 		    fp.flush()
 		    fp.close()
@@ -65,9 +65,9 @@ class Monitor_control():
 	    	return child.before
 	    else:
 		    if i == 0: 
-		        print 'ERROR!'
-		        print 'SSH could not login. Here is what SSH said:'
-		        print child.before, child.after
+		        print str(os.getpid()) + ': ',  'ERROR!'
+		        print str(os.getpid()) + ': ',  'SSH could not login. Here is what SSH said:'
+		        print str(os.getpid()) + ': ',  child.before, child.after
 		        return None
 		    # SSH does not have the public key. Just accept it.
 		    if i == 1: 
@@ -75,9 +75,9 @@ class Monitor_control():
 		        j = child.expect([pexpect.TIMEOUT, 'password: '])
 		        # Timeout
 		        if j == 0: 
-		            print 'ERROR!'
-		            print 'SSH could not login. Here is what SSH said:'
-		            print child.before, child.after
+		            print str(os.getpid()) + ': ',  'ERROR!'
+		            print str(os.getpid()) + ': ',  'SSH could not login. Here is what SSH said:'
+		            print str(os.getpid()) + ': ',  child.before, child.after
 		            return None
 		        else:
 		        	child.sendline(password)
@@ -93,19 +93,15 @@ class Monitor_control():
 			fsql.write(sql)
 
 		cmd1 = "scp %s gpadmin@%s:%s" % (self.report_folder + os.sep + 'monitor_temp.sql', self.remote_host, '/tmp/')
-		print cmd1
 		result1 = self.ssh_command(cmd = cmd1)
-		print result1
 
 		cmd2 = 'ssh gpadmin@%s "source ~/psql.sh; psql -d postgres -f %s"' % (self.remote_host, '/tmp/monitor_temp.sql')
-		print cmd2
 		result2 = self.ssh_command(cmd = cmd2)
-		print result2
 
 
 	def scp_data(self, filename):
 		if not os.path.exists(self.report_folder + os.sep + filename):
-			print 'copy file: ', filename, ' is not exists.'
+			print str(os.getpid()) + '%s is not exists when copy it to remote database.' % (filename)
 			return None
 
 		table_name = filename[filename.find('qd'):filename.rindex('_')]
@@ -113,11 +109,9 @@ class Monitor_control():
 			cmd = '''psql -d postgres -c "COPY moni.%s FROM '%s' WITH DELIMITER '|';" ''' % (table_name, self.report_folder + os.sep + filename)
 			(s, o) = commands.getstatusoutput(cmd)
 			if o.find('COPY') != -1 and o.find('ERROR') == -1:
-				print 'copy file %s success. '% (filename)
-				print o
+				print str(os.getpid()) + ': ', 'copy file %s success.'% (filename), o.strip()
 			else:
-				print cmd
-				print o.strip()
+				print str(os.getpid()) + ': ', cmd, o.strip()
 		else:
 			count = 0
 			while (count < 10):
@@ -137,18 +131,17 @@ class Monitor_control():
 				cmd4 = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d hawq_cov -f %s; rm -rf %s"' % (self.remote_host, self.seg_tmp_folder, copy_file, copy_file)
 				result4 = self.ssh_command(cmd = cmd4)
 				if result4.find('COPY') != -1 and result4.find('ERROR') == -1:
-					print 'copy file %s success in %d times. '% (filename, count + 1)
-					print result4
+					print str(os.getpid()) + ': ', 'copy file %s success in %d times.'% (filename, count + 1), result4
 					break
 				else:
 					count += 1
 			
 			if count == 10:
-				print 'copy file %s error for %d times, the last time error is below: '% (filename, count)
-				print cmd1, '\n', result1
-				print cmd2
-				print cmd3, '\n', result3
-				print cmd4, '\n', result4
+				print str(os.getpid()) + ': ', 'copy file %s error for %d times, the last time error is below: '% (filename, count)
+				print str(os.getpid()) + ': ', cmd1, '\n', result1
+				print str(os.getpid()) + ': ', cmd2
+				print str(os.getpid()) + ': ', cmd3, '\n', result3
+				print str(os.getpid()) + ': ', cmd4, '\n', result4
 
 	def _get_monitor_seg_script_path(self):
 		for one_path in sys.path:
@@ -158,7 +151,7 @@ class Monitor_control():
 				self.remote_schema_script = one_path + os.sep + 'remote_schema.sql'
 				if os.path.exists(self.seg_script):
 					return 0
-		print 'not find MonitorSeg.py when setup monitor. '
+		print str(os.getpid()) + ': ', 'not find MonitorSeg.py when setup monitor. '
 		sys.exit(2)
 
 	def _get_seg_list(self, hostfile = 'hostfile_seg'):
@@ -166,7 +159,7 @@ class Monitor_control():
 		(status, output) = commands.getstatusoutput(cmd)
 		
 		if status != 0:
-			print ('Unable to select gp_segment_configuration in monitor_control. ')
+			print str(os.getpid()) + ': ', 'Unable to select gp_segment_configuration in monitor_control.'
 			sys.exit(2)
 		
 		with open(hostfile, 'w') as fnode:
@@ -184,35 +177,25 @@ class Monitor_control():
 		cmd = " gpssh -f %s -e 'mkdir -p %s; touch %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder, self.seg_tmp_folder)
 		(s, o) = commands.getstatusoutput(cmd)
 		if s != 0:
-			print ('perp monitor report folder on seg host error.')
-			print s,o
+			print str(os.getpid()) + ': ', 'perp monitor report folder on seg host error.'
+			print str(os.getpid()) + ': ', s, o
 			sys.exit(2)
 
 		# gpscp seg monitor script to every seg host
 		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
 		(s, o) = commands.getstatusoutput(cmd)
 		if s != 0:
-			print ('gpscp monitor node script to every node error.')
-			print s,o
+			print str(os.getpid()) + ':', 'gpscp monitor node script to every node error.'
+			print str(os.getpid()) + ':', s, o
 			sys.exit(2)
 
 		if self.mode == 'remote':
 			cmd = 'ssh gpadmin@%s "mkdir -p %s"' % (self.remote_host, self.seg_tmp_folder)
 			result = self.ssh_command(cmd = cmd)
-
-			#cmd = "scp %s gpadmin@%s:%s" % (self.remote_schema_script, self.remote_host, self.seg_tmp_folder)
-			#print cmd
-			#result = self.ssh_command(cmd = cmd)
-			#print result.strip()
-
-			#cmd = 'ssh gpadmin@%s "source ~/psql.sh; cd %s; psql -d hawq_cov -f remote_schema.sql"' % (self.remote_host, self.seg_tmp_folder)
-			#print cmd
-			#result = self.ssh_command(cmd = cmd)
-			#print result.strip()
 		else:
 			cmd = "psql -d postgres -f %s" % (self.local_schema_script)
 			(s, o) = commands.getstatusoutput(cmd)
-			print o
+			print str(os.getpid()) + ': ', '\n', o
 	
 
 	'''
@@ -229,7 +212,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
 			pass
-			#print timeslot, ': return code = ', status, ' output = ', output, ' in qd_mem_cpu'
 		
 		line_item = output.splitlines()
 		output_string = ''
@@ -244,7 +226,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot)  + self.sep +  now_time + self.sep + temp[0] + self.sep + temp[1] + self.sep +  temp[13][3:] + self.sep + \
 				temp[15] + self.sep + temp[16] + self.sep + str(int(temp[4])/1024) + self.sep + temp[5] + self.sep + temp[2]
 			except Exception, e:
-				#print temp
+				#print str(os.getpid()) + ':'  + temp
 				continue
 
 			output_string = output_string + one_item + '\n'
@@ -275,21 +257,21 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		time.sleep(15)
 		self.scp_data(filename = filename)
 
-		print '%s normally stop.' % (function[10:])
-		print '%s: '% (function[10:]), file_no, ' files'
+		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:])
+		print str(os.getpid()) + ': ', '%s total ' % (function[10:]), file_no, ' files'
 
 	# only record current query in memory
 	def _get_qd_info(self):
 		now_time = datetime.now()
 		if self.mode == 'local':
-			sql = "select sess_id,query_start,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
+			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
 		else:
-			sql = "select sess_id,query_start,usename,datname,current_query from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
+			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
 		# -R '***' set record separator '***' (default: newline)
 		cmd = ''' psql -d postgres -t -A -R '***' -c "%s" ''' % (sql)
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			#print 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
+			#print str(os.getpid()) + ':'  + 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
 			return None
 
 		''' line_item = sess_id|query_start|usename|datname|current_query '''
@@ -304,7 +286,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					print line, '\n', str(e)
+					print str(os.getpid()) + ':', line, '\n', str(e)
 					continue
 
 				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
@@ -351,7 +333,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					#print 'time error ' + str(line)
+					#print str(os.getpid()) + ':'  + 'time error ' + str(line)
 					continue
 
 				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
@@ -361,18 +343,18 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			time.sleep(15)
 			self.scp_data(filename = filename)
 		 
-		print 'get_qd_info normally stop.'
-		print 'qd_info: ', file_no, ' files'
+		print str(os.getpid()) + ': ', 'get_qd_info process normally stop.'
+		print str(os.getpid()) + ': ', 'qd_info total ', file_no, ' files'
 
-		cmd = " gpssh -f %s -e 'rm -rf %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder)
-		print cmd
+		cmd = "gpssh -f %s -e 'rm -rf %s/run.lock'" % (self.hostfile_seg, self.seg_tmp_folder)
 		(s, o) = commands.getstatusoutput(cmd)
-		print o
+		print str(os.getpid()) + ': ', cmd, '\n', o.strip()
 
 
 	def stop(self):
 		while( os.path.exists(self.run_lock) ):
 			os.system('rm -rf %s' % (self.run_lock))
+		print str(os.getpid()) + ': ', 'remove monitor run.lock file and stop.'
 
 
 	def start(self):
@@ -380,7 +362,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 
 		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
 		(s, o) = commands.getstatusoutput(cmd)
-		print o
+		print str(os.getpid()) + ': ', '\n', o
 
 		p1 = Process( target = self.get_qd_info, args = (1, ) )
 		p2 = Process( target = self.get_qd_data, args = () )

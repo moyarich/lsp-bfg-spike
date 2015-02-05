@@ -49,9 +49,9 @@ class Monitor_seg():
 	    	return child.before
 	    else:
 		    if i == 0: 
-		        print 'ERROR!'
-		        print 'SSH could not login. Here is what SSH said:'
-		        print child.before, child.after
+		        print str(os.getpid()) + ': ', 'ERROR!'
+		        print str(os.getpid()) + ': ', 'SSH could not login. Here is what SSH said:'
+		        print str(os.getpid()) + ': ', child.before, child.after
 		        return None
 		    # SSH does not have the public key. Just accept it.
 		    if i == 1: 
@@ -59,9 +59,9 @@ class Monitor_seg():
 		        j = child.expect([pexpect.TIMEOUT, 'password: '])
 		        # Timeout
 		        if j == 0: 
-		            print 'ERROR!'
-		            print 'SSH could not login. Here is what SSH said:'
-		            print child.before, child.after
+		            print str(os.getpid()) + ': ', 'ERROR!'
+		            print str(os.getpid()) + ': ', 'SSH could not login. Here is what SSH said:'
+		            print str(os.getpid()) + ': ', child.before, child.after
 		            return None
 		        else:
 		        	child.sendline(password)
@@ -74,7 +74,7 @@ class Monitor_seg():
 
 	def scp_data(self, filename):
 		if not os.path.exists(filename):
-			print 'copy file: ', filename, ' is not exists.'
+			print str(os.getpid()) + ': ', '%s is not exists when copy it remote database.' % (filename)
 			return None
 
 		if self.mode == 'local':
@@ -110,18 +110,17 @@ class Monitor_seg():
 			cmd4 = 'ssh gpadmin@%s "%s cd %s; psql -d %s -f %s; rm -rf %s"' % (host, source, folder, db, copy_file, copy_file)
 			result4 = self.ssh_command(cmd = cmd4)
 			if result4.find('COPY') != -1 and result4.find('ERROR') == -1:
-				print 'copy file %s success in %d times. '% (filename, count + 1)
-				print result4
+				print str(os.getpid()) + ': ' ,  'copy file %s success in %d times. '% (filename, count + 1), result4
 				break
 			else:
 				count += 1
 			
 		if count == 10:
-			print 'copy file %s error for %d times, the last time error is below: '% (filename, count)
-			print cmd1, '\n', result1
-			print cmd2
-			print cmd3, '\n', result3
-			print cmd4, '\n', result4
+			print str(os.getpid()) + ': ', 'copy file %s error for %d times, the last time error is below: '% (filename, count)
+			print str(os.getpid()) + ': ', cmd1, '\n', result1
+			print str(os.getpid()) + ': ', cmd2
+			print str(os.getpid()) + ': ', cmd3, '\n', result3
+			print str(os.getpid()) + ': ', cmd4, '\n', result4
 
 	
 	'''
@@ -136,15 +135,15 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 	def _get_qe_mem_cpu(self, timeslot):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
-		#print cmd
+		#print str(os.getpid()) + ': ' ,  cmd
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			print timeslot, ': return code = ', status, ' output = ', output, ' in qe_mem_cpu'
+			print str(os.getpid()) + ': ', timeslot, ': return code = ', status, ' output = ', output, ' in qe_mem_cpu'
 		
 		line_item = output.splitlines()
 		now_time = str(datetime.now())
 		output_string = ''
-		#print output
+		#print str(os.getpid()) + ': ', output
 		
 		for line in line_item:
 			temp = line.split()
@@ -159,7 +158,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 				else:
 					one_item = str(self.run_id) + self.sep + self.hostname + self.sep + str(timeslot) + self.sep + now_time + self.sep + temp[0] + self.sep + temp[12][3:] + self.sep + temp[13] + self.sep + temp[14] + self.sep + 'NULL' + self.sep + temp[16] + self.sep + str(int(temp[3])/1024) + self.sep + temp[4] + self.sep + temp[1]
 			except Exception, e:
-				print temp, '\n', str(e)
+				print str(os.getpid()) + ': ', temp, '\n', str(e)
 				continue
 			output_string = output_string + one_item + '\n'
 		
@@ -189,19 +188,20 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		time.sleep(15)
 		self.scp_data(filename = filename)
 
-		print '%s normally stop.' % (function[10:])
-		print '%s: '% (function[10:]), file_no, ' files'
-
-		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (self.master_host, self.master_folder, self.hostname)
-		print cmd
-		os.system(cmd)
+		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:])
+		print str(os.getpid()) + ': ', '%s total '% (function[10:]), file_no, ' files'
 		os.system('rm -rf run.lock')
-		#os.system('rm -rf /tmp/monitor_report/*')
-
+		
 
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
 	p1 = Process( target = monitor_seg.get_qe_data, args = ('self._get_qe_mem_cpu', ) )
 	p1.start()
+	p1.join()
+	print str(os.getpid()) + ': ', 'collenct qe data process stop.'
+	cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
+	print str(os.getpid()) + ': ', cmd
+	os.system(cmd)
+	os.system('rm -rf /tmp/monitor_report/*')
 	
