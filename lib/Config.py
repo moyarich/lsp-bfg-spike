@@ -64,7 +64,7 @@ class Config:
     def getNPrimarySegments(self):
         n = 0
         for r in self.record:
-            if r.role:
+            if r.role == 'p':
                 n += 1
         return n
     
@@ -190,12 +190,12 @@ class Config:
      
     #def getMasterDataDirectory(self):
     #    for r in self.record:
-    #        if r.role = 'm':
+    #        if r.role == 'm':
     #            return r.datadir
    
     def getMasterHost(self):
         for r in self.record:
-            if r.role = 'm':
+            if r.role == 'm':
                 return r.hostname
    
     #def getMasterStandbyHost(self):
