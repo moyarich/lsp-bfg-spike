@@ -20,19 +20,16 @@ class Config:
         def __init__(self, line):
             line = line.split('|')
             line = [l.strip() for l in line]
-            self.dbid = int(line[0])
-            self.content = int(line[1])
-            self.role = line[2] == 'p'
-            self.preferred_role = line[3] == 'p'
-            self.mode = line[4] == 's'
-            self.status = line[5] == 'u'
-            self.hostname = line[6]
-            self.address = line[7]
-            self.port = line[8]
-            self.datadir = line[9]
-            self.replication_port = line[10]
-            self.san_mounts = line[11]
-
+            self.role = line[0]
+            #self.preferred_role = line[1] == 'p'
+            #self.mode = line[2] == 's'
+            self.status = line[1] == 'u'
+            self.hostname = line[2]
+            self.address = line[3]
+            self.port = line[4]
+            #self.datadir = line[9]
+            #self.replication_port =line[10]
+            #self.san_mounts = line[11]
     
     def __init__(self):
         from warnings import warn
@@ -47,8 +44,8 @@ class Config:
         #(ok, out) = psql.run(flag = '-q -t', cmd = 'select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration LEFT JOIN pg_catalog.pg_filespace_entry on (dbid = fsedbid) LEFT JOIN pg_catalog.pg_filespace fs on (fsefsoid = fs.oid and fsname=\'pg_system\') ORDER BY content, preferred_role', ofile = '-', isODBC = False, dbname='template1') 
     
         # Anu : commented out the above query since it was returning the full config of the system (including the filespace entry) Hence changed the query to return only the cluster configuration
-        (ok, out) = psql.run(flag='-q -t', cmd='select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration, pg_filespace_entry, pg_catalog.pg_filespace fs where fsefsoid = fs.oid and fsname=\'pg_system\' and gp_segment_configuration.dbid=pg_filespace_entry.fsedbid ORDER BY content, preferred_role', ofile='-',dbname='template1') 
-
+        #(ok, out) = psql.run(flag='-q -t', cmd='select dbid, content, role, preferred_role, mode, status, hostname, address, port, fselocation as datadir, replication_port, san_mounts from gp_segment_configuration, pg_filespace_entry, pg_catalog.pg_filespace fs where fsefsoid = fs.oid and fsname=\'pg_system\' and gp_segment_configuration.dbid=pg_filespace_entry.fsedbid ORDER BY content, preferred_role', ofile='-',dbname='template1') 
+        (ok, out) = psql.run(flag='-q -t', cmd='select role, status, hostname, address, port from gp_segment_configuration ORDER by role;', ofile='-',  dbname='template1')
         if not ok:
             sys.exit('Unable to select gp_segment_configuration')
         for line in out:
