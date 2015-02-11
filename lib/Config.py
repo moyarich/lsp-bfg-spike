@@ -64,7 +64,7 @@ class Config:
     def getNPrimarySegments(self):
         n = 0
         for r in self.record:
-            if r.role and r.content != -1:
+            if r.role:
                 n += 1
         return n
     
@@ -78,7 +78,7 @@ class Config:
 
     def getMasterHostName(self):
         
-        (ok, out) = psql.run(flag='-q -t', cmd="select distinct hostname from gp_segment_configuration where role = 'm'", ofile='-', dbname='template1') 
+        (ok, out) = psql.run(flag='-q -t', cmd="select distinct hostname from gp_segment_configuration where role = 'm';", ofile='-', dbname='template1') 
 
         if not ok:
             sys.exit('Unable to select gp_segment_configuration')
@@ -94,14 +94,14 @@ class Config:
         hostlist = psql.list_out(out)
         return hostlist
    
-    def getMastermirrorHostname(self):
-        '''Returns hostname of the standby master '''
-        (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where role = 's'", ofile='-', dbname='template1')
+    #def getMastermirrorHostname(self):
+    #    '''Returns hostname of the standby master '''
+    #    (ok, out) = psql.run(flag='-q -t', cmd="select hostname from gp_segment_configuration where role = 's'", ofile='-', dbname='template1')
 
-        if not ok:
-            sys.exit('Unable to select gp_segment_configuration')
-        hostname = psql.list_out(out)[0]
-        return hostname
+    #    if not ok:
+    #        sys.exit('Unable to select gp_segment_configuration')
+    #    hostname = psql.list_out(out)[0]
+    #    return hostname
 
  
     def getHostAndPortOfSegment(self, pSegmentNumber=0, pRole='p'):
@@ -127,10 +127,10 @@ class Config:
 
         # For some reason the role in the Config uses True for Primary and False
         # for Mirror, rather than 'p' and 'm' as gp_segment_configuration uses.
-        if pRole == 'p':
-            role = True
-        else:
-            role = False
+        #if pRole == 'p':
+        #    role = True
+        #else:
+        #    role = False
 
         # Extract the "Record" info, which includes the hostname and port for
         # each segment.
@@ -138,8 +138,8 @@ class Config:
         for seg in segmentInfo:
             # DDDIAGNOSTIC
             #print seg.content, seg.role, seg.hostname, seg.port
-            if seg.content == pSegmentNumber and seg.role == role:
-                return (seg.hostname, seg.port, seg.datadir)
+            if seg.role == 'p':
+                return (seg.hostname, seg.port)
 
         # If we couldn't get the requested info, then return a hint that we
         # didn't get the right stuff.
@@ -158,15 +158,15 @@ class Config:
        
     # Johnny Soedomo: 20100505: check if there is MasterMirror
     #
-    def hasMasterMirror(self): 
-        master = 0
-        for r in self.record:
-            if r.content == -1:
-                master += 1
-        if master == 1:
-            return False
-        else:
-            return True 
+    #def hasMasterMirror(self): 
+    #    master = 0
+    #    for r in self.record:
+    #        if r.content == -1:
+    #            master += 1
+    #    if master == 1:
+    #        return False
+    #    else:
+    #        return True 
 
     # ramans2: 20110506: Return number of segments
     def getCountSegments(self):
@@ -188,22 +188,22 @@ class Config:
         return False
 
      
-    def getMasterDataDirectory(self):
-        for r in self.record:
-            if r.role and r.content == -1:
-                return r.datadir
+    #def getMasterDataDirectory(self):
+    #    for r in self.record:
+    #        if r.role = 'm':
+    #            return r.datadir
    
     def getMasterHost(self):
         for r in self.record:
-            if r.role and r.content == -1:
+            if r.role = 'm':
                 return r.hostname
    
-    def getMasterStandbyHost(self):
-        for r in self.record:
-            if r.content == -1 and r.dbid != 1:
-                print r.dbid
-                return r.hostname
-        return None 
+    #def getMasterStandbyHost(self):
+    #    for r in self.record:
+    #        if r.content == -1 and r.dbid != 1:
+    #            print r.dbid
+    #            return r.hostname
+    #    return None 
 
     def isDebug(self):
         '''
