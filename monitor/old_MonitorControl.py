@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os,sys,commands,time,socket
+import os,sys,commands,time
 from datetime import datetime
 from multiprocessing import Process
 from pygresql import pg
@@ -20,7 +20,7 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 7, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
+	def __init__(self, mode = 'local', interval = 5, timeout = 120, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
 		assert mode in ['local', 'remote']
 		self.mode = mode
 		self.interval = int(interval)
@@ -143,6 +143,28 @@ class Monitor_control():
 				print str(os.getpid()) + ': ', cmd3, '\n', result3
 				print str(os.getpid()) + ': ', cmd4, '\n', result4
 
+	def _get_monitor_seg_script_path(self):
+		for one_path in sys.path:
+			if one_path.endswith('monitor'):
+				self.seg_script = one_path + os.sep + 'MonitorSeg.py'
+				self.local_schema_script = one_path + os.sep + 'schema.sql'
+				self.remote_schema_script = one_path + os.sep + 'remote_schema.sql'
+				if os.path.exists(self.seg_script):
+					return 0
+		print str(os.getpid()) + ': ', 'not find MonitorSeg.py when setup monitor. '
+		sys.exit(2)
+
+	def _get_seg_list(self, hostfile = 'hostfile_seg'):
+		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where role = 'p';" '''
+		(status, output) = commands.getstatusoutput(cmd)
+		
+		if status != 0:
+			print str(os.getpid()) + ': ', 'Unable to select gp_segment_configuration in monitor_control.'
+			sys.exit(2)
+		
+		with open(hostfile, 'w') as fnode:
+			fnode.write(output + '\n')
+
 	def setup(self):
 		self._get_monitor_seg_script_path()
 		
@@ -174,118 +196,6 @@ class Monitor_control():
 			cmd = "psql -d postgres -f %s" % (self.local_schema_script)
 			(s, o) = commands.getstatusoutput(cmd)
 			print str(os.getpid()) + ': ', '\n', o
-
-	def _get_monitor_seg_script_path(self):
-		for one_path in sys.path:
-			if one_path.endswith('monitor'):
-				self.seg_script = one_path + os.sep + 'MonitorSeg.py'
-				self.local_schema_script = one_path + os.sep + 'schema.sql'
-				if os.path.exists(self.seg_script):
-					return 0
-		print str(os.getpid()) + ': ', 'not find MonitorSeg.py when setup monitor. '
-		sys.exit(2)
-
-	def _get_seg_list(self, hostfile = 'hostfile_seg'):
-		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where role = 'p';" '''
-		(status, output) = commands.getstatusoutput(cmd)
-		
-		if status != 0:
-			print str(os.getpid()) + ': ', 'Unable to select gp_segment_configuration in monitor_control.'
-			sys.exit(2)
-		
-		with open(hostfile, 'w') as fnode:
-			fnode.write(output + '\n')
-		self.host_list = output.split('\n')
-		
-
-	# only record current query in memory
-	def _get_qd_info(self):
-		now_time = datetime.now()
-		if self.mode == 'local':
-			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
-		else:
-			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
-		# -R '***' set record separator '***' (default: newline)
-		cmd = ''' psql -d postgres -t -A -R '***' -c "%s" ''' % (sql)
-		(status, output) = commands.getstatusoutput(cmd)
-		if status != 0 or output == '':
-			#print str(os.getpid()) + ':'  + 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
-			return None
-
-		''' line_item = sess_id|query_start|usename|datname|current_query '''
-		all_items = output.split('***')
-		output_string = ''
-		
-		for current_query in self.current_query_record:
-			if current_query not in all_items:
-				line = current_query.split('|')
-				if line[1] == '':
-					continue
-				try:
-					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
-				except Exception, e:
-					print str(os.getpid()) + ':', line, '\n', str(e)
-					continue
-
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
-				output_string = output_string + one_item + '\n'
-				self.current_query_record.remove(current_query)
-
-		for line_item in all_items:
-			if line_item not in self.current_query_record:
-				self.current_query_record.append(line_item)
-
-		return output_string
-	
-	def get_qd_info(self, interval = 1):
-		count = 0
-		file_no = 1
-		filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
-
-		while(os.path.exists(self.run_lock)):
-			if count == self.timeout:
-				p1 = Process( target = self.scp_data, args = (filename, ) )
-				p1.start()
-				count = 0
-				file_no += 1
-				filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
-
-			result = self._get_qd_info()
-			if result is None:
-				time.sleep(1)
-				continue
-
-			if result != '':
-				self.report(filename = self.report_folder + os.sep + filename, msg = result)
-				count += 1
-			time.sleep(interval)
-
-		now_time = datetime.now()
-		if len(self.current_query_record) != 0:
-			output_string = ''
-			for current_query in self.current_query_record:
-				line = current_query.split('|')
-				if line[1] == '':
-					continue
-				try:
-					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
-				except Exception, e:
-					#print str(os.getpid()) + ':'  + 'time error ' + str(line)
-					continue
-
-				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
-				output_string = output_string + one_item + '\n'
-		
-			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
-			time.sleep(15)
-			self.scp_data(filename = filename)
-		 
-		print str(os.getpid()) + ': ', 'get_qd_info process normally stop.'
-		print str(os.getpid()) + ': ', 'qd_info total ', file_no, ' files'
-
-		cmd = "gpssh -f %s -e 'rm -rf %s/run.lock'" % (self.hostfile_seg, self.seg_tmp_folder)
-		(s, o) = commands.getstatusoutput(cmd)
-		print str(os.getpid()) + ': ', cmd, '\n', o.strip()
 	
 
 	'''
@@ -350,55 +260,95 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:])
 		print str(os.getpid()) + ': ', '%s total ' % (function[10:]), file_no, ' files'
 
-	
-	def get_qd_data_sync(self, function = 'self._get_qd_mem_cpu'):
-		count = 1   # control scp data with self.timeout
-		file_no = 1
-		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
-		
-		while(os.path.exists(self.run_lock)): 
-			timeslot = (file_no - 1) * self.timeout + count
-			result = eval(function + '(timeslot)')
+	# only record current query in memory
+	def _get_qd_info(self):
+		now_time = datetime.now()
+		if self.mode == 'local':
+			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
+		else:
+			sql = "select sess_id,query_start,usename,datname from pg_stat_activity where current_query not like '%from pg_stat_activity%' and datname not like 'postgres' order by sess_id,query_start;"
+		# -R '***' set record separator '***' (default: newline)
+		cmd = ''' psql -d postgres -t -A -R '***' -c "%s" ''' % (sql)
+		(status, output) = commands.getstatusoutput(cmd)
+		if status != 0 or output == '':
+			#print str(os.getpid()) + ':'  + 'error code: ' + str(status) + ' output: ' + output + ' in qd_info'
+			return None
 
-			if count > self.timeout:
+		''' line_item = sess_id|query_start|usename|datname|current_query '''
+		all_items = output.split('***')
+		output_string = ''
+		
+		for current_query in self.current_query_record:
+			if current_query not in all_items:
+				line = current_query.split('|')
+				if line[1] == '':
+					continue
+				try:
+					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
+				except Exception, e:
+					print str(os.getpid()) + ':', line, '\n', str(e)
+					continue
+
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
+				output_string = output_string + one_item + '\n'
+				self.current_query_record.remove(current_query)
+
+		for line_item in all_items:
+			if line_item not in self.current_query_record:
+				self.current_query_record.append(line_item)
+
+		return output_string
+	
+
+	def get_qd_info(self, interval = 1):
+		count = 0
+		file_no = 1
+		filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
+
+		while(os.path.exists(self.run_lock)):
+			if count == self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
 				p1.start()
-				count = 1
+				count = 0
 				file_no += 1
-				filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
+				filename = self.hostname + '_qd_info_' + str(file_no) + '.data'
 
-			self.report(filename = self.report_folder + os.sep + filename, msg = result)
-			count += 1
+			result = self._get_qd_info()
+			if result is None:
+				time.sleep(1)
+				continue
 
-			for addr in self.host_list:
+			if result != '':
+				self.report(filename = self.report_folder + os.sep + filename, msg = result)
+				count += 1
+			time.sleep(interval)
+
+		now_time = datetime.now()
+		if len(self.current_query_record) != 0:
+			output_string = ''
+			for current_query in self.current_query_record:
+				line = current_query.split('|')
+				if line[1] == '':
+					continue
 				try:
-					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-					sock.connect((addr, 8001))
-					sock.send( str(datetime.now()) + '*' + str(timeslot) )
-					sock.close()
+					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
 				except Exception, e:
-					print addr, 'error:', str(e), 
-					cmd = " gpssh -h %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d sync > monitor.log 2>&1 &' " % (addr, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
-					(s, o) = commands.getstatusoutput(cmd)
-					print str(os.getpid()) + ': ', '\n', o
+					#print str(os.getpid()) + ':'  + 'time error ' + str(line)
+					continue
 
-			time.sleep(self.interval)
+				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep +line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
+				output_string = output_string + one_item + '\n'
+		
+			self.report(filename = self.report_folder + os.sep + filename, msg = output_string)
+			time.sleep(15)
+			self.scp_data(filename = filename)
+		 
+		print str(os.getpid()) + ': ', 'get_qd_info process normally stop.'
+		print str(os.getpid()) + ': ', 'qd_info total ', file_no, ' files'
 
-		time.sleep(15)
-		self.scp_data(filename = filename)
-
-		for addr in self.host_list:
-			try:
-				sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				sock.connect((addr, 8001))
-				sock.send( 'stop' + '*' + str(timeslot))
-				#data=sock.recv(1024)
-				#print data
-				sock.close()
-			except Exception, e:
-				print addr, 'error when stop monitor.'
-
-		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:]), 'Total ', file_no, ' files'
+		cmd = "gpssh -f %s -e 'rm -rf %s/run.lock'" % (self.hostfile_seg, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		print str(os.getpid()) + ': ', cmd, '\n', o.strip()
 
 
 	def stop(self):
@@ -407,25 +357,17 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		print str(os.getpid()) + ': ', 'remove monitor run.lock file and stop.'
 
 
-	def start(self, mode = 'async'):
+	def start(self):
 		self.setup()
-		if mode == 'async':
-			cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d async > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
-			(s, o) = commands.getstatusoutput(cmd)
-			print str(os.getpid()) + ': ', '\n', o
-			p1 = Process( target = self.get_qd_info, args = (1, ) )
-			p2 = Process( target = self.get_qd_data, args = () )
-			p1.start()
-			p2.start()
-		else:
-			cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d sync > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
-			(s, o) = commands.getstatusoutput(cmd)
-			print str(os.getpid()) + ': ', '\n', o
-			p1 = Process( target = self.get_qd_info, args = (1, ) )
-			p2 = Process( target = self.get_qd_data_sync, args = () )
-			p1.start()
-			p2.start()
 
+		cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
+		(s, o) = commands.getstatusoutput(cmd)
+		print str(os.getpid()) + ': ', '\n', o
+
+		p1 = Process( target = self.get_qd_info, args = (1, ) )
+		p2 = Process( target = self.get_qd_data, args = () )
+		p1.start()
+		p2.start()
 
 
 #monitor_control = Monitor_control()#(mode = 'remote')

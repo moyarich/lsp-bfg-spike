@@ -90,6 +90,7 @@ class Workload(object):
         self.compression_type = None
         self.compression_level = -1
         self.partitions = 0
+        self.seg_nums = 1
 
         self.scale_factor = None
         self.ans_directory = ''
@@ -145,12 +146,18 @@ class Workload(object):
             sys.exit(2)
         
         # Need to make it univerally applicable instead of hard-code number of segments
-        self.nsegs =  config.getNPrimarySegments()
+        nnodes = len(config.getSegHostNames())
+        if nnodes == 0:
+            print 'getSegHostNames from gp_segment_configuration error.'
+            sys.exit(2)
+        
+        if 'seg_nums' in ts.keys():
+            self.seg_nums = ts['seg_nums']
+        self.nsegs =  nnodes * self.seg_nums
         
         if self.data_volume_type == 'TOTAL':
             self.scale_factor = self.data_volume_size
         elif self.data_volume_type == 'PER_NODE':
-            nnodes = len(config.getSegHostNames())
             self.scale_factor = self.data_volume_size * nnodes
         elif self.data_volume_type == 'PER_SEGMENT':
             self.scale_factor = self.data_volume_size * self.nsegs

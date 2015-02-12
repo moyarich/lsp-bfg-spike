@@ -19,6 +19,7 @@ workloads_content:
           compression_level: 1
           partitions: 128
           distributed_randomly: false
+          seg_nums: 4
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -38,6 +39,7 @@ workloads_content:
           compression_type: SNAPPY
           partitions: 0
           distributed_randomly: false
+          seg_nums: 4
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -56,6 +58,7 @@ workloads_content:
           compression_level: 1
           partitions: 128
           distributed_randomly: true
+          seg_nums: 4
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -75,6 +78,7 @@ workloads_content:
           compression_type: SNAPPY
           partitions: 0
           distributed_randomly: true
+          seg_nums: 4
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL

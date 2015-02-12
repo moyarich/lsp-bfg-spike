@@ -132,18 +132,15 @@ class Monitor_seg():
  	  1035  0.8 658804 20844  0.5 S postgres: port 40000, gpadmin gpsqltest_tpch_ao_row_gpadmin 127.0.0.1(43204) con82 seg0 cmd2 slice1 MPPEXEC SELECT
 index  0    1      2     3     4  5    6       7     8       9             10                        11           12     13  14    15      16     17
 	'''
-	def _get_qe_mem_cpu(self, timeslot, real_time = None):
+	def _get_qe_mem_cpu(self, timeslot):
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg-|resource manager'
 		cmd = ''' ps -eo pid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep seg | grep -vE "%s" ''' % (filter_string)
 		#print str(os.getpid()) + ': ' ,  cmd
 		(status, output) = commands.getstatusoutput(cmd)
 		if status != 0 or output == '':
-			#pass
 			print str(os.getpid()) + ': ', timeslot, ': return code = ', status, ' output = ', output, ' in qe_mem_cpu'
 		
 		line_item = output.splitlines()
-		if real_time is not None:
-			print real_time
 		now_time = str(datetime.now())
 		output_string = ''
 		#print str(os.getpid()) + ': ', output
@@ -166,6 +163,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 			output_string = output_string + one_item + '\n'
 		
 		return output_string
+	
 	
 	def get_qe_data(self, function = 'self._get_qe_mem_cpu'):
 		file_no = 1
@@ -190,64 +188,20 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		time.sleep(15)
 		self.scp_data(filename = filename)
 
-		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:]), 'Total ', file_no, ' files'
+		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:])
+		print str(os.getpid()) + ': ', '%s total '% (function[10:]), file_no, ' files'
 		os.system('rm -rf run.lock')
-	
-	def get_qe_data_sync(self, function = 'self._get_qe_mem_cpu', timeslot = 0, real_time = ''):
-		beg_time = datetime.now()
-		file_no = (timeslot - 1) / self.timeout + 1
-		filename = self.hostname + '_' + function[10:] + '_' + str(file_no) + '.data'
 		
-		if now_time == 'stop':
-			time.sleep(15)
-			self.scp_data(filename = filename)
-			print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:]), 'Total ', file_no, ' files'
-			os.system('rm -rf run.lock')
-			return 0
-
-		result = eval(function + '(timeslot, now_time)')
-		self.report(filename = filename, msg = result)
-		if (timeslot % self.timeout) == 0:
-			p1 = Process( target = self.scp_data, args = (filename, ) )
-			p1.start()
-
-		end_time = datetime.now()
-		duration = end_time - beg_time
-		duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000
-		print timeslot, ': ', duration, 'ms'
-    	
 
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	if sys.argv[9] == 'async':
-		p1 = Process( target = monitor_seg.get_qe_data, args = ('self._get_qe_mem_cpu', ) )
-		p1.start()
-		p1.join()
-		print str(os.getpid()) + ': ', 'async collenct qe data process stop.'
-		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
-		print str(os.getpid()) + ': ', cmd
-		os.system(cmd)
-	else:
-		import socket   
-		s = socket.socket(socket.AF_INET,socket.SOCK_STREAM)  
-		s.bind((monitor_seg.hostname, 8001))  
-		s.listen(1)
-		while 1:
-			conn,addr = s.accept()
-			data = conn.recv(1024).split('*')
-			now_time = data[0]
-			timeslot = int(data[1])
-			monitor_seg.get_qe_data_sync(timeslot = timeslot, real_time = now_time)
-			if data[0] == 'stop':
-				print 'get master stop signal.'
-				cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
-				print str(os.getpid()) + ': ', cmd
-				os.system(cmd)
-				break
-			#conn.send('done')
-		conn.close()
+	p1 = Process( target = monitor_seg.get_qe_data, args = ('self._get_qe_mem_cpu', ) )
+	p1.start()
+	p1.join()
+	print str(os.getpid()) + ': ', 'collenct qe data process stop.'
+	cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
+	print str(os.getpid()) + ': ', cmd
+	os.system(cmd)
 	#os.system('rm -rf /tmp/monitor_report/*')
-
-	
 	
