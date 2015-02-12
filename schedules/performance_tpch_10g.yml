@@ -1,4 +1,4 @@
-workloads_list: tpch_row_10gpn_nocomp_nopart, #tpch_row_10gpn_nocomp_nopart_random
+workloads_list: tpch_row_10gpn_nocomp_nopart, tpch_row_10gpn_nocomp_nopart_random
 
 workloads_mode: sequential
 
@@ -16,7 +16,7 @@ workloads_content:
           orientation: ROW
           partitions: 0
           distributed_randomly: false
-          seg_num: 6
+          seg_num: 4
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
