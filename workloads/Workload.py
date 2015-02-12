@@ -90,7 +90,7 @@ class Workload(object):
         self.compression_type = None
         self.compression_level = -1
         self.partitions = 0
-        self.seg_nums = 1
+        self.seg_num = 2
 
         self.scale_factor = None
         self.ans_directory = ''
@@ -151,9 +151,9 @@ class Workload(object):
             print 'getSegHostNames from gp_segment_configuration error.'
             sys.exit(2)
         
-        if 'seg_nums' in ts.keys():
-            self.seg_nums = ts['seg_nums']
-        self.nsegs =  nnodes * self.seg_nums
+        if 'seg_num' in ts.keys():
+            self.seg_num = ts['seg_num']
+        self.nsegs =  nnodes * self.seg_num
         
         if self.data_volume_type == 'TOTAL':
             self.scale_factor = self.data_volume_size

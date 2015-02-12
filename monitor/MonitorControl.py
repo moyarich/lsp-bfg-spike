@@ -20,7 +20,7 @@ except ImportError:
 
 class Monitor_control():
 	
-	def __init__(self, mode = 'local', interval = 5, timeout = 7, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
+	def __init__(self, mode = 'local', interval = 5, timeout = 120, remote_host = 'gpdb63.qa.dh.greenplum.com', run_id = 0):
 		assert mode in ['local', 'remote']
 		self.mode = mode
 		self.interval = int(interval)

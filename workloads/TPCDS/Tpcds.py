@@ -237,8 +237,8 @@ class Tpcds(Workload):
             sys.exit(2)
        
     def _data_gen_segment(self):
-        total_paralle = self.nsegs * 4
-        seg_num = self.nsegs * 4 / self.seg_host_num
+        total_paralle = self.nsegs
+        seg_num = self.seg_num
         count = 1
         for cur_host in self.seg_hostname_list:
             self.output('generate script for %s' % (cur_host))

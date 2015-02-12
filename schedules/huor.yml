@@ -25,7 +25,7 @@ workloads_content:
           compression_level: 1
           partitions: 0
           distributed_randomly: true
-          seg_nums: 2
+          seg_num: 2
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
