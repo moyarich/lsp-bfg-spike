@@ -1,4 +1,4 @@
-workloads_list: tpch_row_10gpn_nocomp_nopart #, tpch_row_10gpn_nocomp_nopart_random
+workloads_list: tpch_row_10gpn_nocomp_nopart, tpch_row_10gpn_nocomp_nopart_random
 
 workloads_mode: sequential
 
