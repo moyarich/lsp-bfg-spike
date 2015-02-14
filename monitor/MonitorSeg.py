@@ -17,19 +17,20 @@ except ImportError:
 class Monitor_seg():
 
 	def __init__(self):
-		self.master_host = sys.argv[2]
-		self.master_folder = sys.argv[3]
-		self.mode = sys.argv[4]
-		self.remote_host = sys.argv[5]
-		self.interval = int(sys.argv[6])
-		self.timeout = int(sys.argv[7])
-		self.run_id = int(sys.argv[8])
-		
 		self.pwd = os.getcwd()
-		(s, o) = commands.getstatusoutput('hostname')
-		self.hostname = o.strip()
-		self.sep = '|'
+		
+		(s, o) = commands.getstatusoutput('cat run.lock')
+		seg_info = o.strip().split('|')
+		self.hostname = seg_info[0]
+		self.mode = seg_info[1]
+		self.master_folder = seg_info[2]
+		self.master_host = seg_info[3]
+		self.remote_host = seg_info[4]
+		self.interval = int(seg_info[5])
+		self.timeout = int(seg_info[6])
+		self.run_id = int(seg_info[7])
 
+		self.sep = '|'
 
 	def report(self, filename, msg):
 		if msg != '':
@@ -220,7 +221,7 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 monitor_seg = Monitor_seg()
 
 if __name__ == "__main__" :
-	if sys.argv[9] == 'async':
+	if sys.argv[2] == 'async':
 		p1 = Process( target = monitor_seg.get_qe_data, args = ('self._get_qe_mem_cpu', ) )
 		p1.start()
 		p1.join()

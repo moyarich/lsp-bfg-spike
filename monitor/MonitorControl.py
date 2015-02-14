@@ -152,12 +152,15 @@ class Monitor_control():
 		os.system( 'touch %s' % (self.run_lock) )
 		
 		# make tmp dir on every seg host
-		cmd = " gpssh -f %s -e 'mkdir -p %s; touch %s/run.lock' " % (self.hostfile_seg, self.seg_tmp_folder, self.seg_tmp_folder)
-		(s, o) = commands.getstatusoutput(cmd)
-		if s != 0:
-			print str(os.getpid()) + ': ', 'perp monitor report folder on seg host error.'
-			print str(os.getpid()) + ': ', s, o
-			sys.exit(2)
+		monitor_info = self.mode + '|' + self.report_folder + '|' + self.hostname + '|' + self.remote_host + '|' + str(self.interval) + '|' + str(self.timeout) + '|' + str(self.run_id)
+		for hostname in self.host_list:
+			seg_info = hostname + '|' + monitor_info
+			cmd = ''' gpssh -h %s -e "mkdir -p %s; echo '%s' > %s/run.lock" ''' % (hostname, self.seg_tmp_folder, seg_info, self.seg_tmp_folder)
+			(s, o) = commands.getstatusoutput(cmd)
+			if s != 0:
+				print str(os.getpid()) + ': ', 'perp monitor report folder on seg host %s error.' % (hostname)
+				print str(os.getpid()) + ': ', s, o
+				sys.exit(2)
 
 		# gpscp seg monitor script to every seg host
 		cmd = 'gpscp -f %s %s =:%s' % (self.hostfile_seg, self.seg_script, self.seg_tmp_folder)
@@ -280,12 +283,7 @@ class Monitor_control():
 			time.sleep(15)
 			self.scp_data(filename = filename)
 		 
-		print str(os.getpid()) + ': ', 'get_qd_info process normally stop.'
-		print str(os.getpid()) + ': ', 'qd_info total ', file_no, ' files'
-
-		cmd = "gpssh -f %s -e 'rm -rf %s/run.lock'" % (self.hostfile_seg, self.seg_tmp_folder)
-		(s, o) = commands.getstatusoutput(cmd)
-		print str(os.getpid()) + ': ', cmd, '\n', o.strip()
+		print str(os.getpid()) + ': ', 'get_qd_info process normally stop.', 'Total ', file_no, ' files'
 	
 
 	'''
@@ -347,8 +345,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		time.sleep(15)
 		self.scp_data(filename = filename)
 
-		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:])
-		print str(os.getpid()) + ': ', '%s total ' % (function[10:]), file_no, ' files'
+		print str(os.getpid()) + ': ', '%s normally stop.' % (function[10:]), 'Total ', file_no, ' files'
 
 	
 	def get_qd_data_sync(self, function = 'self._get_qd_mem_cpu'):
@@ -378,7 +375,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 					sock.close()
 				except Exception, e:
 					print addr, 'error:', str(e), 
-					cmd = " gpssh -h %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d sync > monitor.log 2>&1 &' " % (addr, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
+					cmd = " gpssh -h %s -e 'cd %s; nohup python -u MonitorSeg.py %s sync >> monitor.log 2>&1 &' " % (addr, self.seg_tmp_folder, pexpect_dir)
 					(s, o) = commands.getstatusoutput(cmd)
 					print str(os.getpid()) + ': ', '\n', o
 
@@ -406,11 +403,17 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			os.system('rm -rf %s' % (self.run_lock))
 		print str(os.getpid()) + ': ', 'remove monitor run.lock file and stop.'
 
+		cmd = "gpssh -f %s -e 'rm -rf %s/run.lock'" % (self.hostfile_seg, self.seg_tmp_folder)
+		(s, o) = commands.getstatusoutput(cmd)
+		print str(os.getpid()) + ': ', cmd, '\n', o.strip()
+		time.sleep(60)
+
 
 	def start(self, mode = 'async'):
+		assert mode in ['async', 'sync']
 		self.setup()
 		if mode == 'async':
-			cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d async > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
+			cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s async > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir)
 			(s, o) = commands.getstatusoutput(cmd)
 			print str(os.getpid()) + ': ', '\n', o
 			p1 = Process( target = self.get_qd_info, args = (1, ) )
@@ -418,7 +421,7 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			p1.start()
 			p2.start()
 		else:
-			cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s %s %s %s %s %d %d %d sync > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir, self.hostname, self.report_folder, self.mode, self.remote_host, self.interval, self.timeout, self.run_id)
+			cmd = " gpssh -f %s -e 'cd %s; nohup python -u MonitorSeg.py %s sync > monitor.log 2>&1 &' " % (self.hostfile_seg, self.seg_tmp_folder, pexpect_dir)
 			(s, o) = commands.getstatusoutput(cmd)
 			print str(os.getpid()) + ': ', '\n', o
 			p1 = Process( target = self.get_qd_info, args = (1, ) )
