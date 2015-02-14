@@ -242,12 +242,13 @@ if __name__ == "__main__" :
 			monitor_seg.get_qe_data_sync(timeslot = timeslot, real_time = now_time)
 			if data[0] == 'stop':
 				print 'get master stop signal.'
-				cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
-				print str(os.getpid()) + ': ', cmd
-				os.system(cmd)
 				break
 			#conn.send('done')
 		conn.close()
+		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
+		print str(os.getpid()) + ': ', cmd
+		os.system(cmd)
+		
 	#os.system('rm -rf /tmp/monitor_report/*')
 
 	

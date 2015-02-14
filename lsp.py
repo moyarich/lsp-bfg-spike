@@ -175,7 +175,7 @@ if __name__ == '__main__':
 
             if monitor_interval > 0:
                 monitor_control = Monitor_control(mode = 'remote', interval = monitor_interval , run_id = tr_id)
-                monitor_control.start()
+                monitor_control.start(mode = 'sync')
 
         # parse list of the workloads for execution
         workloads_list = schedule_parser['workloads_list']
