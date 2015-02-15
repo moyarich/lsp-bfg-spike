@@ -189,7 +189,7 @@ class Monitor_control():
 		sys.exit(2)
 
 	def _get_seg_list(self, hostfile = 'hostfile_seg'):
-		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where role = 'p';" '''
+		cmd = ''' psql -d postgres -t -A -c "select distinct hostname from gp_segment_configuration where content <> -1 and role = 'p';" '''
 		(status, output) = commands.getstatusoutput(cmd)
 		
 		if status != 0:
@@ -367,11 +367,12 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			self.report(filename = self.report_folder + os.sep + filename, msg = result)
 			count += 1
 
+			real_time = str(datetime.now())
 			for addr in self.host_list:
 				try:
 					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					sock.connect((addr, 8001))
-					sock.send( str(datetime.now()) + '*' + str(timeslot) )
+					sock.send( real_time + '*' + str(timeslot) )
 					sock.close()
 				except Exception, e:
 					print addr, 'error:', str(e), 
