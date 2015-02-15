@@ -144,8 +144,9 @@ index  0    1      2     3     4  5    6       7     8       9             10   
 		
 		line_item = output.splitlines()
 		if real_time is not None:
-			print real_time
-		now_time = str(datetime.now())
+			now_time = str(real_time)
+		else:
+			now_time = str(datetime.now())
 		output_string = ''
 		#print str(os.getpid()) + ': ', output
 		
@@ -248,7 +249,6 @@ if __name__ == "__main__" :
 		cmd = "gpscp -h %s monitor.log =:%s/seg_log/%s.log" % (monitor_seg.master_host, monitor_seg.master_folder, monitor_seg.hostname)
 		print str(os.getpid()) + ': ', cmd
 		os.system(cmd)
-		
 	#os.system('rm -rf /tmp/monitor_report/*')
 
 	
