@@ -502,6 +502,23 @@ BEGIN
 END
 $$ LANGUAGE PLPGSQL;
 
+CREATE OR REPLACE FUNCTION hst.f_generate_test_report_detail(start_run_id_actual INT, end_run_id_actual INT, start_run_id_baseline INT, end_run_id_baseline INTG)
+RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), action_target VARCHAR(128), actual_execution_time DECIMAL(18,2), baseline_execution_time DECIMAL(18,2), test_result TEXT, deviation DECIMAL(18,2), revised_baseline_execution_time DECIMAL(18,2), success_status INT, improve_status INT, failure_status INT, skip_status INT, error_status INT)
+AS $$
+DECLARE
+    actual_test_result_table TEXT;
+    baseline_test_result_table TEXT;
+BEGIN
+    CREATE TEMP TABLE actual_test_result_table ON COMMIT DROP AS
+    SELECT * FROM hst.f_generate_test_result(start_run_id_actual, end_run_id_actual);
+
+    CREATE TEMP TABLE baseline_test_result_table ON COMMIT DROP AS
+    SELECT * FROM hst.f_generate_test_result(start_run_id_baseline, end_run_id_baseline);
+
+    RETURN QUERY SELECT * FROM hst.f_generate_test_report_detail_internal(actual_test_result_table, baseline_test_result_table);
+END
+$$ LANGUAGE PLPGSQL;
+
 
 CREATE OR REPLACE FUNCTION hst.f_generate_test_report_detail(baseline1_hdfs_version TEXT, baseline1_hawq_version TEXT, baseline2_hdfs_version TEXT, baseline2_hawq_version TEXT)
 RETURNS TABLE(tr_id INT, s_id INT, wl_name VARCHAR(512), action_type VARCHAR(128), action_target VARCHAR(128), actual_execution_time DECIMAL(18,2), baseline_execution_time DECIMAL(18,2), test_result TEXT, deviation DECIMAL(18,2), revised_baseline_execution_time DECIMAL(18,2), success_status INT, improve_status INT, failure_status INT, skip_status INT, error_status INT)
@@ -683,8 +700,8 @@ INSERT INTO hst.scenario (cs_id, wl_id, us_id) VALUES (1, 1, 1);
 
 
 -- 6. Sample for reporting
-SELECT * FROM hst.f_precompute_test_baseline('PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
-SELECT * FROM hst.f_generate_test_baseline('PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
+SELECT * FROM hst.f_precompute_test_baseline('PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946');
+SELECT * FROM hst.f_generate_test_baseline('PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946');
 
 
 SELECT * FROM hst.f_precompute_test_result(136);
@@ -692,16 +709,21 @@ SELECT * FROM hst.f_precompute_test_result(134);
 SELECT * FROM hst.f_generate_test_result(127);
 SELECT * FROM hst.f_generate_test_result(129);
 
-SELECT * FROM hst.f_generate_test_report_detail(136, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
-SELECT * FROM hst.f_generate_test_report_detail(87, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');
-SELECT * FROM hst.f_generate_test_report_detail(87, 87);
-SELECT * FROM hst.f_generate_test_report_detail('PHD 2.2', 'HAWQ 1.2.2.0 build 11714','PHD 2.2', 'HAWQ 1.2.2.0 build 11714');
+SELECT * FROM hst.f_generate_test_report_detail(233, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946');
+SELECT * FROM hst.f_generate_test_report_detail(233, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946');
+SELECT * FROM hst.f_generate_test_report_detail(233, 233);
+SELECT * FROM hst.f_generate_test_report_detail('PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946','PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946');
 
-SELECT * FROM hst.f_generate_test_report_summary(88, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');
-SELECT * FROM hst.f_generate_test_report_summary(89, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');
-SELECT * FROM hst.f_generate_test_report_summary(87, 'PHD 2.2', 'HAWQ 1.2.2.0 build 11714');
+SELECT * FROM hst.f_generate_test_report_detail(233, 237, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946');
+SELECT * FROM hst.f_generate_test_report_detail('PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946','PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946');
+
+
+SELECT * FROM hst.f_generate_test_report_detail(233, 
+SELECT * FROM hst.f_generate_test_report_summary(88, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
+SELECT * FROM hst.f_generate_test_report_summary(89, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
+SELECT * FROM hst.f_generate_test_report_summary(87, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
 SELECT * FROM hst.f_generate_test_report_summary(87, 87);
-SELECT * FROM hst.f_generate_test_report_summary('PHD 2.2', 'HAWQ 1.2.2.0 build 11714','PHD 2.2', 'HAWQ 1.2.2.0 build 11714');
+SELECT * FROM hst.f_generate_test_report_summary('PHD 2.2', 'HAWQ 1.2.1.2 build 11946','PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
 
 
 

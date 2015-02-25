@@ -234,7 +234,7 @@ if __name__ == '__main__':
         || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
         || '|Test Status|' || test_result \
         from \
-            hst.f_generate_test_report_detail(%d, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946');" % (tr_id)
+            hst.f_generate_test_report_detail(%d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946') WHERE wl_name not like '%s';" % (tr_id, '%' + 'RWITHD' + '%')
 
         result = check.get_result_by_sql(sql = sql)
         
@@ -253,7 +253,7 @@ if __name__ == '__main__':
         if report_num > 0:
             start_run_id = int(tr_id) - int(report_num) + 1
             sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
-            from hst.f_generate_test_report_summary(%d, %d, 'PHD 2.2', 'HAWQ 1.2.1.2 build 11946') where wl_name not like '%s' order by tr_id, s_id,action_type;" % (start_run_id, tr_id, '%' + 'RWITHD' + '%')
+            from hst.f_generate_test_report_summary(%d, %d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946') where wl_name not like '%s' order by tr_id, s_id,action_type;" % (start_run_id, tr_id, '%' + 'RWITHD' + '%')
             
             result = check.get_result_by_sql(sql = sql)
             result = str(result).strip().split('\r\n')
