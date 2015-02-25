@@ -404,10 +404,10 @@ BEGIN
     INSERT INTO hst.qd_info_history select * from hst.qd_info WHERE run_id between start_id and end_id;
     TRUNCATE TABLE hst.qd_info;
 
-    INSERT INTO hst.qd_mem_cpu_history select * from hst.qd_mem_cpu;
+    INSERT INTO hst.qd_mem_cpu_history select * from hst.qd_mem_cpu WHERE run_id between start_id and end_id;
     TRUNCATE TABLE hst.qd_mem_cpu;
 
-    INSERT INTO hst.qe_mem_cpu_history select * from hst.qe_mem_cpu;
+    INSERT INTO hst.qe_mem_cpu_history select * from hst.qe_mem_cpu WHERE run_id between start_id and end_id;
     TRUNCATE TABLE hst.qe_mem_cpu;
   END IF;
 
@@ -429,6 +429,14 @@ TRUNCATE TABLE hst.qd_mem_cpu_history;
 INSERT INTO hst.qe_mem_cpu select * from hst.qe_mem_cpu_history WHERE run_id in (116,117,118,119);
 TRUNCATE TABLE hst.qe_mem_cpu_history;
 
+create table hawq1212_query_master_stat_info_v1 as select * from hawq1212_query_master_stat_info;
+create table hawq1212_query_seg_stat_info_v1 as select * from hawq1212_query_seg_stat_info;
+create table hawq1212_qde_monitorinfo_v1 as select * from hawq1212_qde_monitorinfo;
+create table hawq1212_test_result_info_v1 as select * from hawq1212_test_result_info;
+
+
+
+
 drop table if exists hawq1212_query_master_stat_info;
 drop table if exists hawq1212_query_seg_stat_info;
 drop table if exists hawq1212_qde_monitorinfo;
@@ -439,7 +447,10 @@ create table hawq1212_query_seg_stat_info as select * from query_seg_stat_info;
 create table hawq1212_qde_monitorinfo as select * from qde_monitorinfo;
 create table hawq1212_test_result_info as select * from test_result_info;
 
-
+grant all on hawq1212_query_master_stat_info to hawq_cov;
+grant all on hawq1212_query_seg_stat_info to hawq_cov;
+grant all on hawq1212_qde_monitorinfo to hawq_cov;
+grant all on hawq1212_test_result_info to hawq_cov;
 
 DROP FUNCTION IF EXISTS f_get_scenario_info(test_run_id INT);
 CREATE OR REPLACE FUNCTION f_get_scenario_info(test_run_id INT)
@@ -481,4 +492,5 @@ $$ LANGUAGE PLPGSQL;
 
 
 select  f_get_scenario_info(1);   
+
 
