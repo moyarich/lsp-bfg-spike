@@ -199,7 +199,7 @@ class Tpcds(Workload):
     
     def _prepare_tmp_folder(self):
         # mkdir in each segment
-        cmd = "gpssh -f %s -e 'mkdir -p %s; mkdir -p %s'" % (self.hostfile_seg, self.tmp_tpcds_folder, self.tmp_tpcds_data_folder)
+        cmd = "gpssh -f %s -e 'rm -rf %s; mkdir -p %s; mkdir -p %s'" % (self.hostfile_seg, self.tmp_tpcds_folder, self.tmp_tpcds_folder, self.tmp_tpcds_data_folder)
         (status, output) = commands.getstatusoutput(cmd)
         if status != 0:
             print('gpssh to prepare folder failed. ')
@@ -237,7 +237,7 @@ class Tpcds(Workload):
             sys.exit(2)
        
     def _data_gen_segment(self):
-        total_paralle = self.nsegs
+        total_paralle = self.nsegs * self.seg_num
         seg_num = self.seg_num
         count = 1
         for cur_host in self.seg_hostname_list:
