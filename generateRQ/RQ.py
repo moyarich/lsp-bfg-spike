@@ -89,20 +89,20 @@ class RQ:
 		for line in open("%s/userlist"%self.report_directory):
         		userlist = line.split(',')
 
-#		path = commands.getoutput("sudo find / -name pg_hba.conf")
-#		result = re.findall(".*testcaseamy.*pg_hba.conf",path)
-#		os.system("sed -i '/role/d' %s"%result[0])
-#		for user in userlist:
- #       		f = open(result[0],"a+")
-  #      		for line in f.readlines():
-   #             		if re.search(".*all.*gpadmin.*",line):
-    #                    		line = line.replace("gpadmin",user.strip())
-     #                   		line = line.replace("ident","trust")
-      #                  		f.write(line)
-       # 		f.close()
+		path = commands.getoutput("sudo find / -name pg_hba.conf")
+		result = re.findall(".*master.*pg_hba.conf",path)
+		os.system("sed -i '/role/d' %s"%result[0])
+		for user in userlist:
+        		f = open(result[0],"a+")
+        		for line in f.readlines():
+                		if re.search(".*all.*gpadmin.*",line):
+                        		line = line.replace("gpadmin",user.strip())
+                        		line = line.replace("ident","trust")
+                        		f.write(line)
+        		f.close()
 
-	#	out = commands.getoutput("gpstop -a")
-	#	out = commands.getoutput("gpstart -a")
+		out = commands.getoutput("hawq cluster stop")
+		out = commands.getoutput("hawq cluster start")
 
 		#add users to the sqlfile
 
