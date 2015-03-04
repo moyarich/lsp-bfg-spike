@@ -62,10 +62,6 @@ class RQ:
 					parentlist += node.addToNode(curNode,curn)
 					breaktag = 1
 					break
-				elif curm==m and i==length+1:
-					curn = curnum
-					parentlist += node.addToNode(curNode,curn)
-                                        breaktag = 1
 				else:
 					curnum -= curn
 					parentlist += node.addToNode(curNode,curn)
@@ -75,7 +71,7 @@ class RQ:
 	self.typeOfNode(pgroot,leaflist,branchlist)
 	self.dump_branchlist(branchlist)
 	self.dump_leaflist(leaflist)
-
+	print 'generate rq success', m ,n
 
     def runRq(self):
 	#execute the RQsql
@@ -127,6 +123,7 @@ class RQ:
 
     def dropRole(self):
 	path = "%s/RQ.sql"%self.report_directory
+	print path
 	for line in fileinput.input(path, inplace = 1):
 		line = re.sub(r'^DROP.*()', r'\1',line.strip())
                	print line
@@ -176,7 +173,7 @@ class RQ:
     def dump_branchlist(self,list):
     	if os.path.exists("%s/RQ.sql"%self.report_directory):
         	os.system("rm %s/RQ.sql"%self.report_directory)
-	fl = open("%s/RQ.sql"%self.report_directory,"a")
+	fl = open("%s/RQ.sql"%self.report_directory,"w")
 	print "branchlist" + str(len(list))
 	sql = ""
 	for i in range(1,len(list)):
@@ -194,15 +191,13 @@ PARENT= " + "'" + list[i]._parent + "'" + \
     def dump_leaflist(self,list):
 	userlist = ""
 	filename = "%s/RQ.sql"%self.report_directory 
-	print filename
-	#fl = open(filename,"a")
-	fll = open("./RQ.sql","a")
-	fll.write("AAAAAAAAAAA")
+	fll = open("%s/RQ.sql"%self.report_directory,"a")
 	print "leaflist" + str(len(list))
 
 	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);\n"
 	os.system("sed -i '1i %s' %s"%(default, filename))
 
+	fll = open("%s/RQ.sql"%self.report_directory,"a")
 	sql1 = ""
 	for i in range(1,len(list)):
 		sql = "CREATE RESOURCE QUEUE "+ list[i]._name + " WITH(\
@@ -229,14 +224,12 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 	#	line = re.sub(r'^user_list.*',userlist,line.strip())
 	#	print line
 	#fileinput.close()
-	print sql1
-	print fll
 	fll.write(sql1)
 	fll.close()
 
 curqueue = 1
 class node:
-    def __init__(self, path='./RQ.yml'):
+    def __init__(self, path='/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp/generateRQ/RQ.yml'):
         self._children = []
  	self._name = ''
 	self._parent = ''
