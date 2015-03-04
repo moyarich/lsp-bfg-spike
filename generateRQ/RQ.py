@@ -180,7 +180,6 @@ PARENT= " + "'" + list[i]._parent + "'" + \
 ",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" +  \
 ",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" +  \
 ",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
-",RESOURCE_LOWER_FACTOR=" + str(list[i]._resource_lower_factor) + \
 ",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n"
 		sql = sql + sqltmp
 	fl.write(sql)
@@ -204,7 +203,6 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 ",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" + \
 ",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" + \
 ",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
-",RESOURCE_LOWER_FACTOR=" + str(list[i]._resource_lower_factor) + \
 ",SEGMENT_RESOURCE_QUOTA='" + str(list[i]._segment_resource_quota) + "'" + \
 ",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n" + \
 "CREATE ROLE role" + str(i) + " WITH LOGIN RESOURCE QUEUE " + str(list[i]._name) + ";\n"
@@ -235,7 +233,6 @@ class node:
 	self._memory_limit_cluster = ''
 	self._core_limit_cluster = ''
 	self._resource_upper_factor = ''
-	self._resource_lower_factor = ''
 	self._segment_resource_quota = ''
 	self._allocation_policy = ''
 
@@ -260,7 +257,6 @@ class node:
 		new._parent = parent._name
         new._name = name
 	new._resource_upper_factor = new.listJudge(new._resource_upper_factor,new.yaml_parser['leaf']['RESOURCE_UPPER_FACTOR'])
-        new._resource_lower_factor = new.listJudge(new._resource_lower_factor,new.yaml_parser['leaf']['RESOURCE_LOWER_FACTOR'])
 	new._segment_resource_quota = new.listJudge(new._segment_resource_quota,new.yaml_parser['leaf']['SEGMENT_RESOURCE_QUOTA'])
         new._allocation_policy = new.listJudge(new._allocation_policy,new.yaml_parser['leaf']['ALLOCATION_POLICY'])
 	new._active_statements_cluster = new.listJudge(new._active_statements_cluster,new.yaml_parser['leaf']['ACTIVE_STATEMENTS'])
@@ -296,8 +292,10 @@ class node:
 		if i != childrenNum:
 			percentMem = random.randint(0, percentSumMem)
 			percentSumMem -= percentMem
-			percentCore = random.randint(0, percentSumCore)
+			percentCore = percentMem
 			percentSumCore -= percentCore
+			#percentCore = random.randint(0, percentSumCore)
+			#percentSumCore -= percentCore
 		else:
 			percentMem = percentSumMem
 			percentCore = percentSumCore
