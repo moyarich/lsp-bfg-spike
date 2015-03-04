@@ -76,15 +76,16 @@ class Executor(object):
         self.rq_instance = None
         self.rq_path_num = 1
         self.rq_path_count = 0
+        self.adjust_factor_count = 1
         try:
             if schedule_parser['rq_path_list'] is not None:
                 self.rq_instance = []
                 for rq_path in schedule_parser['rq_path_list'].split(','):
                     rq_path = os.getcwd() + '/generateRQ/' + rq_path.strip()
-                    rq_instance = RQ(path = rq_path)
+                    os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
+                    rq_instance = RQ(path = rq_path, report_directory = self.report_directory + os.sep + 'rqfile_%d/' % (self.rq_path_count) )
                     rq_instance.generateRq()
                     self.rq_instance.append(rq_instance)
-                    os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
                     self.rq_path_count += 1
                 self.rq_path_num = len(self.rq_instance)
                 self.rq_path_count = 0
@@ -108,11 +109,14 @@ class Executor(object):
             self.rq_path_count += 1
             report_directory = self.report_directory
         else:
-            report_directory = self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)
+            report_directory = self.report_directory + os.sep + 'rqfile_%d/factor_%d' % (self.rq_path_count, self.adjust_factor_count)
             user_list = self.rq_instance[self.rq_path_count].runRq()
             if len(user_list) == 0:
                 self.rq_path_count += 1
+                self.adjust_factor_count = 1
                 return 'next'
+            else:
+                self.adjust_factor_count += 1
 
         # instantiate and prepare workloads based on workloads content
         for workload_name in self.workloads_list:
