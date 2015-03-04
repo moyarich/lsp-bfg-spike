@@ -8,12 +8,12 @@ import re
 import commands
 
 class RQ:
-    def __init__(self, path = './', report_directory = './'):
+    def __init__(self, path = './RQ.yml', report_directory = './'):
         self.path = path
 	self.report_directory = report_directory
 	self.count = 0
 	print self.path
-	with open("%s/RQ.yml"%self.path, "r") as fyaml:
+	with open(self.path, "r") as fyaml:
             import yaml
             self.yaml_parser = yaml.load(fyaml)
         self.changeList = {}
@@ -62,6 +62,10 @@ class RQ:
 					parentlist += node.addToNode(curNode,curn)
 					breaktag = 1
 					break
+				elif curm==m and i==length+1:
+					curn = curnum
+					parentlist += node.addToNode(curNode,curn)
+                                        breaktag = 1
 				else:
 					curnum -= curn
 					parentlist += node.addToNode(curNode,curn)
@@ -133,7 +137,7 @@ class RQ:
                 droprq = "DROP RESOURCE QUEUE %s;\n"%rq
                 os.system("sed -i '1i %s' %s" % (droprq, path))
 
-	for users in open("%s/userlist"%self.path):
+	for users in open("%s/userlist"%self.report_directory):
 		userlist = users.split(',')
 
 	for user in userlist:
@@ -185,11 +189,15 @@ PARENT= " + "'" + list[i]._parent + "'" + \
 ",ALLOCATION_POLICY=" + str(list[i]._allocation_policy) + ");\n"
 		sql = sql + sqltmp
 	fl.write(sql)
+	fl.close()
 
     def dump_leaflist(self,list):
 	userlist = ""
 	filename = "%s/RQ.sql"%self.report_directory 
-	fl = open(filename,"a")
+	print filename
+	#fl = open(filename,"a")
+	fll = open("./RQ.sql","a")
+	fll.write("AAAAAAAAAAA")
 	print "leaflist" + str(len(list))
 
 	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);\n"
@@ -216,16 +224,19 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 
 	file = open("%s/userlist"%self.report_directory,"w")
 	file.write(userlist)
+	file.close()
 	#for line in fileinput.input("amy.yml",inplace=1):
 	#	line = re.sub(r'^user_list.*',userlist,line.strip())
 	#	print line
 	#fileinput.close()
-		
-	fl.write(sql1)
+	print sql1
+	print fll
+	fll.write(sql1)
+	fll.close()
 
 curqueue = 1
 class node:
-    def __init__(self, path='./'):
+    def __init__(self, path='./RQ.yml'):
         self._children = []
  	self._name = ''
 	self._parent = ''
@@ -239,7 +250,7 @@ class node:
 
 	self.path = path
 
-	with open("%s/RQ.yml"%self.path,"r") as yamlfile:
+	with open(self.path,"r") as yamlfile:
                 self.yaml_parser = yaml.load(yamlfile)
 
     def add(self, node):
