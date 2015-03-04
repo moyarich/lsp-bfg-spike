@@ -30,7 +30,7 @@ class RQ:
     def generateRq(self):
 	m = self.yaml_parser['height']
 	n = self.yaml_parser['width']
-	curnum = self.yaml_parser['nodeNum']
+	curnum = self.yaml_parser['nodeNum']-2
 	curm = 1
 	#curnum = 1022
 	parentlist = []
@@ -43,13 +43,17 @@ class RQ:
 			pgdefault = node.createNode(self.path,"pg_default",pgroot,0,0)
 			pgroot.add(pgdefault)
 			curn = random.randint(1,n-1)
-			if (curnum-curn)<=0:
-				curn = curnum
-				parentlist = node.addToNode(self.path,pgroot,curn)
-				break
-			else:
-				curnum -= curn
-				parentlist = node.addToNode(self.path,pgroot,curn)
+			if m==2:
+                                curn = curnum
+                                parentlist = node.addToNode(self.path,pgroot,curn)
+                                break
+                        elif m!=2 and (curnum-curn)<=0:
+                                curn = curnum
+                                parentlist = node.addToNode(self.path,pgroot,curn)
+                                break
+                        else:
+                                curnum -= curn
+                                parentlist = node.addToNode(self.path,pgroot,curn)
 		else:
 			length = len(parentlist)
 			breaktag = 0
