@@ -12,7 +12,6 @@ class RQ:
         self.path = path
 	self.report_directory = report_directory
 	self.count = 0
-	print self.path
 	with open(self.path, "r") as fyaml:
             import yaml
             self.yaml_parser = yaml.load(fyaml)
@@ -39,18 +38,18 @@ class RQ:
 	branchlist = []
 	while curm<=m:
 		if curm==1:
-			pgroot = node.createNode("pg_root",None,100,100)
+			pgroot = node.createNode(self.path,"pg_root",None,100,100)
 		elif curm==2:
-			pgdefault = node.createNode("pg_default",pgroot,0,0)
+			pgdefault = node.createNode(self.path,"pg_default",pgroot,0,0)
 			pgroot.add(pgdefault)
 			curn = random.randint(1,n-1)
 			if (curnum-curn)<=0:
 				curn = curnum
-				parentlist = node.addToNode(pgroot,curn)
+				parentlist = node.addToNode(self.path,pgroot,curn)
 				break
 			else:
 				curnum -= curn
-				parentlist = node.addToNode(pgroot,curn)
+				parentlist = node.addToNode(self.path,pgroot,curn)
 		else:
 			length = len(parentlist)
 			breaktag = 0
@@ -59,12 +58,12 @@ class RQ:
 				curn = random.randint(1,n)
 				if (curnum-curn)<=0:
 					curn = curnum
-					parentlist += node.addToNode(curNode,curn)
+					parentlist += node.addToNode(self.path,curNode,curn)
 					breaktag = 1
 					break
 				else:
 					curnum -= curn
-					parentlist += node.addToNode(curNode,curn)
+					parentlist += node.addToNode(self.path,curNode,curn)
 			if breaktag==1:
 				break
 		curm += 1
@@ -123,7 +122,6 @@ class RQ:
 
     def dropRole(self):
 	path = "%s/RQ.sql"%self.report_directory
-	print path
 	for line in fileinput.input(path, inplace = 1):
 		line = re.sub(r'^DROP.*()', r'\1',line.strip())
                	print line
@@ -183,7 +181,7 @@ PARENT= " + "'" + list[i]._parent + "'" + \
 ",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" +  \
 ",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
 ",RESOURCE_LOWER_FACTOR=" + str(list[i]._resource_lower_factor) + \
-",ALLOCATION_POLICY=" + str(list[i]._allocation_policy) + ");\n"
+",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n"
 		sql = sql + sqltmp
 	fl.write(sql)
 	fl.close()
@@ -192,7 +190,7 @@ PARENT= " + "'" + list[i]._parent + "'" + \
 	userlist = ""
 	filename = "%s/RQ.sql"%self.report_directory 
 	fll = open("%s/RQ.sql"%self.report_directory,"a")
-	print "leaflist" + str(len(list))
+	print "leaflist" + str(len(list)-1)
 
 	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);\n"
 	os.system("sed -i '1i %s' %s"%(default, filename))
@@ -229,7 +227,7 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 
 curqueue = 1
 class node:
-    def __init__(self, path='/home/gpadmin/Dev/gpsql/private/liuq8/test/lsp/generateRQ/RQ.yml'):
+    def __init__(self, path=''):
         self._children = []
  	self._name = ''
 	self._parent = ''
@@ -254,8 +252,8 @@ class node:
     
 
     @staticmethod
-    def createNode(name,parent,percentMem,percentCore):
-	new = node()
+    def createNode(path,name,parent,percentMem,percentCore):
+	new = node(path)
 	if parent == None:
 		new._parent = ""
 	else:
@@ -289,7 +287,7 @@ class node:
 		
     
     @staticmethod
-    def addToNode(curNode,childrenNum):
+    def addToNode(path,curNode,childrenNum):
 	global curqueue
 	parentList = []
 	percentSumMem = 100
@@ -305,7 +303,7 @@ class node:
 			percentCore = percentSumCore
 		sonName = 'queue' + str(curqueue)
 		curqueue += 1
-		son = node.createNode(sonName,curNode,percentMem,percentCore)
+		son = node.createNode(path,sonName,curNode,percentMem,percentCore)
 		curNode.add(son)
 		parentList.append(son)
 	return parentList
