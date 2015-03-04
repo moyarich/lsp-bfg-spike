@@ -1,5 +1,5 @@
 import os
-import sys
+import sys,time
 from datetime import datetime
 from multiprocessing import Process, Queue, Value , Array
 
@@ -19,9 +19,8 @@ except ImportError:
 
 
 class SequentialExecutor(Executor):
-    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id):
-        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
-        self.AllProcess = []
+    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id):
+        Executor.__init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id)
 
     def handle_finished_workload(self, pid):
         '''routine to handle the situation when workload is finished'''
@@ -37,15 +36,22 @@ class SequentialExecutor(Executor):
 
     def execute(self):
         # instantiate and prepare workloads, prepare report directory
-        self.setup()
-        # execute workloads sequentially,such as Tpch,Xmarq
-        for wi in self.workloads_instance:
-            p = Process(target=wi.execute)
-            p.start()
-            while True:
-                if p.is_alive():
-                    self.handle_ongoing_workload(p)
-                else:
-                    break
-        # clean up environment after all workload are finished
-        self.cleanup()
+        while(1):
+            result = self.setup()
+            if result == 'stop':
+                break
+            elif result == 'next':
+                continue
+                
+            # execute workloads sequentially,such as Tpch,Xmarq
+            for wi in self.workloads_instance:
+                p = Process(target=wi.execute)
+                p.start()
+                while True:
+                    if p.is_alive():
+                        self.handle_ongoing_workload(p)
+                        time.sleep(5)
+                    else:
+                        break
+            # clean up environment after all workload are finished
+            self.cleanup()

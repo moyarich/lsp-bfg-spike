@@ -56,20 +56,63 @@ except ImportError:
     sys.stderr.write('Executor needs Streamtpch Workload in workloads/Streamtpch/Streamtpch.py\n')
     sys.exit(2)
 
+try:
+    from generateRQ.RQ import RQ
+except ImportError:
+    sys.stderr.write('Executor needs generateRQ/RQ.py.\n')
+    sys.exit(2)
+
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
-    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id):
-        self.workloads_list = workloads_list
-        self.workloads_content = workloads_content
+    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id):
+        self.workloads_list = [wl.strip() for wl in schedule_parser['workloads_list'].split(',')]
+        self.workloads_content = schedule_parser['workloads_content']
+        
+        # create report directory for schedule
         self.report_directory = report_directory + os.sep + schedule_name
+        os.system('mkdir -p %s' % (self.report_directory))
+
+        self.rq_instance = None
+        self.rq_path_num = 1
+        self.rq_path_count = 0
+        try:
+            if schedule_parser['rq_path_list'] is not None:
+                self.rq_instance = []
+                for rq_path in schedule_parser['rq_path_list'].split(','):
+                    rq_path = os.getcwd() + '/generateRQ/' + rq_path.strip()
+                    rq_instance = RQ(path = rq_path)
+                    rq_instance.generateRq()
+                    self.rq_instance.append(rq_instance)
+                    os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
+                    self.rq_path_count += 1
+                self.rq_path_num = len(self.rq_instance)
+                self.rq_path_count = 0
+        except Exception, e:
+            pass
+        
         self.report_sql_file = report_sql_file
         self.cs_id = cs_id
+
         self.workloads_instance = []
 
+
     def setup(self):
-        # create report directory for schedule
-        os.system('mkdir -p %s' % (self.report_directory))
+        self.workloads_instance = []
+        user_list = None
+        if self.rq_path_count == self.rq_path_num:
+            return 'stop'
+
+        if self.rq_instance is None:
+            user_list = None
+            self.rq_path_count += 1
+            report_directory = self.report_directory
+        else:
+            report_directory = self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)
+            user_list = self.rq_instance[self.rq_path_count].runRq()
+            if len(user_list) == 0:
+                self.rq_path_count += 1
+                return 'next'
 
         # instantiate and prepare workloads based on workloads content
         for workload_name in self.workloads_list:
@@ -80,10 +123,12 @@ class Executor(object):
                 if workload_specs['workload_name'] == workload_name:
                     workload_name_exist = True
                     workload_specification = workload_specs
-                    user_list = [ user.strip() for user in workload_specification['user'].strip().split(',') ]
+                    if user_list is None:
+                        user_list = [ user.strip() for user in workload_specification['user'].strip().split(',') ]
             
             if not workload_name_exist:
                 print 'Detaled definition of workload %s no found in schedule file' % (workload_name)
+                continue
 
             # Find appropreciate workload type for current workload
             workload_category = workload_name.split('_')[0].upper()
@@ -97,9 +142,13 @@ class Executor(object):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 for user in user_list:
+                    user = user.strip()
                     wl_instance = workload_category.lower().capitalize() + \
-                    '(workload_specification, workload_directory, self.report_directory, self.report_sql_file, self.cs_id, user)'
+                    '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, user)'
                     self.workloads_instance.append(eval(wl_instance))
+
+        return 'start'
+        
                 
     def cleanup(self):
         pass

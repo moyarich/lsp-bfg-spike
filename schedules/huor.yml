@@ -14,7 +14,7 @@ cluster_name: HAWQ main performance on Geneva cluster
 workloads_content:
 
     - workload_name: tpch_ao_row
-      database_name: gpsqltest_tpch_ao_row
+      database_name: tpch
       user: gpadmin
       table_setting:
           data_volume_type: total
@@ -25,13 +25,13 @@ workloads_content:
           compression_level: 1
           partitions: 0
           distributed_randomly: true
-          seg_num: 2
+          #seg_num: 2
       load_data_flag: true
-      run_workload_flag: true
+      run_workload_flag: false
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 3
-      stream_mode: true
-      num_iteration: 1
+      num_concurrency: 0
+      stream_mode: false
+      num_iteration: 0
 
     - workload_name: tpcds_ao_row
       database_name: tpcds_ao_row

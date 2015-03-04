@@ -1,0 +1,16 @@
+height: 4
+width: 4
+nodeNum: 15
+
+default:
+        #percentage
+        MEMORY_LIMIT_CLUSTER: 20
+        CORE_LIMIT_CLUSTER: 20
+leaf:
+        RESOURCE_UPPER_FACTOR: 2, 3, 5
+        RESOURCE_LOWER_FACTOR: 0.5
+        ACTIVE_STATEMENTS: 4
+        #SEGMENT_RESOURCE_QUOTA = ['core:0.5' | 'mem:1gb']
+        SEGMENT_RESOURCE_QUOTA: 'core:0.5'
+        #ALLOCATION_POLICY:['FIFO'|'EVEN']
+        ALLOCATION_POLICY: 'EVEN'

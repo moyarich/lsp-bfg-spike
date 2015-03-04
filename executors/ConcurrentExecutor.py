@@ -12,8 +12,8 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class ConcurrentExecutor(Executor):
-    def __init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id):
-        Executor.__init__(self, workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
+    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id):
+        Executor.__init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id)
         self.AllProcess = []
         self.should_stop = False
 
@@ -30,35 +30,35 @@ class ConcurrentExecutor(Executor):
         pass
 
     def execute(self):
-        # init workload and setup directories before execution
-        self.setup()
-
-        # routine of workload running
-        for wi in self.workloads_instance:
-            p = Process(target=wi.execute)
-            self.AllProcess.append(p)
-            p.start() 
- 
-
-        while True and not self.should_stop:
-            for process in self.AllProcess[:]:
-                process.join(timeout = 1)
-                if process.is_alive():
-                    self.handle_workload_not_done(process)
-                    continue
-                else:
-                    self.handle_workload_done(process)
-                    self.AllProcess.remove(process)
-                
-            if len(self.AllProcess) == 0:
-                self.should_stop = True
+        while(1):
+            # init workload and setup directories before execution
+            result = self.setup()
+            if result == 'stop':
+                break
+            elif result == 'next':
                 continue
 
-            if len(self.AllProcess) != 0:
-                time.sleep(5)
+            # routine of workload running
+            for wi in self.workloads_instance:
+                p = Process(target=wi.execute)
+                self.AllProcess.append(p)
+                p.start() 
+     
+            self.should_stop = False
+            while True and not self.should_stop:
+                for process in self.AllProcess[:]:
+                    process.join(timeout = 1)
+                    if process.is_alive():
+                        self.handle_workload_not_done(process)
+                        continue
+                    else:
+                        self.handle_workload_done(process)
+                        self.AllProcess.remove(process)
+                    
+                if len(self.AllProcess) == 0:
+                    self.should_stop = True
+                else:
+                    time.sleep(5)
 
-
-
-        # clean up after execution 
-        
-        self.cleanup()
+            # clean up after execution 
+            self.cleanup()

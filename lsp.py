@@ -164,8 +164,8 @@ if __name__ == '__main__':
                 check.insert_new_record(table_name = 'hst.test_run', 
                     col_list = 'pulse_build_id, pulse_build_url, hdfs_version, hawq_version, start_time', 
                     values = "'%s', '%s', '%s', '%s', '%s'" % (build_id, build_url, hdfs_version, hawq_version, str(beg_time)))
-                
-                tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))               
+
+                tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
             
             # prepare report directory with times and the report.sql file
             report_directory = LSP_HOME + os.sep + 'report' + os.sep + datetime.now().strftime('%Y%m%d-%H%M%S')
@@ -175,28 +175,23 @@ if __name__ == '__main__':
 
             if monitor_interval > 0:
                 monitor_control = Monitor_control(mode = 'remote', interval = monitor_interval , run_id = tr_id)
-                monitor_control.start(mode = 'async')
+                monitor_control.start(mode = 'sync')
 
         # parse list of the workloads for execution
-        workloads_list = schedule_parser['workloads_list']
-        workloads_list = [wl.strip(' ') for wl in workloads_list.split(',')]
-        if len(workloads_list) == 0:
+        if len(schedule_parser['workloads_list']) == 0:
             print 'No workload is specified in schedule file : %s' %(schedule_name + '.yml')
             exit(-1)
-
-        # parse detailed definition of the workloads
-        workloads_content = schedule_parser['workloads_content']
 
         # select appropriate executor to run workloads
         workloads_executor = None 
         try:
             workloads_mode = schedule_parser['workloads_mode'].upper()
             if workloads_mode == 'SEQUENTIAL':
-                workloads_executor = SequentialExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
+                workloads_executor = SequentialExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id)
             elif workloads_mode == 'CONCURRENT':
-                workloads_executor = ConcurrentExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
+                workloads_executor = ConcurrentExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id)
             elif workloads_mode == 'DYNAMIC':
-                workloads_executor = DynamicExecutor(workloads_list, workloads_content, report_directory, schedule_name, report_sql_file, cs_id)
+                workloads_executor = DynamicExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id)
             else:
                 print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
                 exit(-1)
@@ -234,7 +229,7 @@ if __name__ == '__main__':
         || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
         || '|Test Status|' || test_result \
         from \
-            hst.f_generate_test_report_detail(%d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946') WHERE wl_name not like '%s';" % (tr_id, '%' + 'RWITHD' + '%')
+            hst.f_generate_test_report_detail(%d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946') where wl_name not like '%s';" % (tr_id, '%' + 'RWITHD' + '%')
 
         result = check.get_result_by_sql(sql = sql)
         
@@ -243,21 +238,21 @@ if __name__ == '__main__':
             msg = str(one_tuple).strip()
             Report(result_file , msg)
 
+        if report_num > 0:
+            start_run_id = int(tr_id) - int(report_num) + 1
+            sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
+            from hst.f_generate_test_report_summary(%d, %d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946') where wl_name not like '%s' order by tr_id, s_id,action_type;" % (start_run_id, tr_id, '%' + 'RWITHD' + '%')
+
+            result = check.get_result_by_sql(sql = sql)
+            result = str(result).strip().split('\r\n')
+
+            for one_tuple in result:
+                msg = str(one_tuple).strip()
+                Report('./report/summary_report.txt' , msg)
+
         if monitor_interval > 0 and report_num > 0:
             start_run_id = int(tr_id) - int(report_num) + 1
             sql = 'select hst.f_generate_monitor_report(%d, %d, false);' % (start_run_id, tr_id)
             print sql
             result = check.get_result_by_sql(sql = sql)
             print 'generate monitor report: ', result
-
-        if report_num > 0:
-            start_run_id = int(tr_id) - int(report_num) + 1
-            sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
-            from hst.f_generate_test_report_summary(%d, %d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946') where wl_name not like '%s' order by tr_id, s_id,action_type;" % (start_run_id, tr_id, '%' + 'RWITHD' + '%')
-            
-            result = check.get_result_by_sql(sql = sql)
-            result = str(result).strip().split('\r\n')
-            
-            for one_tuple in result:
-                msg = str(one_tuple).strip()
-                Report('./report/summary_report.txt' , msg)
