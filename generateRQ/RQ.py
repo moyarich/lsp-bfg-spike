@@ -93,8 +93,8 @@ class RQ:
 		for line in open("%s/userlist"%self.report_directory):
         		userlist = line.split(',')
 
-		path = commands.getoutput("sudo find / -name pg_hba.conf")
-		result = re.findall(".*master.*pg_hba.conf",path)
+		path = commands.getoutput("ps -ef | grep postgres")
+		result = re.findall(".*masterdd.*pg_hba.conf",path)
 		os.system("sed -i '/role/d' %s"%result[0])
 		for user in userlist:
         		f = open(result[0],"a+")
@@ -192,10 +192,10 @@ PARENT= " + "'" + list[i]._parent + "'" + \
     def dump_leaflist(self,list):
 	userlist = ""
 	filename = "%s/RQ.sql"%self.report_directory 
-	fll = open("%s/RQ.sql"%self.report_directory,"a")
 	print "leaflist" + str(len(list)-1)
 
 	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);\n"
+	print default
 	os.system("sed -i '1i %s' %s"%(default, filename))
 
 	fll = open("%s/RQ.sql"%self.report_directory,"a")
@@ -294,7 +294,7 @@ class node:
 	percentSumCore = 100
 	for i in range(1,childrenNum+1):
 		if i != childrenNum:
-			percentMem = random.randint(0, percentSumMem)
+			percentMem = random.randint(1, percentSumMem)
 			percentSumMem -= percentMem
 			percentCore = percentMem
 			percentSumCore -= percentCore
