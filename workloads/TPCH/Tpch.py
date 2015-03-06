@@ -132,7 +132,7 @@ class Tpch(Workload):
 
                     self.output(cmd)
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, flag = '-t -A') #, username = self.user,)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, flag = '-t -A') #, username = self.user)
                     end_time = datetime.now()
                     self.output(result[0].split('***')[0])
                     #self.output('\n'.join(result))

@@ -561,7 +561,7 @@ class Workload(object):
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, flag = '-t -A', username = self.user)
                     end_time = datetime.now()
                     
-                    if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1:
+                    if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1 and str(result).find('PANIC:') == -1:
                         status = 'SUCCESS'
                         con_id = int(result[0].split('***')[1].split('|')[2].strip())
                         # generate output and md5 file
@@ -666,7 +666,7 @@ class Workload(object):
                     f.write(get_con_id_sql)
 
                 beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + sql_filename, dbname = self.database_name, username = self.user, flag = '-t -A')
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + sql_filename, dbname = self.database_name, flag = '-t -A') # , username = self.user,)
                 end_time = datetime.now()
                 self.output(result[0].split('***')[0])
 
@@ -700,6 +700,28 @@ class Workload(object):
     def clean_up(self):
         pass
 
+    def grand_revoke_privileges(self, filename = ''):
+        if self.run_workload_flag and self.user != 'gpadmin':
+            with open(self.workload_directory + '/data/' + filename , 'r') as f:
+                query = f.read()
+            if gl.suffix:
+                query = query.replace('TABLESUFFIX', self.tbl_suffix)
+            else:
+                query = query.replace('_TABLESUFFIX', '')
+            query = query.replace('ROLENAME', self.user)
+
+            file_path = self.tmp_folder + os.sep + '%s_%s_' % (self.database_name, self.user) + filename
+            with open(file_path, 'w') as f:
+                f.write(query)
+
+            (ok, output) = psql.runfile(ifile = file_path, dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
+            if not ok:
+                print query
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(query)
+            self.output('\n'.join(output))
+
 
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
@@ -711,15 +733,7 @@ class Workload(object):
         self.load_data()
 
         # grant privileges
-        if self.run_workload_flag and self.user != 'gpadmin':
-            cmd = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
-            (ok, output) = psql.runcmd(cmd = cmd, username = 'gpadmin')
-            if not ok:
-                print cmd
-                print '\n'.join(output)
-                sys.exit(2)
-            self.output(cmd)
-            self.output('\n'.join(output))
+        self.grand_revoke_privileges(filename = 'grant.sql')
 
         # vacuum_analyze
         self.vacuum_analyze()
@@ -729,6 +743,9 @@ class Workload(object):
             self.run_workload_by_stream()
         else:
             self.run_workload()
+
+        # revoke privileges
+        self.grand_revoke_privileges(filename = 'revoke.sql')
 
         # clean up 
         self.clean_up()
