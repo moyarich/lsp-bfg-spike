@@ -57,7 +57,7 @@ class Workload(object):
         
         # check user_id if exist in backend database
         if self.cs_id != 0:
-            self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % (self.user))
+            self.us_id = check.check_id(result_id = 'us_id', table_name = 'hst.users', search_condition = "us_name = '%s'" % ('gpadmin')) #(self.user))
             if self.us_id is None:
                 sys.stderr.write('The db user name is wrong!\n')
                 sys.exit(2)
