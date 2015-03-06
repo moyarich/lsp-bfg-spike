@@ -78,35 +78,41 @@ class RQ:
 
     def runRq(self):
 	#execute the RQsql
+	parameter = self.yaml_parser['parameter']
+	if parameter != '':
+		paraValue = self.yaml_parser['leaf'][parameter]
 	print 'in rq self.count = ', self.count
 	if self.count < self.changeNum:
                 self.count += 1
 		if self.count > 1:
                 	self.changeRqSql(self.changeList, self.count)
 		result = commands.getoutput("psql -d postgres -U gpadmin -f %s/RQ.sql"%self.report_directory)
-		if str(result).find('ERROR') != -1 and str(result).find('FATAL') != -1:
-        		print "execute RQsql success!"
+		if str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
+        		print "Create Resource Queue success!"
 		else:
-        		print "execute RQsql fail!"
+        		print "Create Resource Queue fail!"
+			print result
+			print "#######################\n"
 
 		#change mode for users
 		for line in open("%s/userlist"%self.report_directory):
         		userlist = line.split(',')
 
-	#	path = commands.getoutput("ps -ef | grep postgres")
-	#	result = re.findall(".*masterdd.*pg_hba.conf",path)
-	#	os.system("sed -i '/role/d' %s"%result[0])
-	#	for user in userlist:
-        #		f = open(result[0],"a+")
-        #		for line in f.readlines():
-         #       		if re.search(".*all.*gpadmin.*",line):
-          #              		line = line.replace("gpadmin",user.strip())
-           #             		line = line.replace("ident","trust")
-            #            		f.write(line)
-        #		f.close()
-#
-#		out = commands.getoutput("hawq cluster stop")
-#		out = commands.getoutput("hawq cluster start")
+		path = "/data/masterdd/pg_hba.conf"
+		os.system("sed -i '/role/d' %s"%path)
+		for user in userlist:
+        		f = open(path,"a+")
+        		for line in f.readlines():
+        	       		if re.search(".*all.*gpadmin.*",line):
+                        		line = line.replace("gpadmin",user.strip())
+                        		line = line.replace("ident","trust")
+                        		f.write(line)
+        		f.close()
+
+		print "hawq restart now..."
+		out = commands.getoutput("hawq cluster stop")
+		out = commands.getoutput("hawq cluster start")
+		print "hawq restart success!"
 
 		#add users to the sqlfile
 
@@ -117,13 +123,21 @@ class RQ:
         	#	i = random.randint(0,len(userlist)-1)
         	#	os.system("sed -i '1i\\\\\c - %s' %s" % (userlist[i], filepath))
 		self.dropRole()
-                self.list = userlist
+		self.list = []
+		for user in userlist:
+			userdict = {user:paraValue}
+			self.list.append(userdict)
                 return self.list
         else:
-		print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
 		rqsql = "%s/RQ.sql"%self.report_directory
 		os.system("sed -i '/WITH/ d' %s"%rqsql)
-		print "%%%%%%%%%%%%%%%%%%%%%%%%55555555"
+		dropresult = commands.getoutput("psql -d postgres -U gpadmin -f %s/RQ.sql"%self.report_directory)
+		if str(dropresult).find('ERROR') != -1 and str(dropresult).find('FATAL') != -1:
+                        print "Drop Resource Queue success!"
+                else:
+                        print "Drop Resource Queue fail!"
+			print dropresult
+			print "#####################\n"
                 return []
 		
 		

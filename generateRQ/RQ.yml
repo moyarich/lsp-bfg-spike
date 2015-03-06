@@ -1,13 +1,14 @@
 height: 4
 width: 4
 nodeNum: 10
+parameter: RESOURCE_UPPER_FACTOR
 
 default:
         #percentage
         MEMORY_LIMIT_CLUSTER: 20
         CORE_LIMIT_CLUSTER: 20
 leaf:
-        RESOURCE_UPPER_FACTOR: 2, 3, 5
+        RESOURCE_UPPER_FACTOR: 2
         ACTIVE_STATEMENTS: 4
         #SEGMENT_RESOURCE_QUOTA = ['core:0.5' | 'mem:1gb']
         SEGMENT_RESOURCE_QUOTA: 'core:0.5'
