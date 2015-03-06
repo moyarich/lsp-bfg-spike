@@ -87,7 +87,7 @@ class RQ:
 		if self.count > 1:
                 	self.changeRqSql(self.changeList, self.count)
 		result = commands.getoutput("psql -d postgres -U gpadmin -f %s/RQ.sql"%self.report_directory)
-		if str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
+		if str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1 and str(result).find('PANIC') == -1:
         		print "Create Resource Queue success!"
 		else:
         		print "Create Resource Queue fail!"
@@ -132,7 +132,7 @@ class RQ:
 		rqsql = "%s/RQ.sql"%self.report_directory
 		os.system("sed -i '/WITH/ d' %s"%rqsql)
 		dropresult = commands.getoutput("psql -d postgres -U gpadmin -f %s/RQ.sql"%self.report_directory)
-		if str(dropresult).find('ERROR') != -1 and str(dropresult).find('FATAL') != -1:
+		if str(dropresult).find('ERROR') == -1 and str(dropresult).find('FATAL') == -1 and str(dropresult).find('PANIC') == -1:
                         print "Drop Resource Queue success!"
                 else:
                         print "Drop Resource Queue fail!"
