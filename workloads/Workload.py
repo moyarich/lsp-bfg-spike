@@ -710,6 +710,17 @@ class Workload(object):
         # load data
         self.load_data()
 
+        # grant privileges
+        if self.run_workload_flag and self.user != 'gpadmin':
+            cmd = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
+            (ok, output) = psql.runcmd(cmd = cmd, username = 'gpadmin')
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
+
         # vacuum_analyze
         self.vacuum_analyze()
 

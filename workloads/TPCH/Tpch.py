@@ -112,17 +112,6 @@ class Tpch(Workload):
             self.output(cmd)
             self.output('\n'.join(output))
 
-            if self.user != 'gpadmin':
-                cmd = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
-                (ok, output) = psql.runcmd(cmd = cmd, username = 'gpadmin')
-                if not ok:
-                    print cmd
-                    print '\n'.join(output)
-                    sys.exit(2)
-                self.output(cmd)
-                self.output('\n'.join(output))
-
-
         tables = ['nation', 'region', 'part', 'supplier', 'partsupp', 'customer', 'orders','lineitem' ,'revenue']
         for table_name in tables:
             con_id = -1
@@ -148,7 +137,7 @@ class Tpch(Workload):
                     self.output(result[0].split('***')[0])
                     #self.output('\n'.join(result))
                     
-                    if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
+                    if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1 and (str(result).find('INSERT 0') != -1 or str(result).find('CREATE VIEW') != -1):
                         status = 'SUCCESS'
                         con_id = int(result[0].split('***')[1].split('|')[2].strip())
                     else:
