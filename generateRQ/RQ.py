@@ -93,20 +93,20 @@ class RQ:
 		for line in open("%s/userlist"%self.report_directory):
         		userlist = line.split(',')
 
-		path = commands.getoutput("ps -ef | grep postgres")
-		result = re.findall(".*masterdd.*pg_hba.conf",path)
-		os.system("sed -i '/role/d' %s"%result[0])
-		for user in userlist:
-        		f = open(result[0],"a+")
-        		for line in f.readlines():
-                		if re.search(".*all.*gpadmin.*",line):
-                        		line = line.replace("gpadmin",user.strip())
-                        		line = line.replace("ident","trust")
-                        		f.write(line)
-        		f.close()
-
-		out = commands.getoutput("hawq cluster stop")
-		out = commands.getoutput("hawq cluster start")
+	#	path = commands.getoutput("ps -ef | grep postgres")
+	#	result = re.findall(".*masterdd.*pg_hba.conf",path)
+	#	os.system("sed -i '/role/d' %s"%result[0])
+	#	for user in userlist:
+        #		f = open(result[0],"a+")
+        #		for line in f.readlines():
+         #       		if re.search(".*all.*gpadmin.*",line):
+          #              		line = line.replace("gpadmin",user.strip())
+           #             		line = line.replace("ident","trust")
+            #            		f.write(line)
+        #		f.close()
+#
+#		out = commands.getoutput("hawq cluster stop")
+#		out = commands.getoutput("hawq cluster start")
 
 		#add users to the sqlfile
 
@@ -120,7 +120,13 @@ class RQ:
                 self.list = userlist
                 return self.list
         else:
+		print "%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%"
+		rqsql = "%s/RQ.sql"%self.report_directory
+		os.system("sed -i '/WITH/ d' %s"%rqsql)
+		print "%%%%%%%%%%%%%%%%%%%%%%%%55555555"
                 return []
+		
+		
 
 
 
@@ -133,8 +139,9 @@ class RQ:
 	for rqs in open("%s/rqlist"%self.report_directory):
                 rqlist = rqs.split(',')
         for rq in rqlist:
-                droprq = "DROP RESOURCE QUEUE %s;\n"%rq
-                os.system("sed -i '1i %s' %s" % (droprq, path))
+		if rq != '':
+                	droprq = "DROP RESOURCE QUEUE %s;\n"%rq
+                	os.system("sed -i '1i %s' %s" % (droprq, path))
 
 	for users in open("%s/userlist"%self.report_directory):
 		userlist = users.split(',')
@@ -194,10 +201,6 @@ PARENT= " + "'" + list[i]._parent + "'" + \
 	filename = "%s/RQ.sql"%self.report_directory 
 	print "leaflist" + str(len(list)-1)
 
-	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);\n"
-	print default
-	os.system("sed -i '1i %s' %s"%(default, filename))
-
 	fll = open("%s/RQ.sql"%self.report_directory,"a")
 	sql1 = ""
 	for i in range(1,len(list)):
@@ -226,6 +229,9 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 	#fileinput.close()
 	fll.write(sql1)
 	fll.close()
+	
+	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);"
+	os.system("sed -i '1i %s' %s"%(default, filename))
 
 curqueue = 1
 class node:
