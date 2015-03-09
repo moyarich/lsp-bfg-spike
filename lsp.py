@@ -111,6 +111,10 @@ if __name__ == '__main__':
     gl.suffix = options.suffix
     monitor_interval = options.monitor
     report_num = options.report
+    
+    if not str(report_num).isdigit():
+        print '-r option must follow a digit, such as -r 1'
+        sys.exit(2)
 
     if options.param is None:
         pass
@@ -118,6 +122,7 @@ if __name__ == '__main__':
         rq_param = options.param
     else:
         print 'formart error: For example, -p RESOURCE_UPPER_FACTOR:2'
+        sys.exit(2)
 
     cs_id = 0
     if schedules is None:
