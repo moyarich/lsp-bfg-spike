@@ -98,6 +98,8 @@ class Executor(object):
 
         self.workloads_instance = []
 
+    def map_user_workload(self, workloads, user, mode):
+        pass
 
     def setup(self):
         self.workloads_instance = []
@@ -129,7 +131,11 @@ class Executor(object):
                     workload_name_exist = True
                     workload_specification = workload_specs
                     if user_list is None:
-                        user_list = [ user.strip() for user in workload_specification['user'].strip().split(',') ]
+                        user_list = []
+                        for user in workload_specification['user'].strip().split(','):
+                            temp_dict = {}
+                            temp_dict[user] = 0
+                            user_list.append(temp_dict)
             
             if not workload_name_exist:
                 print 'Detaled definition of workload %s no found in schedule file' % (workload_name)
@@ -146,6 +152,7 @@ class Executor(object):
             if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
+                print user_list
                 for user in user_list:
                     user = user.keys()[0].strip()
                     wl_instance = workload_category.lower().capitalize() + \
