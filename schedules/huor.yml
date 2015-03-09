@@ -9,6 +9,7 @@ workloads_list: tpch_ao_row
 workloads_mode: sequential
 #workloads_mode: concurrent
 rq_path_list: RQ.yml #,RQ1.yml,RQ2.yml
+#workload_user_map: scan
 
 cluster_name: HAWQ main performance on Geneva cluster
 
@@ -27,7 +28,7 @@ workloads_content:
           partitions: 0
           distributed_randomly: true
           #seg_num: 2
-      load_data_flag: true
+      load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
@@ -95,9 +96,9 @@ workloads_content:
           row_group_size: 8388608
           page_size: 1048576
           compression_type: SNAPPY
-          partitions: 128
+          partitions: 0
       load_data_flag: true
-      run_workload_flag: false
+      run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_concurrency: 1
       num_iteration: 1

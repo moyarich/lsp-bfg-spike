@@ -68,7 +68,15 @@ class Executor(object):
     def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id):
         self.workloads_list = [wl.strip() for wl in schedule_parser['workloads_list'].split(',')]
         self.workloads_content = schedule_parser['workloads_content']
-        
+        if 'workload_user_map' in schedule_parser.keys():
+            self.map_mode = schedule_parser['workload_user_map'].strip()
+        else:
+            self.map_mode = 'loop'
+
+        if self.map_mode not in ['loop', 'scan']:
+            print "workloads and users map mode must in ['loop', 'scan']"
+            sys.exit(2)
+
         # create report directory for schedule
         self.report_directory = report_directory + os.sep + schedule_name
         os.system('mkdir -p %s' % (self.report_directory))
@@ -98,29 +106,8 @@ class Executor(object):
 
         self.workloads_instance = []
 
-    def map_user_workload(self, workloads, user, mode):
-        pass
 
-    def setup(self):
-        self.workloads_instance = []
-        user_list = None
-        if self.rq_path_count == self.rq_path_num:
-            return 'stop'
-
-        if self.rq_instance is None:
-            user_list = None
-            self.rq_path_count += 1
-            report_directory = self.report_directory
-        else:
-            report_directory = self.report_directory + os.sep + 'rqfile_%d/factor_%d' % (self.rq_path_count, self.adjust_factor_count)
-            user_list = self.rq_instance[self.rq_path_count].runRq()
-            if len(user_list) == 0:
-                self.rq_path_count += 1
-                self.adjust_factor_count = 1
-                return 'next'
-            else:
-                self.adjust_factor_count += 1
-
+    def map_user_workload(self, user_list, report_directory, mode = 'loop'):
         # instantiate and prepare workloads based on workloads content
         for workload_name in self.workloads_list:
             # check if the detailed definition of current workload exist
@@ -148,19 +135,51 @@ class Executor(object):
                 print 'Not find workload_directory about %s' % (workload_category)
                 continue
 
+            user_num = len(user_list)
+            user_count = 0
             # add one workload into the workloads_instance list
             if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
-                print user_list
-                for user in user_list:
-                    user = user.keys()[0].strip()
+                if mode == 'loop':
+                    for user in user_list:
+                        user = user.keys()[0].strip()
+                        wl_instance = workload_category.lower().capitalize() + \
+                        '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
+                        self.workloads_instance.append(eval(wl_instance))
+                elif mode == 'scan':
+                    user = user_list[user_count].keys()[0].strip()
                     wl_instance = workload_category.lower().capitalize() + \
                     '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                     self.workloads_instance.append(eval(wl_instance))
+                    user_count += 1
+                    if user_count == user_num:
+                        user_count = 0
 
+
+    def setup(self):
+        self.workloads_instance = []
+        user_list = None
+        if self.rq_path_count == self.rq_path_num:
+            return 'stop'
+
+        if self.rq_instance is None:
+            user_list = None
+            self.rq_path_count += 1
+            report_directory = self.report_directory
+        else:
+            report_directory = self.report_directory + os.sep + 'rqfile_%d/factor_%d' % (self.rq_path_count, self.adjust_factor_count)
+            user_list = self.rq_instance[self.rq_path_count].runRq()
+            if len(user_list) == 0:
+                self.rq_path_count += 1
+                self.adjust_factor_count = 1
+                return 'next'
+            else:
+                self.adjust_factor_count += 1
+
+        # instantiate and prepare workloads based on workloads content
+        self.map_user_workload(user_list = user_list, report_directory = report_directory, mode = self.map_mode)
         return 'start'
-        
                 
     def cleanup(self):
         pass
