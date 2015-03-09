@@ -65,7 +65,7 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
-    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id):
+    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id):
         self.workloads_list = [wl.strip() for wl in schedule_parser['workloads_list'].split(',')]
         self.workloads_content = schedule_parser['workloads_content']
         
@@ -94,6 +94,7 @@ class Executor(object):
         
         self.report_sql_file = report_sql_file
         self.cs_id = cs_id
+        self.tr_id = tr_id
 
         self.workloads_instance = []
 
@@ -148,7 +149,7 @@ class Executor(object):
                 for user in user_list:
                     user = user.keys()[0].strip()
                     wl_instance = workload_category.lower().capitalize() + \
-                    '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, user)'
+                    '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                     self.workloads_instance.append(eval(wl_instance))
 
         return 'start'

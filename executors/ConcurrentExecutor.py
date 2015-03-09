@@ -12,8 +12,8 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class ConcurrentExecutor(Executor):
-    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id):
-        Executor.__init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id)
+    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id):
+        Executor.__init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
         self.AllProcess = []
         self.should_stop = False
 

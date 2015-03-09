@@ -45,11 +45,11 @@ except ImportError:
 
 class Workload(object):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user):
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user):
         # initialize common variables
         self.cs_id = cs_id
+        self.tr_id = tr_id
         self.us_id = 0
-        self.tr_id = 0
         self.s_id = 0
         self.adj_s_id = 0
 
@@ -345,7 +345,7 @@ class Workload(object):
                                         values = '%d, %d, %d' % (self.cs_id, self.wl_id, self.us_id))
                 self.s_id = check.get_max_id(result_id = 's_id', table_name = 'hst.scenario')
             #get tr_id
-            self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
+            #self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
 
             # check adjust scenario check
             adj_wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = adj_check_condition)
@@ -670,7 +670,7 @@ class Workload(object):
                 end_time = datetime.now()
                 self.output(result[0].split('***')[0])
 
-                if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1:
+                if ok and str(result).find('ERROR:') == -1 and str(result).find('FATAL:') == -1:
                     status = 'SUCCESS'
                     con_id = int(result[0].split('***')[1].split('|')[2].strip())
                 else:
