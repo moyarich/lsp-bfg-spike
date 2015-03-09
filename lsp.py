@@ -103,6 +103,7 @@ if __name__ == '__main__':
     parser.add_option('-f', '--suffix', dest='suffix', action='store_true', default=False, help='Add table suffix')
     parser.add_option('-m', '--monitor', dest='monitor', action='store', default=0, help='Monitor interval')
     parser.add_option('-r', '--report', dest='report', action='store', default=0, help='Generate monitor report num')
+    parser.add_option('-p', '--parameter', dest='param', action='store', help='Assign resource queue parameter name and value')
     (options, args) = parser.parse_args()
     schedules = options.schedule
     add_database = options.add_option
@@ -111,9 +112,16 @@ if __name__ == '__main__':
     monitor_interval = options.monitor
     report_num = options.report
 
+    if options.param is None:
+        pass
+    elif options.param.find(':') != -1 and options.param[-1] != ':':
+        rq_param = options.param
+    else:
+        print 'formart error: For example, -p RESOURCE_UPPER_FACTOR:2'
+
     cs_id = 0
     if schedules is None:
-        sys.stderr.write('Usage: python -u lsp.py -s schedule_file1[,schedule_file2] [-a] [-c] [-f]\nPlease use python -u lsp.py -h for more info\n')
+        sys.stderr.write('Usage: python -u lsp.py -s schedule_file1[,schedule_file2] [-a] [-c] [-f] [-p] [-r]\nPlease use python -u lsp.py -h for more info\n')
         sys.exit(2)
 
     schedule_list = schedules.split(',')
@@ -126,6 +134,11 @@ if __name__ == '__main__':
         with open(schedule_file, 'r') as fschedule:
             schedule_parser = yaml.load(fschedule)
 
+        # parse list of the workloads for execution
+        if 'workloads_list' not in schedule_parser.keys() or schedule_parser['workloads_list'] is None :
+            print 'No workload is specified in schedule file : %s' %(schedule_name + '.yml')
+            continue
+
         # check cluster information if lsp not run in standalone mode
         if add_database:
             cluster_name = schedule_parser['cluster_name']
@@ -135,7 +148,7 @@ if __name__ == '__main__':
                 sys.stderr.write('Invalid cluster name %s!\n' % (cluster_name))
                 continue
 
-        if not start_flag:            
+        if not start_flag:
             start_flag = True
             # add test run information in backend database if lsp not run in standalone mode,such as build_id, build_url, hawq_version, hdfs_version
             tr_id = -1
@@ -177,11 +190,6 @@ if __name__ == '__main__':
                 monitor_control = Monitor_control(mode = 'remote', interval = monitor_interval , run_id = tr_id)
                 monitor_control.start(mode = 'sync')
 
-        # parse list of the workloads for execution
-        if len(schedule_parser['workloads_list']) == 0:
-            print 'No workload is specified in schedule file : %s' %(schedule_name + '.yml')
-            exit(-1)
-
         # select appropriate executor to run workloads
         workloads_executor = None 
         try:
@@ -218,7 +226,7 @@ if __name__ == '__main__':
         cmd = 'source ~/psql.sh && psql -d hawq_cov -t -q -f /tmp/report.sql'
         remotecmd.ssh_command(user = 'gpadmin', host = 'gpdb63.qa.dh.greenplum.com', password = 'changeme', command = cmd)
 
-        # retrieve test report from backend database for pulse report purpose`
+        # retrieve test report from backend database for pulse report purpose
         result_file = os.path.join(report_directory, 'result.txt')
         tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
         sql = "select 'Test Suite Name|'|| wl_name || '|Test Case Name|' || action_type ||'.' || action_target \
@@ -232,12 +240,12 @@ if __name__ == '__main__':
             hst.f_generate_test_report_detail(%d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946') where wl_name not like '%s';" % (tr_id, '%' + 'RWITHD' + '%')
 
         result = check.get_result_by_sql(sql = sql)
-        
         result = str(result).strip().split('\r\n')
         for one_tuple in result:
             msg = str(one_tuple).strip()
             Report(result_file , msg)
 
+        # generate summary report
         if report_num > 0:
             start_run_id = int(tr_id) - int(report_num) + 1
             sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
@@ -250,6 +258,14 @@ if __name__ == '__main__':
                 msg = str(one_tuple).strip()
                 Report('./report/summary_report.txt' , msg)
 
+        # add resource parameter and run info into backend database
+        if options.param is not None:
+            sql = "DELETE FROM hst.parameters WHERE param_name = '%s';" % (options.param.split(':')[0].strip().upper())
+            print check.get_result_by_sql(sql = sql)
+            sql = "INSERT INTO hst.parameters (run_id, param_name, param_value) VALUES (%d, '%s', '%s');" % (tr_id, options.param.split(':')[0].strip().upper(), options.param.split(':')[1].strip())
+            print check.get_result_by_sql(sql = sql)
+
+        # generate monitor report
         if monitor_interval > 0 and report_num > 0:
             start_run_id = int(tr_id) - int(report_num) + 1
             sql = 'select hst.f_generate_monitor_report(%d, %d, false);' % (start_run_id, tr_id)

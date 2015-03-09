@@ -146,7 +146,7 @@ class Executor(object):
                 print 'No appropreciate workload type found for workload %s' % (workload_name)
             else:
                 for user in user_list:
-                    user = user.strip()
+                    user = user.keys()[0].strip()
                     wl_instance = workload_category.lower().capitalize() + \
                     '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, user)'
                     self.workloads_instance.append(eval(wl_instance))

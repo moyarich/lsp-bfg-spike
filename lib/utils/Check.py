@@ -16,7 +16,7 @@ def remote_psql_file(sql, user, host, password, local_file = '/tmp/temp.sql', re
     file(filename = local_file, msg = sql)
     remotecmd.scp_command(from_user = '', from_host = '', from_file = local_file,
         to_user = 'gpadmin@', to_host = 'gpdb63.qa.dh.greenplum.com', to_file = ':' + remote_file, password = 'changeme')
-    cmd = 'source psql.sh && psql -d hawq_cov -t -q -f %s' % (remote_file)
+    cmd = 'source psql.sh && psql -d hawq_cov -t -f %s' % (remote_file)
     result = remotecmd.ssh_command(user = user, host = host, password = password, command = cmd)
     if str(result).find('ERROR:') != -1 or str(result).find('FATAL:') != -1:
         print(sql)
