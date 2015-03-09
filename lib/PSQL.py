@@ -102,6 +102,7 @@ class PSQL:
             
         if host is None:
             host = "-h %s" % ('localhost')
+            #host = ''
         else:
             host = "-h %s" % host
 
@@ -134,9 +135,11 @@ class PSQL:
             ofile = '> %s 2>&1' % ofile
 
         if username == None:
+            print '%s psql -d %s %s %s %s %s %s %s' % (PGOPTIONS, dbname, host, port, flag, arg, ofile, background)
             return shell.run_timeout('%s psql -d %s %s %s %s %s %s %s' %
                         (PGOPTIONS, dbname, host, port, flag, arg, ofile, background), timeout=timeout)
         else:
+            print '%s psql -d %s %s %s -U %s %s %s %s %s' %(PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background)
             return shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
                         (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), timeout=timeout)
 
