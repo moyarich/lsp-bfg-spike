@@ -142,6 +142,10 @@ class PSQL:
             #print '%s psql -d %s %s %s -U %s %s %s %s %s' %(PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background)
             return shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
                         (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), timeout=timeout)
+            #result = shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
+                        (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), timeout=timeout)
+            #print result
+            #return result
 
 
     def runcmd(self, cmd, dbname = None, ofile = '-', flag = '', username = None, password = None,

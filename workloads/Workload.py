@@ -426,7 +426,7 @@ class Workload(object):
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
                     end_time = datetime.now()
                     
-                    if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1:
+                    if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1 and str(result).find('server closed') == -1 :
                         status = 'SUCCESS'
                         con_id = int(result[0].split('***')[1].split('|')[2].strip())
                         # generate output and md5 file
