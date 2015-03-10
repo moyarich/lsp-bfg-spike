@@ -90,7 +90,8 @@ class Executor(object):
         self.rq_path_num = 1
         self.rq_path_count = 0
         self.adjust_factor_count = 1
-        try:
+
+        if 'rq_path_list' in schedule_parser.keys():
             if schedule_parser['rq_path_list'] is not None:
                 self.rq_instance = []
                 for rq_path in schedule_parser['rq_path_list'].split(','):
@@ -98,7 +99,7 @@ class Executor(object):
                     os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
                     rq_instance = RQ(path = rq_path, report_directory = self.report_directory + os.sep + 'rqfile_%d/' % (self.rq_path_count) )
                     # generate resource queue in two modes, inhert from pg_default or other
-                    if schedule_parser['rq_generate_mode'].strip() == 'default':
+                    if self.rq_generate_mode == 'default':
                         rq_instance.generateRqForDefault()
                     else:
                         rq_instance.generateRq()
@@ -107,8 +108,6 @@ class Executor(object):
                     self.rq_path_count += 1
                 self.rq_path_num = len(self.rq_instance)
                 self.rq_path_count = 0
-        except Exception, e:
-            pass
         
         self.report_sql_file = report_sql_file
         self.cs_id = cs_id

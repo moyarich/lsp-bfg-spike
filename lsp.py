@@ -197,20 +197,16 @@ if __name__ == '__main__':
 
         # select appropriate executor to run workloads
         workloads_executor = None 
-        try:
-            workloads_mode = schedule_parser['workloads_mode'].upper()
-            if workloads_mode == 'SEQUENTIAL':
-                workloads_executor = SequentialExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
-            elif workloads_mode == 'CONCURRENT':
-                workloads_executor = ConcurrentExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
-            elif workloads_mode == 'DYNAMIC':
-                workloads_executor = DynamicExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
-            else:
-                print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
-                exit(-1)
-        except Exception as e:
-            print 'Error while selecting appropreciate executor for workloads: ' + str(e)
-            exit(-1)
+        workloads_mode = schedule_parser['workloads_mode'].upper()
+        if workloads_mode == 'SEQUENTIAL':
+            workloads_executor = SequentialExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
+        elif workloads_mode == 'CONCURRENT':
+            workloads_executor = ConcurrentExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
+        elif workloads_mode == 'DYNAMIC':
+            workloads_executor = DynamicExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
+        else:
+            print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
+            sys.exit(2)
 
         workloads_executor.execute()
     
