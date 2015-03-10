@@ -68,14 +68,19 @@ class Executor(object):
     def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id):
         self.workloads_list = [wl.strip() for wl in schedule_parser['workloads_list'].split(',')]
         self.workloads_content = schedule_parser['workloads_content']
-        if 'workload_user_map' in schedule_parser.keys():
-            self.map_mode = schedule_parser['workload_user_map'].strip()
+        if 'workloads_user_map' in schedule_parser.keys():
+            self.map_mode = schedule_parser['workloads_user_map'].strip()
         else:
             self.map_mode = 'loop'
 
         if self.map_mode not in ['loop', 'scan']:
             print "workloads and users map mode must in ['loop', 'scan']"
             sys.exit(2)
+
+        self.rq_generate_mode = None
+        if 'rq_generate_mode' in schedule_parser.keys():
+            self.rq_generate_mode = schedule_parser['rq_generate_mode'].strip()
+
 
         # create report directory for schedule
         self.report_directory = report_directory + os.sep + schedule_name
@@ -92,7 +97,12 @@ class Executor(object):
                     rq_path = os.getcwd() + '/generateRQ/' + rq_path.strip()
                     os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
                     rq_instance = RQ(path = rq_path, report_directory = self.report_directory + os.sep + 'rqfile_%d/' % (self.rq_path_count) )
-                    rq_instance.generateRq()
+                    # generate resource queue in two modes, inhert from pg_default or other
+                    if schedule_parser['rq_generate_mode'].strip() == 'default':
+                        rq_instance.generateRqForDefault()
+                    else:
+                        rq_instance.generateRq()
+                    
                     self.rq_instance.append(rq_instance)
                     self.rq_path_count += 1
                 self.rq_path_num = len(self.rq_instance)
