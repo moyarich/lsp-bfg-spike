@@ -294,7 +294,7 @@ class Monitor_control():
 index  0     1    2    3      4     5   6    7       8      9      10               11                     12             13       14            15    16          
 	'''
 
-	def _get_qd_mem_cpu(self, timeslot): 
+	def _get_qd_mem_cpu(self, timeslot, now_time): 
 		filter_string = 'bin/postgres|logger|stats|writer|checkpoint|seqserver|WAL|ftsprobe|sweeper|sh -c|bash|grep|seg|pg_stat_activity|resource manager|psql -d postgres|HAWQ|build|NULL|Metadata Cache process'
 		cmd = ''' ps -eo pid,ppid,pcpu,vsz,rss,pmem,state,command | grep postgres | grep -vE "%s" ''' % (filter_string)
 		(status, output) = commands.getstatusoutput(cmd)
@@ -303,7 +303,6 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		
 		line_item = output.splitlines()
 		output_string = ''
-		now_time = str(datetime.now())
 		
 		for line in line_item:
 			temp = line.split()
@@ -329,7 +328,8 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		
 		while(os.path.exists(self.run_lock)): 
 			timeslot = (file_no - 1) * self.timeout + count
-			result = eval(function + '(timeslot)')
+			now_time = str(datetime.now())
+			result = eval(function + '(timeslot, now_time)')
 
 			if count > self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
@@ -355,7 +355,8 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 		
 		while(os.path.exists(self.run_lock)): 
 			timeslot = (file_no - 1) * self.timeout + count
-			result = eval(function + '(timeslot)')
+			now_time = str(datetime.now())
+			result = eval(function + '(timeslot, now_time)')
 
 			if count > self.timeout:
 				p1 = Process( target = self.scp_data, args = (filename, ) )
@@ -367,12 +368,11 @@ index  0     1    2    3      4     5   6    7       8      9      10           
 			self.report(filename = self.report_folder + os.sep + filename, msg = result)
 			count += 1
 
-			real_time = str(datetime.now())
 			for addr in self.host_list:
 				try:
 					sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 					sock.connect((addr, 8001))
-					sock.send( real_time + '*' + str(timeslot) )
+					sock.send( now_time + '*' + str(timeslot) )
 					sock.close()
 				except Exception, e:
 					print addr, 'error:', str(e), 
