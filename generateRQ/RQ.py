@@ -9,10 +9,14 @@ import commands
 
 class RQ:
     def __init__(self, path = './RQ.yml', report_directory = './', param_name = 'RESOURCE_UPPER_FACTOR', param_value = 3):
-        self.path = path
+	self.path = path
 	self.report_directory = report_directory
 	self.param_name = param_name
 	self.param_value = param_value
+	print "param--------------------------------"
+	print self.param_name
+	print self.param_value
+	print "-------------------------------------"
 	self.count = 0
 	with open(self.path, "r") as fyaml:
             import yaml
@@ -103,6 +107,10 @@ class RQ:
 	
 	fuser = open("%s/userlist"%self.report_directory, "w")
 	fuser.write(",role1")
+	
+	frq = open("%s/rqlist"%self.report_directory,"w")
+	frq.write(",")
+
 	print 'generate rqDefault success'
 
     def runRq(self):
@@ -184,16 +192,12 @@ class RQ:
 		line = re.sub(r'^DROP.*()', r'\1',line.strip())
                	print line
 
-	if os.path.exists("rqlist"):	
-		for rqs in open("%s/rqlist"%self.report_directory):
-                	rqlist = rqs.split(',')
-		print "%%%%%%%%%%%%%%%%%%%%%%%%%"
-		print rqlist
-		print "%%%%%%%%%%%%%%%%%%%%%%%%"
-        	for rq in rqlist:
-			if rq != '':
-                		droprq = "DROP RESOURCE QUEUE %s;\n"%rq
-                		os.system("sed -i '1i %s' %s" % (droprq, path))
+	for rqs in open("%s/rqlist"%self.report_directory):
+               	rqlist = rqs.split(',')
+        for rq in rqlist:
+		if rq != '':
+               		droprq = "DROP RESOURCE QUEUE %s;\n"%rq
+                	os.system("sed -i '1i %s' %s" % (droprq, path))
 
 	for users in open("%s/userlist"%self.report_directory):
 		userlist = users.split(',')
@@ -253,7 +257,6 @@ PARENT= " + "'" + list[i]._parent + "'" + \
 
     def dump_leaflist(self,list):
 	userlist = ""
-	print "#################"
 	filename = "%s/RQ.sql"%self.report_directory 
 	print "leaflist" + str(len(list)-1)
 
@@ -289,7 +292,6 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 	file = open("%s/userlist"%self.report_directory,"w")
 	file.write(userlist)
 	file.close()
-	os.system("cat RQ.sql")
 	
 
 curqueue = 1
@@ -349,10 +351,8 @@ class node:
 		new._core_limit_cluster = percentCore
 
 	if param_name != '':
-		param_Name = 'new.' + '_' + param_name.lower()
-		param_Name = param_value
-			
-		
+		exec("new._" + param_name.lower() + "=" + str(param_value))
+	print new._resource_upper_factor	
 	return new
 		
     
@@ -393,7 +393,7 @@ class node:
 if __name__ == '__main__':
 
 	rq = RQ()
-	rq.generateRq()
+	rq.generateRqForDefault()
 	print rq.runRq()
 	print rq.runRq()
 	print rq.runRq()
