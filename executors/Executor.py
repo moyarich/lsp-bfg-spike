@@ -65,7 +65,7 @@ except ImportError:
 LSP_HOME = os.getenv('LSP_HOME')
 
 class Executor(object):
-    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id):
+    def __init__(self, schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id, rq_param):
         self.workloads_list = [wl.strip() for wl in schedule_parser['workloads_list'].split(',')]
         self.workloads_content = schedule_parser['workloads_content']
         if 'workloads_user_map' in schedule_parser.keys():
@@ -81,7 +81,6 @@ class Executor(object):
         if 'rq_generate_mode' in schedule_parser.keys():
             self.rq_generate_mode = schedule_parser['rq_generate_mode'].strip()
 
-
         # create report directory for schedule
         self.report_directory = report_directory + os.sep + schedule_name
         os.system('mkdir -p %s' % (self.report_directory))
@@ -91,13 +90,20 @@ class Executor(object):
         self.rq_path_count = 0
         self.adjust_factor_count = 1
 
+        if rq_param == '':
+            p_name = ''
+            p_value = ''
+        else:
+            p_name = rq_param.split(':')[0].strip()
+            p_value = rq_param.split(':')[1].strip()
+
         if 'rq_path_list' in schedule_parser.keys():
             if schedule_parser['rq_path_list'] is not None:
                 self.rq_instance = []
                 for rq_path in schedule_parser['rq_path_list'].split(','):
                     rq_path = os.getcwd() + '/generateRQ/' + rq_path.strip()
                     os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
-                    rq_instance = RQ(path = rq_path, report_directory = self.report_directory + os.sep + 'rqfile_%d/' % (self.rq_path_count) )
+                    rq_instance = RQ(path = rq_path, report_directory = self.report_directory + os.sep + 'rqfile_%d/' % (self.rq_path_count), param_name = p_name, param_value = p_value)
                     # generate resource queue in two modes, inhert from pg_default or other
                     if self.rq_generate_mode == 'default':
                         rq_instance.generateRqForDefault()

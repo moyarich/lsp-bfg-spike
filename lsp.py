@@ -117,7 +117,7 @@ if __name__ == '__main__':
         sys.exit(2)
 
     if options.param is None:
-        pass
+        rq_param = ''
     elif options.param.find(':') != -1 and options.param[-1] != ':':
         rq_param = options.param
     else:
@@ -199,11 +199,11 @@ if __name__ == '__main__':
         workloads_executor = None 
         workloads_mode = schedule_parser['workloads_mode'].upper()
         if workloads_mode == 'SEQUENTIAL':
-            workloads_executor = SequentialExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
+            workloads_executor = SequentialExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id, rq_param)
         elif workloads_mode == 'CONCURRENT':
-            workloads_executor = ConcurrentExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
+            workloads_executor = ConcurrentExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id, rq_param)
         elif workloads_mode == 'DYNAMIC':
-            workloads_executor = DynamicExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id)
+            workloads_executor = DynamicExecutor(schedule_parser, report_directory, schedule_name, report_sql_file, cs_id, tr_id, rq_param)
         else:
             print 'Invalid workloads mode ' + workloads_mode + ' specified in schedule file.'
             sys.exit(2)
