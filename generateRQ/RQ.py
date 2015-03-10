@@ -73,61 +73,37 @@ class RQ:
 			if breaktag==1:
 				break
 		curm += 1
-	self.typeOfNode(pgroot,leaflist,branchlist,'root')
-	self.dump_branchlist(branchlist,'root')
-	self.dump_leaflist(leaflist,'root')
+	self.typeOfNode(pgroot,leaflist,branchlist)
+	self.dump_branchlist(branchlist)
+	self.dump_leaflist(leaflist)
 	print 'generate rq success', m ,n
 
     def generateRqForDefault(self):
-	m = self.yaml_parser['height']
-	n = self.yaml_parser['width']
-	curnum = self.yaml_parser['nodeNum']-2
-	curm = 1
-	#curnum = 1022
-	parentlist = []
-	leaflist = []
-	branchlist = []
-	while curm<=m:
-		if curm==1:
-			pgroot = node.createNode(self.path,"pg_root",None,100,100,self.param_name,self.param_value)
-		elif curm==2:
-			pgdefault = node.createNode(self.path,"pg_default",pgroot,0,0,self.param_name,self.param_value)
-			pgroot.add(pgdefault)
-			curn = random.randint(1,n-1)
-			if m==2:
-                                curn = curnum
-                                parentlist = node.addToNode(self.path,pgdefault,curn,self.param_name,self.param_value)
-                                break
-                        elif m!=2 and (curnum-curn)<=0:
-                                curn = curnum
-                                parentlist = node.addToNode(self.path,pgdefault,curn,self.param_name,self.param_value)
-                                break
-                        else:
-                                curnum -= curn
-                                parentlist = node.addToNode(self.path,pgdefault,curn,self.param_name,self.param_value)
-		else:
-			length = len(parentlist)
-			breaktag = 0
-			for i in range(1,length+1):
-				curNode = parentlist.pop(0)
-				curn = random.randint(1,n)
-				if (curnum-curn)<=0:
-					curn = curnum
-					parentlist += node.addToNode(self.path,curNode,curn,self.param_name,self.param_value)
-					breaktag = 1
-					break
-				else:
-					curnum -= curn
-					parentlist += node.addToNode(self.path,curNode,curn,self.param_name,self.param_value)
-			if breaktag==1:
-				break
-		curm += 1
-	self.typeOfNode(pgroot,leaflist,branchlist,'default')
-	self.dump_branchlist(branchlist,'default')
-	self.dump_leaflist(leaflist,'default')
-	#RqPath = "%s/RQ.sql"%self.report_directory
-	#os.system("sed -i '/CREATE RESOURCE QUEUE pg_default/ d' %s"%RqPath)
-	print 'generate rqDefault success', m ,n
+	memory_limit_cluster = self.yaml_parser['default']['MEMORY_LIMIT_CLUSTER']
+	core_limit_cluster = self.yaml_parser['default']['MEMORY_LIMIT_CLUSTER']
+	#resouce_upper_factor = self.yaml_parser['leaf']['RESOUCE_UPPER_FACTOR']
+	#active_statements = self.yaml_parser['leaf']['ACTIVE_STATEMENTS']
+	#segment_resource_quota = self.yaml_parser['leaf']['SEGMENT_RESOURCE_QUOTA']
+	#allocation_policy = self.yaml_parser['leaf']['ALLOCATION_POLICY']
+
+	if self.param_name != '':
+		self.param_name = self.param_name.lower()
+		self.param_name = self.param_value
+	
+	default = "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER =" + str(memory_limit_cluster) + "%" +",CORE_LIMIT_CLUSTER =" + str(core_limit_cluster) + "%);\n"
+	role = "CREATE ROLE role1 WITH LOGIN RESOURCE QUEUE pg_default;"
+		
+	RqPath = "%s/RQ.sql"%self.report_directory
+	if os.path.exists(RqPath):
+		os.system("rm %s"%RqPath)
+	f = open(RqPath,"a")
+	f.write(default)
+	f.write(role)
+	f.close()
+	
+	fuser = open("userlist", "w")
+	fuser.write(",role1")
+	print 'generate rqDefault success'
 
     def runRq(self):
 	#execute the RQsql
@@ -151,7 +127,6 @@ class RQ:
 		#change mode for users
 		for line in open("%s/userlist"%self.report_directory):
         		userlist = line.split(',')
-
 		path = "/data/masterdd/pg_hba.conf"
 		os.system("sed -i '/role/d' %s"%path)
 		for user in userlist:
@@ -208,20 +183,22 @@ class RQ:
 	for line in fileinput.input(path, inplace = 1):
 		line = re.sub(r'^DROP.*()', r'\1',line.strip())
                	print line
-	
-	for rqs in open("%s/rqlist"%self.report_directory):
-                rqlist = rqs.split(',')
-        for rq in rqlist:
-		if rq != '':
-                	droprq = "DROP RESOURCE QUEUE %s;\n"%rq
-                	os.system("sed -i '1i %s' %s" % (droprq, path))
+
+	if os.path.exists("rqlist"):	
+		for rqs in open("%s/rqlist"%self.report_directory):
+                	rqlist = rqs.split(',')
+        	for rq in rqlist:
+			if rq != '':
+                		droprq = "DROP RESOURCE QUEUE %s;\n"%rq
+                		os.system("sed -i '1i %s' %s" % (droprq, path))
 
 	for users in open("%s/userlist"%self.report_directory):
 		userlist = users.split(',')
 
 	for user in userlist:
-                dropuser = "DROP ROLE %s;\n"%user
-                os.system("sed -i '1i %s' %s" % (dropuser, path))
+		if user != '':
+                	dropuser = "DROP ROLE %s;\n"%user
+                	os.system("sed -i '1i %s' %s" % (dropuser, path))
 
     def changeRqSql(self,changeList, count):
 	for key in changeList:
@@ -233,70 +210,45 @@ class RQ:
 		lineitem = re.sub(r'(%s)=.,'%key, r'\1=%s,'%value[count-1].strip(), lineitem.strip())
 		print lineitem
 	
-    def typeOfNode(self,node,leaflist,branchlist,tag):
+    def typeOfNode(self,node,leaflist,branchlist):
 	if len(node._children)==0:
 		leaflist.append(node)
 	else:
 		branchlist.append(node)
 		for i in node._children:
-			self.typeOfNode(i,leaflist,branchlist,tag)
+			self.typeOfNode(i,leaflist,branchlist)
 	#put the resource queue in the rqlist file
 	f = open("%s/rqlist"%self.report_directory,"w")
 	rq = ""
-	if tag == 'root':
-		for i in range(1,len(branchlist)):
-			if i==1:
-				rq += str(branchlist[i]._name)
-			else:
-				rq += ",%s"%branchlist[i]._name
-		for j in range(1,len(leaflist)):
-			rq += ",%s"%leaflist[j]._name
-		f.write(rq)
-	elif tag == 'default':
-		for i in range(2,len(branchlist)):
-			if i==1:
-				rq += str(branchlist[i]._name)
-			else:
-				rq += ",%s"%branchlist[i]._name
-		for j in range(0,len(leaflist)):
-			rq += ",%s"%leaflist[j]._name
-		f.write(rq)
+	for i in range(1,len(branchlist)):
+		if i==1:
+			rq += str(branchlist[i]._name)
+		else:
+			rq += ",%s"%branchlist[i]._name
+	for j in range(1,len(leaflist)):
+		rq += ",%s"%leaflist[j]._name
+	f.write(rq)
 
-    def dump_branchlist(self,list,tag):
+    def dump_branchlist(self,list):
     	if os.path.exists("%s/RQ.sql"%self.report_directory):
         	os.system("rm %s/RQ.sql"%self.report_directory)
 	filename = "%s/RQ.sql"%self.report_directory
 	fl = open(filename,"w")
 	print "branchlist" + str(len(list))
 	sql = ""
-	if tag == 'root':
-		for i in range(1,len(list)):
-			sqltmp = "CREATE RESOURCE QUEUE " + list[i]._name + " WITH(\
+	for i in range(1,len(list)):
+		sqltmp = "CREATE RESOURCE QUEUE " + list[i]._name + " WITH(\
 PARENT= " + "'" + list[i]._parent + "'" + \
 ",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" +  \
 ",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" +  \
 ",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
 ",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n"
-			sql = sql + sqltmp
-		print sql
-		fl.write(sql)
-		fl.close()
-	elif tag == 'default':
-		for i in range(2,len(list)):
-			sqltmp = "CREATE RESOURCE QUEUE " + list[i]._name + " WITH(\
-PARENT= " + "'" + list[i]._parent + "'" + \
-",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" +  \
-",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" +  \
-",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
-",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n"
-			sql = sql + sqltmp
-		print sql
-		fl.write(sql)
-		fl.close()
-		default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[1]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);"
-		os.system("sed -i '1i %s' %s"%(default, filename))
+		sql = sql + sqltmp
+	print sql
+	fl.write(sql)
+	fl.close()
 
-    def dump_leaflist(self,list,tag):
+    def dump_leaflist(self,list):
 	userlist = ""
 	print "#################"
 	filename = "%s/RQ.sql"%self.report_directory 
@@ -304,9 +256,8 @@ PARENT= " + "'" + list[i]._parent + "'" + \
 
 	fll = open("%s/RQ.sql"%self.report_directory,"a")
 	sql1 = ""
-	if tag == 'root':
-		for i in range(1,len(list)):
-			sql = "CREATE RESOURCE QUEUE "+ list[i]._name + " WITH(\
+	for i in range(1,len(list)):
+		sql = "CREATE RESOURCE QUEUE "+ list[i]._name + " WITH(\
 PARENT= " + "'" + list[i]._parent + "'" +\
 ",ACTIVE_STATEMENTS=" + str(list[i]._active_statements_cluster) + \
 ",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" + \
@@ -315,43 +266,27 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 ",SEGMENT_RESOURCE_QUOTA='" + str(list[i]._segment_resource_quota) + "'" + \
 ",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n" + \
 "CREATE ROLE role" + str(i) + " WITH LOGIN RESOURCE QUEUE " + str(list[i]._name) + ";\n"
-			sql1 += sql 
-			if i==1:
-				userlist += "role" + str(i)
-			else:
-				username = ", role" + str(i)
-				userlist += username
-		
-		default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);"
-		os.system("sed -i '1i %s' %s"%(default, filename))
-	elif tag == 'default':
-		for i in range(0,len(list)):
-			sql = "CREATE RESOURCE QUEUE "+ list[i]._name + " WITH(\
-PARENT= " + "'" + list[i]._parent + "'" +\
-",ACTIVE_STATEMENTS=" + str(list[i]._active_statements_cluster) + \
-",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" + \
-",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" + \
-",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
-",SEGMENT_RESOURCE_QUOTA='" + str(list[i]._segment_resource_quota) + "'" + \
-",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n" + \
-"CREATE ROLE role" + str(i) + " WITH LOGIN RESOURCE QUEUE " + str(list[i]._name) + ";\n"
-			sql1 += sql 
-			if i==0:
-				userlist += "role" + str(i)
-			else:
-				username = ", role" + str(i)
-				userlist += username
+		sql1 += sql 
+		if i==1:
+			userlist += "role" + str(i)
+		else:
+			username = ", role" + str(i)
+			userlist += username
+	fll.write(sql1)
+	fll.close()	
+	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);"
+	os.system("sed -i '1i %s' %s"%(default, filename))
 
-	file = open("%s/userlist"%self.report_directory,"w")
-	file.write(userlist)
-	file.close()
 	#for line in fileinput.input("amy.yml",inplace=1):
 	#	line = re.sub(r'^user_list.*',userlist,line.strip())
 	#	print line
 	#fileinput.close()
 	print sql1
-	fll.write(sql1)
-	fll.close()
+
+	file = open("%s/userlist"%self.report_directory,"w")
+	file.write(userlist)
+	file.close()
+	os.system("cat RQ.sql")
 	
 
 curqueue = 1
@@ -455,7 +390,7 @@ class node:
 if __name__ == '__main__':
 
 	rq = RQ()
-	rq.generateRqForDefault()
+	rq.generateRq()
 	print rq.runRq()
 	print rq.runRq()
 	print rq.runRq()
