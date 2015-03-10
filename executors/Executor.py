@@ -123,53 +123,82 @@ class Executor(object):
 
 
     def map_user_workload(self, user_list, report_directory, mode = 'loop'):
-        # instantiate and prepare workloads based on workloads content
-        for workload_name in self.workloads_list:
-            # check if the detailed definition of current workload exist
-            workload_name_exist = False
-            workload_specification = None
-            for workload_specs in self.workloads_content:
-                if workload_specs['workload_name'] == workload_name:
-                    workload_name_exist = True
-                    workload_specification = workload_specs
-                    if user_list is None:
-                        user_list = []
-                        for user in workload_specification['user'].strip().split(','):
-                            temp_dict = {}
-                            temp_dict[user] = 0
-                            user_list.append(temp_dict)
-            
-            if not workload_name_exist:
-                print 'Detaled definition of workload %s no found in schedule file' % (workload_name)
-                continue
+        # not have a resource queue yaml file
+        if user_list is None:
+            for workload_name in self.workloads_list:
+                # check if the detailed definition of current workload exist
+                workload_name_exist = False
+                workload_specification = None
+                for workload_specs in self.workloads_content:
+                    if workload_specs['workload_name'] == workload_name:
+                        workload_name_exist = True
+                        workload_specification = workload_specs
+                        user_list = [ user.strip() for user in workload_specification['user'].strip().split(',') ]
+                
+                if not workload_name_exist:
+                    print 'Detaled definition of workload %s no found in schedule file' % (workload_name)
+                    continue
 
-            # Find appropreciate workload type for current workload
-            workload_category = workload_name.split('_')[0].upper()
-            workload_directory = LSP_HOME + os.sep + 'workloads' + os.sep + workload_category
-            if not os.path.exists(workload_directory):
-                print 'Not find workload_directory about %s' % (workload_category)
-                continue
+                # Find appropreciate workload type for current workload
+                workload_category = workload_name.split('_')[0].upper()
+                workload_directory = LSP_HOME + os.sep + 'workloads' + os.sep + workload_category
+                if not os.path.exists(workload_directory):
+                    print 'Not find workload_directory about %s' % (workload_category)
+                    continue
 
-            user_num = len(user_list)
-            user_count = 0
-            # add one workload into the workloads_instance list
-            if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
-                print 'No appropreciate workload type found for workload %s' % (workload_name)
-            else:
-                if mode == 'loop':
+                # add one workload into the workloads_instance list
+                if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
+                    print 'No appropreciate workload type found for workload %s' % (workload_name)
+                else:
                     for user in user_list:
-                        user = user.keys()[0].strip()
                         wl_instance = workload_category.lower().capitalize() + \
                         '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                         self.workloads_instance.append(eval(wl_instance))
-                elif mode == 'scan':
-                    user = user_list[user_count].keys()[0].strip()
-                    wl_instance = workload_category.lower().capitalize() + \
-                    '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
-                    self.workloads_instance.append(eval(wl_instance))
-                    user_count += 1
-                    if user_count == user_num:
-                        user_count = 0
+        # the user_list is from resource queue yaml file
+        else:
+            user_count = 0
+            user_num = len(user_list)
+            # instantiate and prepare workloads based on workloads content
+            for workload_name in self.workloads_list:
+                # check if the detailed definition of current workload exist
+                workload_name_exist = False
+                workload_specification = None
+                for workload_specs in self.workloads_content:
+                    if workload_specs['workload_name'] == workload_name:
+                        workload_name_exist = True
+                        workload_specification = workload_specs
+                
+                if not workload_name_exist:
+                    print 'Detaled definition of workload %s no found in schedule file' % (workload_name)
+                    continue
+
+                # Find appropreciate workload type for current workload
+                workload_category = workload_name.split('_')[0].upper()
+                workload_directory = LSP_HOME + os.sep + 'workloads' + os.sep + workload_category
+                if not os.path.exists(workload_directory):
+                    print 'Not find workload_directory about %s' % (workload_category)
+                    continue
+
+                # add one workload into the workloads_instance list
+                if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
+                    print 'No appropreciate workload type found for workload %s' % (workload_name)
+                else:
+                    if mode == 'loop':
+                        for user in user_list:
+                            user = user.keys()[0].strip()
+                            wl_instance = workload_category.lower().capitalize() + \
+                            '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
+                            self.workloads_instance.append(eval(wl_instance))
+                            #print workload_name, user
+                    elif mode == 'scan':
+                        user = user_list[user_count].keys()[0].strip()
+                        wl_instance = workload_category.lower().capitalize() + \
+                        '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
+                        self.workloads_instance.append(eval(wl_instance))
+                        #print workload_name, user
+                        user_count += 1
+                        if user_count == user_num:
+                            user_count = 0
 
 
     def setup(self):
