@@ -143,7 +143,7 @@ class PSQL:
             return shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
                         (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), timeout=timeout)
             #result = shell.run_timeout('%s psql -d %s %s %s -U %s %s %s %s %s' %
-                        (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), timeout=timeout)
+            #            (PGOPTIONS, dbname, host, port, username, flag, arg, ofile, background), timeout=timeout)
             #print result
             #return result
 
