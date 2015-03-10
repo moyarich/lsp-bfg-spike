@@ -101,7 +101,7 @@ class RQ:
 	f.write(role)
 	f.close()
 	
-	fuser = open("userlist", "w")
+	fuser = open("%s/userlist"%self.report_directory, "w")
 	fuser.write(",role1")
 	print 'generate rqDefault success'
 
@@ -187,6 +187,9 @@ class RQ:
 	if os.path.exists("rqlist"):	
 		for rqs in open("%s/rqlist"%self.report_directory):
                 	rqlist = rqs.split(',')
+		print "%%%%%%%%%%%%%%%%%%%%%%%%%"
+		print rqlist
+		print "%%%%%%%%%%%%%%%%%%%%%%%%"
         	for rq in rqlist:
 			if rq != '':
                 		droprq = "DROP RESOURCE QUEUE %s;\n"%rq
