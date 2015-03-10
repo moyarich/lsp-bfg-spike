@@ -8,9 +8,11 @@ import re
 import commands
 
 class RQ:
-    def __init__(self, path = './RQ.yml', report_directory = './'):
+    def __init__(self, path = './RQ.yml', report_directory = './', param_name = 'RESOURCE_UPPER_FACTOR', param_value = 3):
         self.path = path
 	self.report_directory = report_directory
+	self.param_name = param_name
+	self.param_value = param_value
 	self.count = 0
 	with open(self.path, "r") as fyaml:
             import yaml
@@ -38,22 +40,22 @@ class RQ:
 	branchlist = []
 	while curm<=m:
 		if curm==1:
-			pgroot = node.createNode(self.path,"pg_root",None,100,100)
+			pgroot = node.createNode(self.path,"pg_root",None,100,100,self.param_name,self.param_value)
 		elif curm==2:
-			pgdefault = node.createNode(self.path,"pg_default",pgroot,0,0)
+			pgdefault = node.createNode(self.path,"pg_default",pgroot,0,0,self.param_name,self.param_value)
 			pgroot.add(pgdefault)
 			curn = random.randint(1,n-1)
 			if m==2:
                                 curn = curnum
-                                parentlist = node.addToNode(self.path,pgroot,curn)
+                                parentlist = node.addToNode(self.path,pgroot,curn,self.param_name,self.param_value)
                                 break
                         elif m!=2 and (curnum-curn)<=0:
                                 curn = curnum
-                                parentlist = node.addToNode(self.path,pgroot,curn)
+                                parentlist = node.addToNode(self.path,pgroot,curn,self.param_name,self.param_value)
                                 break
                         else:
                                 curnum -= curn
-                                parentlist = node.addToNode(self.path,pgroot,curn)
+                                parentlist = node.addToNode(self.path,pgroot,curn,self.param_name,self.param_value)
 		else:
 			length = len(parentlist)
 			breaktag = 0
@@ -62,26 +64,78 @@ class RQ:
 				curn = random.randint(1,n)
 				if (curnum-curn)<=0:
 					curn = curnum
-					parentlist += node.addToNode(self.path,curNode,curn)
+					parentlist += node.addToNode(self.path,curNode,curn,self.param_name,self.param_value)
 					breaktag = 1
 					break
 				else:
 					curnum -= curn
-					parentlist += node.addToNode(self.path,curNode,curn)
+					parentlist += node.addToNode(self.path,curNode,curn,self.param_name,self.param_value)
 			if breaktag==1:
 				break
 		curm += 1
-	self.typeOfNode(pgroot,leaflist,branchlist)
-	self.dump_branchlist(branchlist)
-	self.dump_leaflist(leaflist)
+	self.typeOfNode(pgroot,leaflist,branchlist,'root')
+	self.dump_branchlist(branchlist,'root')
+	self.dump_leaflist(leaflist,'root')
 	print 'generate rq success', m ,n
+
+    def generateRqForDefault(self):
+	m = self.yaml_parser['height']
+	n = self.yaml_parser['width']
+	curnum = self.yaml_parser['nodeNum']-2
+	curm = 1
+	#curnum = 1022
+	parentlist = []
+	leaflist = []
+	branchlist = []
+	while curm<=m:
+		if curm==1:
+			pgroot = node.createNode(self.path,"pg_root",None,100,100,self.param_name,self.param_value)
+		elif curm==2:
+			pgdefault = node.createNode(self.path,"pg_default",pgroot,0,0,self.param_name,self.param_value)
+			pgroot.add(pgdefault)
+			curn = random.randint(1,n-1)
+			if m==2:
+                                curn = curnum
+                                parentlist = node.addToNode(self.path,pgdefault,curn,self.param_name,self.param_value)
+                                break
+                        elif m!=2 and (curnum-curn)<=0:
+                                curn = curnum
+                                parentlist = node.addToNode(self.path,pgdefault,curn,self.param_name,self.param_value)
+                                break
+                        else:
+                                curnum -= curn
+                                parentlist = node.addToNode(self.path,pgdefault,curn,self.param_name,self.param_value)
+		else:
+			length = len(parentlist)
+			breaktag = 0
+			for i in range(1,length+1):
+				curNode = parentlist.pop(0)
+				curn = random.randint(1,n)
+				if (curnum-curn)<=0:
+					curn = curnum
+					parentlist += node.addToNode(self.path,curNode,curn,self.param_name,self.param_value)
+					breaktag = 1
+					break
+				else:
+					curnum -= curn
+					parentlist += node.addToNode(self.path,curNode,curn,self.param_name,self.param_value)
+			if breaktag==1:
+				break
+		curm += 1
+	self.typeOfNode(pgroot,leaflist,branchlist,'default')
+	self.dump_branchlist(branchlist,'default')
+	self.dump_leaflist(leaflist,'default')
+	#RqPath = "%s/RQ.sql"%self.report_directory
+	#os.system("sed -i '/CREATE RESOURCE QUEUE pg_default/ d' %s"%RqPath)
+	print 'generate rqDefault success', m ,n
 
     def runRq(self):
 	#execute the RQsql
 	parameter = self.yaml_parser['parameter']
-	if parameter != '':
+	if parameter != None:
 		paraValue = self.yaml_parser['leaf'][parameter]
-	print 'in rq self.count = ', self.count
+	else:
+		paraValue = self.param_value
 	if self.count < self.changeNum:
                 self.count += 1
 		if self.count > 1:
@@ -109,10 +163,10 @@ class RQ:
                         		f.write(line)
         		f.close()
 
-		print "hawq restart now..."
-		out = commands.getoutput("hawq cluster stop")
-		out = commands.getoutput("hawq cluster start")
-		print "hawq restart success!"
+	#	print "hawq restart now..."
+	#	out = commands.getoutput("hawq cluster stop")
+	#	out = commands.getoutput("hawq cluster start")
+	#	print "hawq restart success!"
 
 		#add users to the sqlfile
 
@@ -122,6 +176,9 @@ class RQ:
         	#	filepath = path + os.sep + file
         	#	i = random.randint(0,len(userlist)-1)
         	#	os.system("sed -i '1i\\\\\c - %s' %s" % (userlist[i], filepath))
+			
+		rqsql = "%s/RQ.sql"%self.report_directory
+		os.system("cp %s %sRQtmp.sql"%(rqsql, self.report_directory))
 		self.dropRole()
 		self.list = []
 		for user in userlist:
@@ -141,6 +198,8 @@ class RQ:
                 return []
 		
 		
+    def addRoleToDefault(self):
+	pass	
 
 
 
@@ -174,51 +233,80 @@ class RQ:
 		lineitem = re.sub(r'(%s)=.,'%key, r'\1=%s,'%value[count-1].strip(), lineitem.strip())
 		print lineitem
 	
-    def typeOfNode(self,node,leaflist,branchlist):
+    def typeOfNode(self,node,leaflist,branchlist,tag):
 	if len(node._children)==0:
 		leaflist.append(node)
 	else:
 		branchlist.append(node)
 		for i in node._children:
-			self.typeOfNode(i,leaflist,branchlist)
+			self.typeOfNode(i,leaflist,branchlist,tag)
 	#put the resource queue in the rqlist file
 	f = open("%s/rqlist"%self.report_directory,"w")
 	rq = ""
-	for i in range(1,len(branchlist)):
-		if i==1:
-			rq += str(branchlist[i]._name)
-		else:
-			rq += ",%s"%branchlist[i]._name
-	for j in range(1,len(leaflist)):
-		rq += ",%s"%leaflist[j]._name
-	f.write(rq)
+	if tag == 'root':
+		for i in range(1,len(branchlist)):
+			if i==1:
+				rq += str(branchlist[i]._name)
+			else:
+				rq += ",%s"%branchlist[i]._name
+		for j in range(1,len(leaflist)):
+			rq += ",%s"%leaflist[j]._name
+		f.write(rq)
+	elif tag == 'default':
+		for i in range(2,len(branchlist)):
+			if i==1:
+				rq += str(branchlist[i]._name)
+			else:
+				rq += ",%s"%branchlist[i]._name
+		for j in range(0,len(leaflist)):
+			rq += ",%s"%leaflist[j]._name
+		f.write(rq)
 
-    def dump_branchlist(self,list):
+    def dump_branchlist(self,list,tag):
     	if os.path.exists("%s/RQ.sql"%self.report_directory):
         	os.system("rm %s/RQ.sql"%self.report_directory)
-	fl = open("%s/RQ.sql"%self.report_directory,"w")
+	filename = "%s/RQ.sql"%self.report_directory
+	fl = open(filename,"w")
 	print "branchlist" + str(len(list))
 	sql = ""
-	for i in range(1,len(list)):
-		sqltmp = "CREATE RESOURCE QUEUE " + list[i]._name + " WITH(\
+	if tag == 'root':
+		for i in range(1,len(list)):
+			sqltmp = "CREATE RESOURCE QUEUE " + list[i]._name + " WITH(\
 PARENT= " + "'" + list[i]._parent + "'" + \
 ",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" +  \
 ",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" +  \
 ",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
 ",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n"
-		sql = sql + sqltmp
-	fl.write(sql)
-	fl.close()
+			sql = sql + sqltmp
+		print sql
+		fl.write(sql)
+		fl.close()
+	elif tag == 'default':
+		for i in range(2,len(list)):
+			sqltmp = "CREATE RESOURCE QUEUE " + list[i]._name + " WITH(\
+PARENT= " + "'" + list[i]._parent + "'" + \
+",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" +  \
+",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" +  \
+",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
+",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n"
+			sql = sql + sqltmp
+		print sql
+		fl.write(sql)
+		fl.close()
+		default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[1]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);"
+		os.system("sed -i '1i %s' %s"%(default, filename))
 
-    def dump_leaflist(self,list):
+    def dump_leaflist(self,list,tag):
 	userlist = ""
+	print "#################"
 	filename = "%s/RQ.sql"%self.report_directory 
 	print "leaflist" + str(len(list)-1)
 
 	fll = open("%s/RQ.sql"%self.report_directory,"a")
 	sql1 = ""
-	for i in range(1,len(list)):
-		sql = "CREATE RESOURCE QUEUE "+ list[i]._name + " WITH(\
+	if tag == 'root':
+		for i in range(1,len(list)):
+			sql = "CREATE RESOURCE QUEUE "+ list[i]._name + " WITH(\
 PARENT= " + "'" + list[i]._parent + "'" +\
 ",ACTIVE_STATEMENTS=" + str(list[i]._active_statements_cluster) + \
 ",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" + \
@@ -227,12 +315,32 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 ",SEGMENT_RESOURCE_QUOTA='" + str(list[i]._segment_resource_quota) + "'" + \
 ",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n" + \
 "CREATE ROLE role" + str(i) + " WITH LOGIN RESOURCE QUEUE " + str(list[i]._name) + ";\n"
-		sql1 += sql 
-		if i==1:
-			userlist += "role" + str(i)
-		else:
-			username = ", role" + str(i)
-			userlist += username
+			sql1 += sql 
+			if i==1:
+				userlist += "role" + str(i)
+			else:
+				username = ", role" + str(i)
+				userlist += username
+		
+		default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);"
+		os.system("sed -i '1i %s' %s"%(default, filename))
+	elif tag == 'default':
+		for i in range(0,len(list)):
+			sql = "CREATE RESOURCE QUEUE "+ list[i]._name + " WITH(\
+PARENT= " + "'" + list[i]._parent + "'" +\
+",ACTIVE_STATEMENTS=" + str(list[i]._active_statements_cluster) + \
+",MEMORY_LIMIT_CLUSTER=" + str(list[i]._memory_limit_cluster) + "%" + \
+",CORE_LIMIT_CLUSTER=" + str(list[i]._core_limit_cluster) + "%" + \
+",RESOURCE_UPPER_FACTOR=" + str(list[i]._resource_upper_factor) + \
+",SEGMENT_RESOURCE_QUOTA='" + str(list[i]._segment_resource_quota) + "'" + \
+",ALLOCATION_POLICY='" + str(list[i]._allocation_policy) + "');\n" + \
+"CREATE ROLE role" + str(i) + " WITH LOGIN RESOURCE QUEUE " + str(list[i]._name) + ";\n"
+			sql1 += sql 
+			if i==0:
+				userlist += "role" + str(i)
+			else:
+				username = ", role" + str(i)
+				userlist += username
 
 	file = open("%s/userlist"%self.report_directory,"w")
 	file.write(userlist)
@@ -241,11 +349,10 @@ PARENT= " + "'" + list[i]._parent + "'" +\
 	#	line = re.sub(r'^user_list.*',userlist,line.strip())
 	#	print line
 	#fileinput.close()
+	print sql1
 	fll.write(sql1)
 	fll.close()
 	
-	default= "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER = " + str(list[0]._memory_limit_cluster) + "%" + ", CORE_LIMIT_CLUSTER = " + str(list[0]._core_limit_cluster) + "%);"
-	os.system("sed -i '1i %s' %s"%(default, filename))
 
 curqueue = 1
 class node:
@@ -273,7 +380,7 @@ class node:
     
 
     @staticmethod
-    def createNode(path,name,parent,percentMem,percentCore):
+    def createNode(path,name,parent,percentMem,percentCore,param_name,param_value):
 	new = node(path)
 	if parent == None:
 		new._parent = ""
@@ -302,12 +409,17 @@ class node:
 	else:
 		new._memory_limit_cluster = percentMem
 		new._core_limit_cluster = percentCore
+
+	if param_name != '':
+		param_Name = 'new.' + '_' + param_name.lower()
+		param_Name = param_value
+			
 		
 	return new
 		
     
     @staticmethod
-    def addToNode(path,curNode,childrenNum):
+    def addToNode(path,curNode,childrenNum,param_name,param_value):
 	global curqueue
 	parentList = []
 	percentSumMem = 100
@@ -325,7 +437,7 @@ class node:
 			percentCore = percentSumCore
 		sonName = 'queue' + str(curqueue)
 		curqueue += 1
-		son = node.createNode(path,sonName,curNode,percentMem,percentCore)
+		son = node.createNode(path,sonName,curNode,percentMem,percentCore,param_name,param_value)
 		curNode.add(son)
 		parentList.append(son)
 	return parentList
@@ -343,7 +455,7 @@ class node:
 if __name__ == '__main__':
 
 	rq = RQ()
-	rq.generateRq()
+	rq.generateRqForDefault()
 	print rq.runRq()
 	print rq.runRq()
 	print rq.runRq()

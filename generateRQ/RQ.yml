@@ -1,7 +1,7 @@
 height: 2
 width: 2
-nodeNum: 3
-parameter: RESOURCE_UPPER_FACTOR
+nodeNum: 4
+parameter: 
 
 default:
         #percentage
