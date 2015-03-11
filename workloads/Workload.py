@@ -72,10 +72,17 @@ class Workload(object):
         try:
             self.workload_name = workload_specification['workload_name'].strip()
             self.database_name = workload_specification['database_name'].strip()
-            self.database_name = self.database_name + '_' + self.user
         except Exception, e:
             print('Please add %s option in schedule file.' % (str(e)) )
             sys.exit(2)
+
+        self.db_reuse = False
+        if 'db_reuse' in workload_specification.keys():
+            self.db_reuse = workload_specification['db_reuse']
+        assert self.db_reuse in [False, True]
+        if not self.db_reuse:
+            self.database_name = self.database_name + '_' + self.user
+
         # prepare folders and files,
         self.__prep_folders_and_files(workload_directory, report_directory, report_sql_file)
 
@@ -715,7 +722,7 @@ class Workload(object):
                 f.write(query)
 
             (ok, output) = psql.runfile(ifile = file_path, dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
-            if not ok:
+            if not ok or str(output).find('ERROR:') != -1 or str(output).find('FATAL:') != -1:
                 print query
                 print '\n'.join(output)
                 sys.exit(2)
