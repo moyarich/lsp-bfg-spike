@@ -121,7 +121,7 @@ if __name__ == '__main__':
     elif options.param.find(':') != -1 and options.param[-1] != ':':
         rq_param = options.param
     else:
-        print 'formart error: For example, -p RESOURCE_UPPER_FACTOR:2'
+        print 'formart error: For example, -p RESOURCE_UPPER_FACTOR:2, -p MEMORY_LIMIT_CLUSTER:20'
         sys.exit(2)
 
     cs_id = 0

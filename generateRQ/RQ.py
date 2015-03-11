@@ -90,9 +90,9 @@ class RQ:
 	#segment_resource_quota = self.yaml_parser['leaf']['SEGMENT_RESOURCE_QUOTA']
 	#allocation_policy = self.yaml_parser['leaf']['ALLOCATION_POLICY']
 
-	if self.param_name != '':
-		self.param_name = self.param_name.lower()
-		self.param_name = self.param_value
+	if self.param_name.strip().upper() == 'MEMORY_LIMIT_CLUSTER':
+		memory_limit_cluster = int(self.param_value)
+		core_limit_cluster = memory_limit_cluster
 	
 	default = "ALTER RESOURCE QUEUE pg_default WITH(MEMORY_LIMIT_CLUSTER =" + str(memory_limit_cluster) + "%" +",CORE_LIMIT_CLUSTER =" + str(core_limit_cluster) + "%);\n"
 	role = "CREATE ROLE role1 WITH LOGIN RESOURCE QUEUE pg_default;"
@@ -167,7 +167,6 @@ class RQ:
 		for user in userlist:
 			userdict = {user:paraValue}
 			self.list.append(userdict)
-			print userdict,'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
                 return self.list
         else:
 		rqsql = "%s/RQ.sql"%self.report_directory
