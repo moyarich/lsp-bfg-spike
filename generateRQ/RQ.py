@@ -106,7 +106,7 @@ class RQ:
 	f.close()
 	
 	fuser = open("%s/userlist"%self.report_directory, "w")
-	fuser.write(",role1")
+	fuser.write("role1")
 	
 	frq = open("%s/rqlist"%self.report_directory,"w")
 	frq.write(",")
@@ -167,6 +167,7 @@ class RQ:
 		for user in userlist:
 			userdict = {user:paraValue}
 			self.list.append(userdict)
+			print userdict,'%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%'
                 return self.list
         else:
 		rqsql = "%s/RQ.sql"%self.report_directory
@@ -393,7 +394,8 @@ class node:
 if __name__ == '__main__':
 
 	rq = RQ()
-	rq.generateRqForDefault()
+	#rq.generateRqForDefault()
+	rq.generateRq()
 	print rq.runRq()
 	print rq.runRq()
 	print rq.runRq()
