@@ -150,7 +150,12 @@ class Executor(object):
                 if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
                     print 'No appropreciate workload type found for workload %s' % (workload_name)
                 else:
+                    user_count = 0
                     for user in user_list:
+                        if user_count > 0 and 'db_reuse' in workload_specification.keys() and workload_specification['db_reuse']:
+                            workload_specification['load_data_flag'] = False
+                        print workload_specification
+                        user_count += 1
                         wl_instance = workload_category.lower().capitalize() + \
                         '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                         self.workloads_instance.append(eval(wl_instance))
@@ -185,10 +190,14 @@ class Executor(object):
                 else:
                     if mode == 'loop':
                         for user in user_list:
+                            if user_count > 0 and 'db_reuse' in workload_specification.keys() and workload_specification['db_reuse']:
+                                workload_specification['load_data_flag'] = False
+                            print workload_specification
                             user = user.keys()[0].strip()
                             wl_instance = workload_category.lower().capitalize() + \
                             '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                             self.workloads_instance.append(eval(wl_instance))
+                            user_count += 1
                             #print workload_name, user
                     elif mode == 'scan':
                         user = user_list[user_count].keys()[0].strip()
