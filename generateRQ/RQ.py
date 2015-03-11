@@ -139,9 +139,9 @@ class RQ:
 		# gpadmin   3268     1  0 13:08 ?        00:00:07 /usr/local/hawq-2.0.0.0-12654/bin/postgres -D /data/masterdd -p 5432 --silent-mode=true -M master -i
 		output = commands.getoutput("ps -ef | grep bin/postgres | grep master | grep -v 'sh -c'")
 		first_index = output.find('-D') + 3
-		last_index = output.find('-p')
+		last_index = output[first_index:-1].find(' -') + first_index
 		path = output[first_index:last_index].strip() + os.sep + 'pg_hba.conf'
-		print 'master dd: ', path
+		print 'master dd:', path
 		os.system("sed -i '/role/d' %s"%path)
 		for user in userlist:
         		f = open(path,"a+")
