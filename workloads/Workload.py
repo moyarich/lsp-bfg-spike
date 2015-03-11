@@ -708,6 +708,7 @@ class Workload(object):
         pass
 
     def grand_revoke_privileges(self, filename = ''):
+        self.output('-- Start exec %s for database %s' % (filename, self.database_name))
         if self.run_workload_flag and self.user != 'gpadmin':
             with open(self.workload_directory + '/data/' + filename , 'r') as f:
                 query = f.read()
@@ -728,7 +729,7 @@ class Workload(object):
                 sys.exit(2)
             self.output(query)
             self.output('\n'.join(output))
-
+        self.output('-- Complete exec %s for database %s' % (filename, self.database_name))
 
     def execute(self):
         self.output('-- Start running workload %s' % (self.workload_name))
