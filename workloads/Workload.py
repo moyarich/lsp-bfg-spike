@@ -392,7 +392,79 @@ class Workload(object):
         '''Load data for workload'''
         pass
 
-    
+    def run_one_query(self, iteration, stream, qf_name, query):
+        con_id = -1
+        if self.continue_flag:
+            if self.run_workload_flag:
+                if gl.suffix:
+                    query = query.replace('TABLESUFFIX', self.tbl_suffix)
+                else:
+                    query = query.replace('_TABLESUFFIX', '')
+                query = query.replace('SQLSUFFIX', self.sql_suffix)
+
+                # get con_id use this query
+                unique_string1 = '%s_%s_%d_%d_' % (self.workload_name, self.user, iteration, stream) + qf_name
+                unique_string2 = '%' + unique_string1 + '%'
+                get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
+
+                with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
+                    f.write(query)
+                    f.write(get_con_id_sql)
+
+                self.output(query)
+                beg_time = datetime.now()
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
+                end_time = datetime.now()
+                
+                if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1 and str(result).find('server closed') == -1 :
+                    status = 'SUCCESS'
+                    # generate output and md5 file
+                    with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'w') as f:
+                        f.write(str(result[0].split('***')[0]))
+                    with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'r') as f:
+                        result = f.read()
+                        md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
+                    with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5', 'w') as f:
+                        f.write(md5code)
+                    
+                    # check query result
+                    if gl.check_result:
+                        ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
+                        md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
+                        if os.path.exists(ans_file):
+                            self.output('Check query result use ans file')
+                            if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output'):
+                                status = 'ERROR'
+                        elif os.path.exists(md5_file):
+                            self.output('Check query result use md5 file')
+                            if not self.check_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5'):
+                                status = 'ERROR'
+                        else:
+                            self.output('No answer file')
+                            status = 'ERROR'
+                                     
+                    con_id = int(result[0].split('***')[1].split('|')[2].strip())
+                else:
+                    status = 'ERROR'
+                    self.output('\n'.join(result))
+            else:
+                status = 'SKIP'
+                beg_time = datetime.now()
+                end_time = beg_time
+        else:
+            status = 'ERROR'
+            beg_time = datetime.now()
+            end_time = beg_time
+            
+        duration = end_time - beg_time
+        duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000     
+        beg_time = str(beg_time)
+        end_time = str(end_time)
+        self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
+        self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
+            % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration, self.adj_s_id))
+
+
     def run_queries(self, iteration, stream, query_files = ''):
         queries_directory = self.workload_directory + os.sep + 'queries'
         if not os.path.exists(queries_directory):
@@ -408,76 +480,9 @@ class Workload(object):
 
         # run all sql files in queries directory
         for qf_name in query_files:
-            con_id = -1
-            if self.continue_flag:
-                if self.run_workload_flag:
-                    with open(os.path.join(queries_directory, qf_name),'r') as f:
-                        query = f.read()
-                    if gl.suffix:
-                        query = query.replace('TABLESUFFIX', self.tbl_suffix)
-                    else:
-                        query = query.replace('_TABLESUFFIX', '')
-                    query = query.replace('SQLSUFFIX', self.sql_suffix)
-
-                    # get con_id use this query
-                    unique_string1 = '%s_%s_%d_%d_' % (self.workload_name, self.user, iteration, stream) + qf_name
-                    unique_string2 = '%' + unique_string1 + '%'
-                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
-
-                    with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
-                        f.write(query)
-                        f.write(get_con_id_sql)
-
-                    self.output(query)
-                    beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
-                    end_time = datetime.now()
-                    
-                    if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1 and str(result).find('server closed') == -1 :
-                        status = 'SUCCESS'
-                        con_id = int(result[0].split('***')[1].split('|')[2].strip())
-                        # generate output and md5 file
-                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'w') as f:
-                            f.write(str(result[0].split('***')[0]))
-                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'r') as f:
-                            result = f.read()
-                            md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
-                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5', 'w') as f:
-                            f.write(md5code)
-                        
-                        if gl.check_result:
-                            ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
-                            md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
-                            if os.path.exists(ans_file):
-                                self.output('Check query result use ans file')
-                                if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output'):
-                                    status = 'ERROR'
-                            elif os.path.exists(md5_file):
-                                self.output('Check query result use md5 file')
-                                if not self.check_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5'):
-                                    status = 'ERROR'
-                            else:
-                                self.output('No answer file')
-                                status = 'ERROR'
-                    else:
-                        status = 'ERROR'
-                        self.output('\n'.join(result))
-                else:
-                    status = 'SKIP'
-                    beg_time = datetime.now()
-                    end_time = beg_time
-            else:
-                status = 'ERROR'
-                beg_time = datetime.now()
-                end_time = beg_time
-                
-            duration = end_time - beg_time
-            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000     
-            beg_time = str(beg_time)
-            end_time = str(end_time)
-            self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
-                % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration, self.adj_s_id))
+            with open(os.path.join(queries_directory, qf_name),'r') as f:
+                query = f.read()
+            self.run_one_query(iteration = iteration, stream = stream, qf_name = qf_name, query = query)
                               
     def run_workload(self):
         niteration = 1
@@ -510,7 +515,7 @@ class Workload(object):
 
             self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
-
+   
     
     def run_queries_by_stream(self, iteration, stream):
         queries_directory = self.report_directory + os.sep + 'queries_stream'
@@ -539,81 +544,13 @@ class Workload(object):
                 os.system( 'touch %s' % (lock_file))
                 break
 
-            con_id = -1
             with open(os.path.join(queries_directory, qf_name), 'r') as f:
                 query = f.read()
                 os.system('mv %s/%s %s' % (queries_directory, qf_name, queries_finish_dir))
                 os.system('touch %s' %(lock_file))
             
-            if self.continue_flag:
-                if self.run_workload_flag:
-                    if gl.suffix:
-                        query = query.replace('TABLESUFFIX', self.tbl_suffix)
-                    else:
-                        query = query.replace('_TABLESUFFIX', '')
-                    query = query.replace('SQLSUFFIX', self.sql_suffix)
-
-                    # get con_id use this query
-                    unique_string1 = '%s_%s_%d_%d_' % (self.workload_name, self.user, iteration, stream) + qf_name
-                    unique_string2 = '%' + unique_string1 + '%'
-                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
-
-                    with open(self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, 'w') as f:
-                        f.write(query)
-                        f.write(get_con_id_sql)
-
-                    self.output(query)
-
-                    beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, flag = '-t -A', username = self.user)
-                    end_time = datetime.now()
-                    
-                    if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1 and str(result).find('PANIC:') == -1:
-                        status = 'SUCCESS'
-                        con_id = int(result[0].split('***')[1].split('|')[2].strip())
-                        # generate output and md5 file
-                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'w') as f:
-                            f.write(str(result[0].split('***')[0]))
-                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'r') as f:
-                            result = f.read()
-                            md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
-                        with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5', 'w') as f:
-                            f.write(md5code)
-                        
-                        if gl.check_result:
-                            ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
-                            md5_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.md5'
-                            if os.path.exists(ans_file):
-                                self.output('Check query result use ans file')
-                                if not self.check_query_result(ans_file = ans_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output'):
-                                    status = 'ERROR'
-                            elif os.path.exists(md5_file):
-                                self.output('Check query result use md5 file')
-                                if not self.check_query_result(ans_file = md5_file, result_file = self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5'):
-                                    status = 'ERROR'
-                            else:
-                                self.output('No answer file')
-                                status = 'ERROR'
-                    else:
-                        status = 'ERROR'
-                        self.output('\n'.join(result))
-                else:
-                    status = 'SKIP'
-                    beg_time = datetime.now()
-                    end_time = beg_time
-            else:
-                status = 'ERROR'
-                beg_time = datetime.now()
-                end_time = beg_time
-                
-            duration = end_time - beg_time
-            duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds/1000     
-            beg_time = str(beg_time)
-            end_time = str(end_time)
-            self.output('   Execution=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (qf_name.replace('.sql', ''), iteration, stream, status, duration))
-            self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Execution', '%s', %d, %d, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
-                % (self.tr_id, self.s_id, con_id, qf_name.replace('.sql', ''), iteration, stream, status, beg_time, end_time, duration, self.adj_s_id))
-            #time.sleep(0.1)                       
+            self.run_one_query(iteration = iteration, stream = stream, qf_name = qf_name, query = query)
+            #time.sleep(0.1)                  
     
     def run_workload_by_stream(self):
         os.system( 'mkdir -p %s; mkdir -p %s' % ( self.report_directory+ os.sep + 'queries_stream', self.report_directory + os.sep + 'queries_finish') )
@@ -654,6 +591,7 @@ class Workload(object):
         cmd = 'rm -rf %s %s' % (self.report_directory + os.sep + 'queries_finish', self.report_directory + os.sep + 'queries_stream')
         os.system(cmd)
         self.output(cmd)  
+  
 
     def vacuum_analyze(self):
         self.output('-- Start vacuum analyze')     
@@ -702,7 +640,6 @@ class Workload(object):
             % (self.tr_id, self.s_id, con_id, status, beg_time, end_time, duration, self.adj_s_id))
         
         self.output('-- Complete vacuum analyze')
-
     
     def clean_up(self):
         pass
