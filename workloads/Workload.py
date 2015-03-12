@@ -415,18 +415,18 @@ class Workload(object):
                 beg_time = datetime.now()
                 (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + '%d_%d_' % (iteration, stream) + qf_name, dbname = self.database_name, username = self.user, flag = '-t -A')
                 end_time = datetime.now()
-                
+
                 if ok and str(result).find('psql: FATAL:') == -1 and str(result).find('ERROR:') == -1 and str(result).find('server closed') == -1 :
                     status = 'SUCCESS'
                     # generate output and md5 file
                     with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'w') as f:
                         f.write(str(result[0].split('***')[0]))
                     with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.output', 'r') as f:
-                        result = f.read()
-                        md5code = hashlib.md5(result.encode('utf-8')).hexdigest()
+                        query_result = f.read()
+                        md5code = hashlib.md5(query_result.encode('utf-8')).hexdigest()
                     with open(self.result_directory + os.sep + '%d_%d_' % (iteration, stream) + qf_name.split('.')[0] + '.md5', 'w') as f:
                         f.write(md5code)
-                    
+
                     # check query result
                     if gl.check_result:
                         ans_file = self.ans_directory + os.sep + qf_name.split('.')[0] + '.ans'
@@ -442,7 +442,7 @@ class Workload(object):
                         else:
                             self.output('No answer file')
                             status = 'ERROR'
-                                     
+                         
                     con_id = int(result[0].split('***')[1].split('|')[2].strip())
                 else:
                     status = 'ERROR'
