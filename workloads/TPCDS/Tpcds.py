@@ -81,15 +81,15 @@ with open('dat_files.txt','w') as f:
 """
 
 class Tpcds(Workload):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user)
         self.hostfile_master = os.path.join(self.tmp_folder, 'hostfile_master')
         self.hostfile_seg = os.path.join(self.tmp_folder, 'hostfile_seg')
         self.seg_hostname_list = None
         self.seg_host_num = 1
-        self.tmp_tpcds_folder = '/data/tmp/tpcds_loading/'
-        self.tmp_tpcds_data_folder = '/data/tmp/tpcds_loading/data'
+        self.tmp_tpcds_folder = '/tmp/tpcds_loading/'
+        self.tmp_tpcds_data_folder = '/tmp/tpcds_loading/data'
 
         
     def load_data(self):
@@ -106,7 +106,7 @@ class Tpcds(Workload):
             self.output('\n'.join(output))
 
             cmd = 'create database %s;' % (self.database_name)
-            (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+            (ok, output) = psql.runcmd(cmd = cmd, username = 'gpadmin')
             if not ok:
                 print cmd
                 print '\n'.join(output)
@@ -349,7 +349,7 @@ class Tpcds(Workload):
 
                 self.output(cmd)    
                 beg_time = datetime.now()
-                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = self.user, flag = '-t -A')
+                (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + table_name + '.sql', dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
                 end_time = datetime.now()
                 self.output(result[0].split('***')[0])
                 

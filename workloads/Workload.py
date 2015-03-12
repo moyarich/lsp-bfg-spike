@@ -724,9 +724,7 @@ class Workload(object):
 
             (ok, output) = psql.runfile(ifile = file_path, dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
             if not ok or str(output).find('ERROR:') != -1 or str(output).find('FATAL:') != -1:
-                print query
-                print '\n'.join(output)
-                sys.exit(2)
+                print query, '\n', '\n'.join(output)
             self.output(query)
             self.output('\n'.join(output))
         self.output('-- Complete exec %s for database %s' % (filename, self.database_name))
