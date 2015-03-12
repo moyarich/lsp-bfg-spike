@@ -407,10 +407,13 @@ class Tpcds(Workload):
     
 
     def clean_up(self):
-        self.output('\n--Stop gpfdist')
-        self._stop_gpfdist()
-        self.output('\n--Delete tmp data folder')
-        self._delete_data()
+        if self.load_data_flag:
+            self.output('\n--Stop gpfdist')
+            self._stop_gpfdist()
+            self.output('\n--Delete tmp data folder')
+            self._delete_data()
+        else:
+            self.output("skip kill gpfdist and delete tmp data folser on segments")
         
     def _stop_gpfdist(self):
         cmd = "ps -ef|grep gpfdist|grep %s|grep -v grep|awk \'{print $2}\'|xargs kill -9" % (self.gpfdist_port)
