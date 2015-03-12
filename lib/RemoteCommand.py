@@ -19,7 +19,7 @@ class RemoteCommand:
 	def ssh_command(self, user, host, password, command):
 	    ssh_newkey = 'Are you sure you want to continue connecting'
 	    cmd = 'ssh -l %s %s "%s"'%(user, host, command)
-	    child = pexpect.spawn(cmd, timeout = 600)
+	    child = pexpect.spawn(cmd, timeout = 3600)
 	    try:
 	    	i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password:'])
 #	    	print 'in try ssh i = ' + str(i)
@@ -52,7 +52,7 @@ class RemoteCommand:
 	    return child.before
 
 	def scp_command(self, from_user, from_host, from_file, to_user, to_host, to_file, password):
-	    child = pexpect.spawn('scp -r %s%s%s %s%s%s' %(from_user, from_host, from_file, to_user, to_host, to_file), timeout = 600)
+	    child = pexpect.spawn('scp -r %s%s%s %s%s%s' %(from_user, from_host, from_file, to_user, to_host, to_file), timeout = 3600)
 	    try:
 	    	i = child.expect(['password:'])
 #	    	print 'in try scp i = ' + str(i)
