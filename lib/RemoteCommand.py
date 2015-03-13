@@ -22,29 +22,31 @@ class RemoteCommand:
 	    child = pexpect.spawn(cmd, timeout = 3600)
 	    try:
 	    	i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password:'])
-#	    	print 'in try ssh i = ' + str(i)
 	    except Exception,e:
 	    	return child.before
 	    else:
 		    # Timeout
-#		    print 'ssh i = ' + str(i)
 		    if i == 0: 
-		        print 'ERROR!'
-		        print 'SSH could not login. Here is what SSH said:'
-		        print child.before, child.after
+		        print str(os.getpid()) + ': ', 'ERROR!'
+		        print str(os.getpid()) + ': ', 'SSH could not login. Here is what SSH said:'
+		        print str(os.getpid()) + ': ', child.before, child.after
 		        return None
 		    # SSH does not have the public key. Just accept it.
-		    if i == 1: 
-		        child.sendline ('yes')
-		        child.expect ('password: ')
-		        j = child.expect([pexpect.TIMEOUT, 'password: '])
-		        child.sendline(password)
-		        # Timeout
-		        if j == 0: 
-		            print 'ERROR!'
-		            print 'SSH could not login. Here is what SSH said:'
-		            print child.before, child.after
-		            return None
+		    if i == 1:
+		    	child.sendline ('yes')
+		        try:
+			        j = child.expect([pexpect.TIMEOUT, 'password: '])
+			    except Exception,e:
+			    	return child.before
+			    else:
+				    # Timeout
+			        if j == 0: 
+			            print str(os.getpid()) + ': ', 'ERROR!'
+			            print str(os.getpid()) + ': ', 'SSH could not login. Here is what SSH said:'
+			            print str(os.getpid()) + ': ', child.before, child.after
+			            return None
+			        else:
+			        	child.sendline(password)
 		    if i == 2:
 		    	child.sendline(password)
 	    
