@@ -57,35 +57,39 @@ class Monitor_control():
 	# ssh gpadmin@gpdb63.qa.dh.greenplum.com -e "pwd;ls"
 	# scp qe_mem_cpu.data gpadmin@gpdb63.qa.dh.greenplum.com:~/
 	def ssh_command(self, cmd, password = 'changeme'):
-	    ssh_newkey = 'Are you sure you want to continue connecting'
-	    child = pexpect.spawn(cmd, timeout = 600)
-	    try:
-	    	i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password:'])
-	    except Exception,e:
-	    	return child.before
-	    else:
-		    if i == 0: 
-		        print str(os.getpid()) + ': ',  'ERROR!'
-		        print str(os.getpid()) + ': ',  'SSH could not login. Here is what SSH said:'
-		        print str(os.getpid()) + ': ',  child.before, child.after
-		        return None
-		    # SSH does not have the public key. Just accept it.
-		    if i == 1: 
-		        child.sendline ('yes')
-		        j = child.expect([pexpect.TIMEOUT, 'password: '])
-		        # Timeout
-		        if j == 0: 
-		            print str(os.getpid()) + ': ',  'ERROR!'
-		            print str(os.getpid()) + ': ',  'SSH could not login. Here is what SSH said:'
-		            print str(os.getpid()) + ': ',  child.before, child.after
-		            return None
-		        else:
-		        	child.sendline(password)
-		    if i == 2:
-		    	child.sendline(password)
-	    
-	    child.expect(pexpect.EOF)
-	    return child.before
+		ssh_newkey = 'Are you sure you want to continue connecting'
+		child = pexpect.spawn(cmd, timeout = 600)
+		try:
+			i = child.expect([pexpect.TIMEOUT, ssh_newkey, 'password:'])
+		except Exception,e:
+			return child.before
+		else:
+			if i == 0:
+				print str(os.getpid()) + ': ', 'ERROR!'
+				print str(os.getpid()) + ': ', 'SSH could not login. Here is what SSH said:'
+				print str(os.getpid()) + ': ', child.before, child.after
+				return None
+			# SSH does not have the public key. Just accept it.
+			if i == 1:
+				child.sendline ('yes')
+				try:
+					j = child.expect([pexpect.TIMEOUT, 'password:'])
+				except Exception,e:
+					return child.before
+				else:
+					# Timeout
+					if j == 0:
+						print str(os.getpid()) + ': ', 'ERROR!'
+						print str(os.getpid()) + ': ', 'SSH could not login. Here is what SSH said:'
+						print str(os.getpid()) + ': ', child.before, child.after
+						return None
+					else:
+						child.sendline(password)
+			if i == 2:
+				child.sendline(password)
+
+		child.expect(pexpect.EOF)
+		return child.before
 
 	def remote_sql(self, sql):
 		#os.system( 'mkdir -p %s' % (self.report_folder + os.sep + 'seg_log') )
