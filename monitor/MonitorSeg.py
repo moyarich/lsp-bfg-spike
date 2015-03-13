@@ -58,7 +58,7 @@ class Monitor_seg():
 		    if i == 1: 
 		        child.sendline ('yes')
 		        try:
-		            j = child.expect([pexpect.TIMEOUT, 'password: '])
+		            j = child.expect([pexpect.TIMEOUT, 'password:'])
 		        except Exception,e:
 		        	return child.before
 		        else:
