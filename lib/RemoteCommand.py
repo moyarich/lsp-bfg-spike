@@ -34,11 +34,11 @@ class RemoteCommand:
 		    # SSH does not have the public key. Just accept it.
 		    if i == 1:
 		    	child.sendline ('yes')
-		        try:
-			        j = child.expect([pexpect.TIMEOUT, 'password: '])
-			    except Exception,e:
-			    	return child.before
-			    else:
+		    	try:
+		    		j = child.expect([pexpect.TIMEOUT, 'password:'])
+		    	except Exception, e:
+		    		return child.before
+		    	else:
 				    # Timeout
 			        if j == 0: 
 			            print str(os.getpid()) + ': ', 'ERROR!'
