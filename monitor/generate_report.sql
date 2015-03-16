@@ -601,3 +601,4 @@ END
 $$ LANGUAGE PLPGSQL;
 
 select f_get_parameter_tuning_report('SEG_NUM');
+select f_get_parameter_tuning_report('RESOURCE_UPPER_FACTOR');
