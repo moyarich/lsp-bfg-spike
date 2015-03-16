@@ -496,7 +496,7 @@ select  f_get_scenario_info(1);
 
 
 drop table parameters;
-CREATE TABLE parameters(param_name varchar(20), run_id int);
+CREATE TABLE parameters(param_value varchar(20), run_id int, param_name varchar(64));
 
 INSERT INTO parameters VALUES('SEG4', 233), ('SEG4', 234),('SEG4', 235), ('SEG4', 236), ('SEG4', 237);
 INSERT INTO parameters VALUES('SEG8', 242), ('SEG8', 243),('SEG8', 244);
@@ -553,4 +553,51 @@ $$ LANGUAGE PLPGSQL;
 select f_get_parameter_tuning_report();
 
 
+DROP FUNCTION IF EXISTS hst.f_get_parameter_tuning_report(p_name varchar(64));
+CREATE OR REPLACE FUNCTION hst.f_get_parameter_tuning_report(p_name varchar(64))
+RETURNS TEXT
+AS $$
+DECLARE
+        qe_cur REFCURSOR;
+        v_pcount int;
+        v_i int;
+        v_pvalue varchar(20);
+        v_crt_string varchar(1000);
+        v_ctl_string varchar(1000);
+        v_from_list varchar(500);
+        v_minrid INT;
+        v_maxrid int; 
+        v_tmp_tbl varchar(20);
+        v_alias_tbl varchar(5);
+        v_cnt int;
+BEGIN
+       DROP TABLE if exists hst.parameter_tuning;
+        v_ctl_string = 'CREATE TABLE HST.parameter_tuning  AS SELECT p1.s_id,  p1.action_type, p1.action_target';
+        v_i = 1;
+        SELECT count(DISTINCT param_value) into v_pcount from parameters where param_name = p_name;         
+        OPEN qe_cur FOR SELECT param_value, count(*) as cnt FROM  parameters where param_name = p_name GROUP BY param_value order by cnt desc;
+        WHILE v_i <= v_pcount loop 
+            FETCH qe_cur INTO v_pvalue, v_cnt;
+            SELECT MIN(run_id) into v_minrid FROM parameters WHERE param_value = v_pvalue;
+            SELECT MAX(run_id) into v_maxrid FROM parameters WHERE param_value = v_pvalue;
+            v_tmp_tbl = 'tmp_param_' || v_i::varchar(2);
+            v_alias_tbl = 'p' || v_i::varchar(2);
+            v_crt_string = 'CREATE TEMP TABLE ' || v_tmp_tbl ||  ' ON COMMIT DROP AS SELECT s_id, action_type, action_target , duration ';
+            v_crt_string  = v_crt_string || 'FROM hst.f_precompute_test_result(' || v_minrid::varchar(4) ||','  || v_maxrid::varchar(4) || ');';
+            EXECUTE v_crt_string;
+            v_ctl_string = v_ctl_string || ' ,p' || v_i::varchar(2) ||'.duration as ' || '"' || v_pvalue || '"';
+            IF v_i = 1 THEN
+                v_from_list = ' FROM ' ||  v_tmp_tbl || ' AS '|| v_alias_tbl;
+            ELSE 
+                 v_from_list = v_from_list || ' LEFT JOIN ' ||  v_tmp_tbl || ' AS '|| v_alias_tbl || ' ON p1.s_id = ' || v_alias_tbl || '.s_id' || ' AND p1.action_target = ' || v_alias_tbl || '.action_target';
+            END IF;
+             v_i = v_i + 1;
+        END LOOP;
+        CLOSE qe_cur;
+        v_ctl_string = v_ctl_string || v_from_list || ';';
+        EXECUTE v_ctl_string;
+        RETURN v_ctl_string;
+END
+$$ LANGUAGE PLPGSQL;
 
+select f_get_parameter_tuning_report('SEG_NUM');
