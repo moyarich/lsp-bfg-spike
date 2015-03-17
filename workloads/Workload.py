@@ -628,7 +628,7 @@ class Workload(object):
                 end_time = datetime.now()
                 self.output(result[0].split('***')[0])
 
-                if ok and str(result).find('ERROR:') == -1 and str(result).find('FATAL:') == -1:
+                if ok and str(result).find('ERROR:') == -1 and str(result).find('FATAL:') == -1 and str(result).find('psql:'):
                     status = 'SUCCESS'
                     con_id = int(result[0].split('***')[1].split('|')[2].strip())
                 else:
