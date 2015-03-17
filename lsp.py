@@ -104,6 +104,7 @@ if __name__ == '__main__':
     parser.add_option('-m', '--monitor', dest='monitor', action='store', default=0, help='Monitor interval')
     parser.add_option('-r', '--report', dest='report', action='store', default=0, help='Generate monitor report num')
     parser.add_option('-p', '--parameter', dest='param', action='store', help='Assign resource queue parameter name and value')
+    parser.add_option('-d', '--delete', dest='del_flag', action='store_true', default=False, help='Delete table parameters')
     (options, args) = parser.parse_args()
     schedules = options.schedule
     add_database = options.add_option
@@ -261,8 +262,9 @@ if __name__ == '__main__':
 
         # add resource parameter and run info into backend database
         if options.param is not None:
-            sql = "DELETE FROM hst.parameters WHERE param_name = '%s';" % (options.param.split(':')[0].strip().upper())
-            print check.get_result_by_sql(sql = sql)
+            if options.del_flag:
+                sql = "DELETE FROM hst.parameters WHERE param_name = '%s';" % (options.param.split(':')[0].strip().upper())
+                print check.get_result_by_sql(sql = sql)
             sql = "INSERT INTO hst.parameters (run_id, param_name, param_value) VALUES (%d, '%s', '%s');" % (tr_id, options.param.split(':')[0].strip().upper(), options.param.split(':')[1].strip())
             print check.get_result_by_sql(sql = sql)
 

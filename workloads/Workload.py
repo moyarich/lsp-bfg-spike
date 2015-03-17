@@ -355,7 +355,20 @@ class Workload(object):
             #self.tr_id = check.get_max_id(result_id = 'tr_id', table_name = 'hst.test_run')
 
             # check adjust scenario check
+            # check adjust scenario check
             adj_wl_id = check.check_id(result_id = 'wl_id', table_name = 'hst.workload', search_condition = adj_check_condition)
+            #if adj_wl_id is None:
+            #    check.insert_new_record(table_name = 'hst.workload',
+            #                            col_list = 'wl_name, wl_catetory, wl_data_volume_type, wl_data_volume_size, wl_appendonly, wl_disrandomly, wl_orientation, wl_row_group_size, wl_page_size, wl_compression_type, wl_compression_level, wl_partitions, wl_iteration, wl_concurrency, wl_query_order',
+            #                            values = adj_wl_values)
+            #    adj_wl_id = check.get_max_id(result_id = 'wl_id', table_name = 'hst.workload')
+            #self.adj_s_id = check.check_id(result_id = 's_id', table_name = 'hst.scenario', 
+            #                       search_condition = 'cs_id = %d and wl_id = %d and us_id = %d' % (self.cs_id, adj_wl_id, self.us_id))
+            #if self.adj_s_id is None:
+            #    check.insert_new_record(table_name = 'hst.scenario', col_list = 'cs_id, wl_id, us_id', 
+            #                            values = '%d, %d, %d' % (self.cs_id, adj_wl_id, self.us_id))
+            #    self.s_id = check.get_max_id(result_id = 's_id', table_name = 'hst.scenario')
+
             if adj_wl_id is None:
                 self.adj_s_id = -1
             else:

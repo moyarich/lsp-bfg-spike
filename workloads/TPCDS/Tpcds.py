@@ -123,8 +123,8 @@ class Tpcds(Workload):
             beg_time = str(datetime.now()).split('.')[0]
             for table_name in tables:
                 self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, 1, 1, 'SKIP', 0))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, table_name, beg_time, beg_time))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', 1, 1, 'SKIP', '%s', '%s', 0, NULL, NULL, NULL, %d);" 
+                    % (self.tr_id, self.s_id, table_name, beg_time, beg_time, self.adj_s_id))
         else:
             self.load_setup()
             self.load_generate()

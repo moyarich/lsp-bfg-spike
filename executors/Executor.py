@@ -161,8 +161,6 @@ class Executor(object):
                         self.workloads_instance.append(eval(wl_instance))
         # the user_list is from resource queue yaml file
         else:
-            user_count = 0
-            user_num = len(user_list)
             # instantiate and prepare workloads based on workloads content
             for workload_name in self.workloads_list:
                 # check if the detailed definition of current workload exist
@@ -188,11 +186,13 @@ class Executor(object):
                 if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
                     print 'No appropreciate workload type found for workload %s' % (workload_name)
                 else:
+                    user_count = 0
+                    user_num = len(user_list)
                     if mode == 'loop':
                         for user in user_list:
                             if user_count > 0 and 'db_reuse' in workload_specification.keys() and workload_specification['db_reuse']:
                                 workload_specification['load_data_flag'] = False
-                            #print workload_specification
+                            print workload_specification
                             user = user.keys()[0].strip()
                             wl_instance = workload_category.lower().capitalize() + \
                             '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
