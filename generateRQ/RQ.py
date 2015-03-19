@@ -141,7 +141,7 @@ class RQ:
 		first_index = output.find('-D') + 3
 		last_index = output[first_index:-1].find(' -') + first_index
 		path = output[first_index:last_index].strip() + os.sep + 'pg_hba.conf'
-		print 'master dd:', path
+		#print 'master dd:', path
 		os.system("sed -i '/role/d' %s"%path)
 		for user in userlist:
         		f = open(path,"a+")

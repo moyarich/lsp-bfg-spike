@@ -226,7 +226,7 @@ class Monitor_control():
 		for current_query in self.current_query_record:
 			if current_query not in all_items:
 				line = current_query.split('|')
-				if line[1] == '':
+				if len(line) != 4 or line[1] == '':
 					continue
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
@@ -272,7 +272,7 @@ class Monitor_control():
 			output_string = ''
 			for current_query in self.current_query_record:
 				line = current_query.split('|')
-				if line[1] == '':
+				if len(line) != 4 or line[1] == '':
 					continue
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
