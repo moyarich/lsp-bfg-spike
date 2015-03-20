@@ -239,7 +239,7 @@ class Monitor_control():
 
 				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
-		
+
 		for current_query in del_query:
 			self.current_query_record.remove(current_query)
 
