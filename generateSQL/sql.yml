@@ -1,0 +1,44 @@
+Type_list: Insert, Select, Copy, Alter Table, Truncate, Drop Table, Analyze
+#random Table_list 
+#Table_list: customer, nation, part, region, supplier, lineitem, orders, revenue
+Query_content:
+        - query_name: Insert
+          handle_class: replaceString
+          sed_string_list: TB1:customer, TB2:lineitem, TB3:nation, TB4:orders, TB5:part, TB6:region, TB7:supplier, TB8:partsupp
+          sql_templates: INSERT INTO TB1_INS SELECT * FROM TB1; | INSERT INTO TB2_INS SELECT * FROM TB2; | INSERT INTO TB3_INS SELECT * FROM TB3; | INSERT INTO TB4_INS SELECT * FROM TB4; | INSERT INTO TB5_INS SELECT * FROM TB5; | INSERT INTO TB6_INS SELECT * FROM TB6; | INSERT INTO TB7_INS SELECT * FROM TB7; | INSERT INTO TB8_INS SELECT * FROM TB8;
+          sql_file:
+          sed_string_dynamic:
+          #if you want to make tablename or value dynamic increament ,then fill up the following param
+                tablename: 
+                value: 
+          sql_num: 4, 4, 4, 4, 4, 4, 4, 4
+          #each sql_num corresponding the sql_template
+          #Isolationlevel: READ COMMITTED
+          Isolationlevel: SERIALIZABLE
+          #you can input 'RANDOM' or the specific isolationlevel['SERIALIZABLE'|'READ COMMITTED'|'READ UNCOMMITTED']
+          Commit_type: ROLLBACK
+          #commitstring = ['COMMIT', 'ROLLBACK']
+
+        - query_name: Select
+          handle_class: replaceString
+          sed_string_list: TB1:nation,
+          sql_templates: INSERT INTO TB1_INS SLECT * FROM TB1; |
+          sql_file: 
+          sed_string_dynamic:
+            tablename:
+            value:
+          sql_num: 2,
+          Isolationlevel: READ UNCOMMITTED
+          Commit_type: COMMIT
+
+        - query_name: copy
+          handle_class: replaceString
+          sed_string_list: lineitem_TABLESUFFIX:lineitem, orders_TABLESUFFIX:orders 
+          sql_templates: 
+          sql_file: TPCH_Query_01.sql, TPCH_Query_04.sql
+          sed_string_dynamic:
+                tablename:
+                value:
+          sql_num: 2, 3
+          Isolationlevel: READ UNCOMMITTED
+          Commit_type: COMMIT
