@@ -223,10 +223,13 @@ class Monitor_control():
 		all_items = output.split('***')
 		output_string = ''
 		
+		del_query = []
 		for current_query in self.current_query_record:
 			if current_query not in all_items:
+				del_query.append(current_query)
 				line = current_query.split('|')
 				if len(line) != 4 or line[1] == '':
+					print 'error:', line
 					continue
 				try:
 					query_start_time = datetime.strptime(line[1][:-3].strip(), "%Y-%m-%d %H:%M:%S.%f")
@@ -236,7 +239,9 @@ class Monitor_control():
 
 				one_item = str(self.run_id) + self.sep + line[0] + self.sep + str(query_start_time) + self.sep + str(now_time) + self.sep + line[2] + self.sep + line[3] + self.sep #+ line[4].strip().replace('\n', ' ')
 				output_string = output_string + one_item + '\n'
-				self.current_query_record.remove(current_query)
+		
+		for current_query in del_query:
+			self.current_query_record.remove(current_query)
 
 		for line_item in all_items:
 			if line_item not in self.current_query_record:
