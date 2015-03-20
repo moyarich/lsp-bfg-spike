@@ -758,5 +758,10 @@ SELECT * FROM hst.f_generate_test_report_summary(87, 87);
 SELECT * FROM hst.f_generate_test_report_summary('PHD 2.2', 'HAWQ 1.2.1.2 build 11946','PHD 2.2', 'HAWQ 1.2.1.2 build 11946');
 
 
+--Generate baseline
+INSERT INTO hst.test_baseline SELECT
+'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946 GVA ORCA OFF',
+s_id, action_type,action_target,iteration,stream,status, start_time,end_time,duration,output,plan,resource_usage,adj_s_id
+from test_result where tr_id in(300,301,302);
 
 
