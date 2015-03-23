@@ -30,9 +30,9 @@ except ImportError:
 
 class Copy(Workload):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user)
         self.fname = self.tmp_folder + os.sep + 'copy.lineitem.tbl'
         self.dss = self.workload_directory + os.sep + 'dists.dss'
 

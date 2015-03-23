@@ -37,9 +37,9 @@ class Query:
 
 class Rqtpch(Workload):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
+        Workload.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user)
 	self.queryfile = self.workload_directory + os.sep + 'YML' + os.sep + workload_specification['query_file'] + '.yml'
 	self.database_name = workload_specification['database_name'].strip()
    

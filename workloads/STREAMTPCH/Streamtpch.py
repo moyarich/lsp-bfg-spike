@@ -23,27 +23,10 @@ except ImportError:
 
 class Streamtpch(Tpch):
 
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Tpch.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
+        Tpch.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user)
 
             
-    def execute(self):
-        self.output('-- Start running workload %s' % (self.workload_name))
-
-        # setup
-        self.setup()
-
-        # load data
-        self.load_data()
-
-        # vacuum_analyze
-        self.vacuum_analyze()
-
-        # run workload concurrently and loop by iteration
-        self.run_workload_by_stream()
-
-        # clean up 
-        self.clean_up()
-        
-        self.output('-- Complete running workload %s' % (self.workload_name))
+    def generate_sql_file(self):
+        pass
