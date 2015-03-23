@@ -23,10 +23,10 @@ class RQ:
             self.yaml_parser = yaml.load(fyaml)
         self.changeList = {}
 	self.changeNum = 1
-        for element in self.yaml_parser['default']:
-            if str(self.yaml_parser['default'][element]).find(',') != -1:
-                self.changeNum = len(str(self.yaml_parser['default'][element]).split(','))
-                self.changeList[element] = str(self.yaml_parser['default'][element]).split(',')
+        #for element in self.yaml_parser['default']:
+        #    if str(self.yaml_parser['default'][element]).find(',') != -1:
+        #        self.changeNum = len(str(self.yaml_parser['default'][element]).split(','))
+        #        self.changeList[element] = str(self.yaml_parser['default'][element]).split(',')
         for item in self.yaml_parser['leaf']:
             if str(self.yaml_parser['leaf'][item]).find(',') != -1 :
                 self.changeNum = len(str(self.yaml_parser['leaf'][item]).split(','))
@@ -80,17 +80,17 @@ class RQ:
 	self.typeOfNode(pgroot,leaflist,branchlist)
 	self.dump_branchlist(branchlist)
 	self.dump_leaflist(leaflist)
-	print 'generate rq success', m ,n
+	print 'generate rq success', 'height =', m, 'width =', n
 
     def generateRqForDefault(self):
 	memory_limit_cluster = self.yaml_parser['default']['MEMORY_LIMIT_CLUSTER']
-	core_limit_cluster = self.yaml_parser['default']['MEMORY_LIMIT_CLUSTER']
+	core_limit_cluster = self.yaml_parser['default']['CORE_LIMIT_CLUSTER']
 	#resouce_upper_factor = self.yaml_parser['leaf']['RESOUCE_UPPER_FACTOR']
 	#active_statements = self.yaml_parser['leaf']['ACTIVE_STATEMENTS']
 	#segment_resource_quota = self.yaml_parser['leaf']['SEGMENT_RESOURCE_QUOTA']
 	#allocation_policy = self.yaml_parser['leaf']['ALLOCATION_POLICY']
 
-	if self.param_name.strip().upper() == 'MEMORY_LIMIT_CLUSTER':
+	if self.param_name.strip().upper() == 'MEMORY_LIMIT_CLUSTER' or self.param_name.strip().upper() == 'CORE_LIMIT_CLUSTER':
 		memory_limit_cluster = int(self.param_value)
 		core_limit_cluster = memory_limit_cluster
 	
@@ -130,7 +130,6 @@ class RQ:
 		else:
         		print "Create Resource Queue fail!"
 			print result
-			print "#######################\n"
 
 		#change mode for users
 		for line in open("%s/userlist"%self.report_directory):
@@ -152,20 +151,13 @@ class RQ:
                         		f.write(line)
         		f.close()
 
-	#	print "hawq restart now..."
-	#	out = commands.getoutput("hawq cluster stop")
-	#	out = commands.getoutput("hawq cluster start")
-	#	print "hawq restart success!"
+		print "hawq restart now..."
+		out = commands.getoutput("hawq cluster stop")
+		print out
+		out = commands.getoutput("hawq cluster start")
+		print out
+		#print "hawq restart success!"
 
-		#add users to the sqlfile
-
-		#path =  "%s/sqlfile"%self.report_directory
-		#filelist = os.listdir(path)
-		#for file in filelist:
-        	#	filepath = path + os.sep + file
-        	#	i = random.randint(0,len(userlist)-1)
-        	#	os.system("sed -i '1i\\\\\c - %s' %s" % (userlist[i], filepath))
-			
 		rqsql = "%s/RQ.sql"%self.report_directory
 		os.system("cp %s %sRQtmp.sql"%(rqsql, self.report_directory))
 		self.dropRole()
@@ -183,7 +175,6 @@ class RQ:
                 else:
                         print "Drop Resource Queue fail!"
 			print dropresult
-			print "#####################\n"
                 return []
 		
 		
@@ -344,7 +335,7 @@ class node:
 		#initialize the node according to parent
 		if str(new.yaml_parser['default']['MEMORY_LIMIT_CLUSTER']).find(',') != -1:
 			memoryList = new.yaml_parser['default']['MEMORY_LIMIT_CLUSTER'].split(',')
-			new._memory_limit_cluster = int((100 - int(memoryList[0])) * (percentMem / 100.0)) 
+			new._memory_limit_cluster = int((100 - int(memoryList[0])) * (percentMem / 100.0))
 		else:
 			new._memory_limit_cluster = int((100 - int(new.yaml_parser['default']['MEMORY_LIMIT_CLUSTER'])) * (percentMem / 100.0))
 		if str(new.yaml_parser['default']['CORE_LIMIT_CLUSTER']).find(',') != -1:
@@ -358,7 +349,6 @@ class node:
 
 	if param_name != '':
 		exec("new._" + param_name.lower() + "=" + str(param_value))
-	print new._resource_upper_factor	
 	return new
 		
     
@@ -370,12 +360,10 @@ class node:
 	percentSumCore = 100
 	for i in range(1,childrenNum+1):
 		if i != childrenNum:
-			percentMem = random.randint(1, percentSumMem)
+			percentMem = random.randint(1, percentSumMem-1)
 			percentSumMem -= percentMem
 			percentCore = percentMem
 			percentSumCore -= percentCore
-			#percentCore = random.randint(0, percentSumCore)
-			#percentSumCore -= percentCore
 		else:
 			percentMem = percentSumMem
 			percentCore = percentSumCore
