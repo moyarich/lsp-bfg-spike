@@ -155,6 +155,7 @@ class Executor(object):
                         self.workloads_instance.append(eval(wl_instance))
         # the user_list is from resource queue yaml file
         else:
+            scan_user_count = 0
             # instantiate and prepare workloads based on workloads content
             for workload_name in self.workloads_list:
                 # check if the detailed definition of current workload exist
@@ -194,14 +195,14 @@ class Executor(object):
                             user_count += 1
                             #print workload_name, user
                     elif mode == 'scan':
-                        user = user_list[user_count].keys()[0].strip()
+                        user = user_list[scan_user_count].keys()[0].strip()
                         wl_instance = workload_category.lower().capitalize() + \
                         '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                         self.workloads_instance.append(eval(wl_instance))
                         #print workload_name, user
-                        user_count += 1
-                        if user_count == user_num:
-                            user_count = 0
+                        scan_user_count += 1
+                        if scan_user_count == user_num:
+                            scan_user_count = 0
 
 
     def setup(self):
