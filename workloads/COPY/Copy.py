@@ -121,13 +121,18 @@ class Copy(Workload):
             count = 0
             while(True):
                 cmd = 'create database %s;' % (self.database_name)
-                (ok, output) = psql.runcmd(cmd = cmd, username = self.user)
+                (ok, output) = psql.runcmd(cmd = cmd)
                 if not ok:
                     count = count + 1
                     time.sleep(1)
                 else:
                     self.output(cmd)
                     self.output('\n'.join(output))
+                    if self.user != 'gpadmin':
+                        cmd1 = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
+                        (ok1, output1) = psql.runcmd(cmd = cmd1)
+                        self.output(cmd1)
+                        self.output(output1)
                     break
                 if count == 10:
                     print cmd
@@ -139,21 +144,30 @@ class Copy(Workload):
         while niteration <= self.num_iteration:
             self.output('-- Start iteration %d' % (niteration))
             for table_name in tables:
+                con_id = -1
                 if self.load_data_flag or self.run_workload_flag:
                     with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
                         cmd = f.read()
                     cmd = self.replace_sql(sql = cmd, table_name = table_name, num = niteration)
+
+                    # get con_id use this query
+                    unique_string1 = '%s_%s_' % (self.workload_name, self.user) + table_name
+                    unique_string2 = '%' + unique_string1 + '%'
+                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
+                    
                     with open(self.tmp_folder + os.sep + 'copy_loading_temp.sql', 'w') as f:
                         f.write(cmd)
+                        f.write(get_con_id_sql)
 
                     self.output(cmd)    
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name, flag = '-t -A', username = self.user)
                     end_time = datetime.now()
-                    self.output('\n'.join(result))
+                    self.output(result[0].split('***')[0])
 
-                    if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1: 
-                        status = 'SUCCESS'    
+                    if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1 and str(result).find('COPY ') != -1: 
+                        status = 'SUCCESS'
+                        con_id = int(result[0].split('***')[1].split('|')[2].strip()) 
                     else:
                         status = 'ERROR'
                 
@@ -168,11 +182,17 @@ class Copy(Workload):
                 end_time = str(end_time).split('.')[0]
                 
                 self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, status, duration))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, 'Loading', '%s', %d, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL);" 
-                    % (self.tr_id, self.s_id, table_name, niteration, status, beg_time, end_time, duration))
+                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Loading', '%s', %d, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
+                    % (self.tr_id, self.s_id, con_id, table_name, niteration, status, beg_time, end_time, duration, self.adj_s_id))
 
             self.output('-- Complete iteration %d' % (niteration))
             niteration += 1
+
+        if self.user != 'gpadmin':
+            cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s;' % (self.database_name, self.user)
+            (ok1, output1) = psql.runcmd(cmd = cmd1)
+            self.output(cmd1)
+            self.output(output1)
 
         self.output('-- Complete loading data')      
     

@@ -673,7 +673,7 @@ class Workload(object):
                 f.write(query)
 
             (ok, output) = psql.runfile(ifile = file_path, dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
-            if not ok or str(output).find('ERROR:') != -1 or str(output).find('FATAL:') != -1:
+            if not ok or str(output).find('ERROR:') != -1 or str(output).find('FATAL:') != -1 or str(output).find('psql:') != -1:
                 print query, '\n', '\n'.join(output)
             self.output(query)
             self.output('\n'.join(output))
