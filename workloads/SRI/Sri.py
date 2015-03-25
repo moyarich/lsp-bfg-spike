@@ -162,6 +162,11 @@ class Sri(Workload):
             self.output(cmd1)
             self.output('\n'.join(output1))
 
+            cmd1 = 'REVOKE ALL ON TABLE %s FROM %s;' % ( table_name, self.user)
+            (ok1, output1) = psql.runcmd(cmd = cmd1, dbname = self.database_name)
+            self.output(cmd1)
+            self.output('\n'.join(output1))
+
         self.output('-- Complete loading data')
         
     

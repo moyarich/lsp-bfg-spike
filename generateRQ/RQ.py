@@ -13,10 +13,10 @@ class RQ:
 	self.report_directory = report_directory
 	self.param_name = param_name
 	self.param_value = param_value
-	print "param--------------------------------"
+	print "get param from external-----------------------"
 	print self.param_name
 	print self.param_value
-	print "-------------------------------------"
+	print "----------------------------------------------"
 	self.count = 0
 	with open(self.path, "r") as fyaml:
             import yaml
@@ -31,7 +31,7 @@ class RQ:
             if str(self.yaml_parser['leaf'][item]).find(',') != -1 :
                 self.changeNum = len(str(self.yaml_parser['leaf'][item]).split(','))
                 self.changeList[item] = str(self.yaml_parser['leaf'][item]).split(',')
-        print 'rq init success', self.changeList	
+        print 'rq instance init success.', 'changelist:', self.changeList	
 
     def generateRq(self):
 	m = self.yaml_parser['height']
@@ -80,7 +80,7 @@ class RQ:
 	self.typeOfNode(pgroot,leaflist,branchlist)
 	self.dump_branchlist(branchlist)
 	self.dump_leaflist(leaflist)
-	print 'generate rq success', 'height =', m, 'width =', n
+	print 'generate reousrce queue sql file success.', 'height =', m, 'width =', n
 
     def generateRqForDefault(self):
 	memory_limit_cluster = self.yaml_parser['default']['MEMORY_LIMIT_CLUSTER']
@@ -111,15 +111,15 @@ class RQ:
 	frq = open("%s/rqlist"%self.report_directory,"w")
 	frq.write(",")
 
-	print 'generate rqDefault success'
+	print 'generate resource queue sql file inherit from pg_default success.'
 
     def runRq(self):
 	#execute the RQsql
-	parameter = self.yaml_parser['parameter']
-	if parameter != None:
-		paraValue = self.yaml_parser['leaf'][parameter]
-	else:
-		paraValue = self.param_value
+	#parameter = self.yaml_parser['parameter']
+	#if parameter != None:
+	#	paraValue = self.yaml_parser['leaf'][parameter]
+	#else:
+	paraValue = self.param_value
 	if self.count < self.changeNum:
                 self.count += 1
 		if self.count > 1:
@@ -130,6 +130,7 @@ class RQ:
 		else:
         		print "Create Resource Queue fail!"
 			print result
+			sys.exit(2)
 
 		#change mode for users
 		for line in open("%s/userlist"%self.report_directory):
@@ -152,11 +153,12 @@ class RQ:
         		f.close()
 
 		print "hawq restart now..."
-		out = commands.getoutput("hawq cluster stop")
-		#print out
-		out = commands.getoutput("hawq cluster start")
-		#print out
-		print "hawq restart success!"
+		out = commands.getoutput("hawq cluster stop; hawq cluster start")
+		if out.find("fail") == -1:
+			print "hawq restart success!"
+		else:
+			print out
+			sys.exit(2)
 
 		rqsql = "%s/RQ.sql"%self.report_directory
 		os.system("cp %s %sRQtmp.sql"%(rqsql, self.report_directory))
