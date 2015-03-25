@@ -1,6 +1,6 @@
 #workloads_list: retail_dw
 #workloads_list: tpcds_parquet_1g_snappy_nopart, tpcds_row_1g_quicklz_part, 
-workloads_list: sri_ao_row, tpch_ao_row
+workloads_list: sri_ao_row, tpch_ao_row, copy_ao_row, gpfdist_ao_row, sri_ao_parquet
 #workloads_list: copy_ao_row
 workloads_mode: sequential
 #workloads_mode: concurrent
