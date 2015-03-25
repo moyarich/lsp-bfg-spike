@@ -157,7 +157,7 @@ class Sri(Workload):
             niteration += 1
 
         if self.user != 'gpadmin':
-            cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s; REVOKE ALL ON TABLE %s FROM %s;' % (self.database_name, self.user, table_name, self.user)
+            cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s;' % (self.database_name, self.user)
             (ok1, output1) = psql.runcmd(cmd = cmd1)
             self.output(cmd1)
             self.output('\n'.join(output1))
