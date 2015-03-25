@@ -350,13 +350,13 @@ class node:
 		with open(path,"r") as yamlfile:
                 	yaml_parser = yaml.load(yamlfile)
                 percentSumMem = 100 - int(yaml_parser['default']['MEMORY_LIMIT_CLUSTER'])
-                percentSumCore = percentSumMem
+                percentSumCore = 100 - int(yaml_parser['default']['CORE_LIMIT_CLUSTER'])
 	else:
 		percentSumMem = 100
 		percentSumCore = 100
 	for i in range(1,childrenNum+1):
 		if i != childrenNum:
-			percentMem = random.randint(1, percentSumMem-1)
+			percentMem = random.randint(1, percentSumMem - childrenNum + i)
 			percentSumMem -= percentMem
 			percentCore = percentMem
 			percentSumCore -= percentCore
