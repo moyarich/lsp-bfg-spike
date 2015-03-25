@@ -132,7 +132,7 @@ class Copy(Workload):
                         cmd1 = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
                         (ok1, output1) = psql.runcmd(cmd = cmd1)
                         self.output(cmd1)
-                        self.output(output1)
+                        self.output('\n'.join(output1))
                     break
                 if count == 10:
                     print cmd
@@ -161,7 +161,7 @@ class Copy(Workload):
 
                     self.output(cmd)    
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name, flag = '-t -A', username = self.user)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name, flag = '-t -A') #, username = self.user)
                     end_time = datetime.now()
                     self.output(result[0].split('***')[0])
 
@@ -192,18 +192,18 @@ class Copy(Workload):
             cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s;' % (self.database_name, self.user)
             (ok1, output1) = psql.runcmd(cmd = cmd1)
             self.output(cmd1)
-            self.output(output1)
+            self.output('\n'.join(output1))
 
         self.output('-- Complete loading data')      
     
     def clean_up(self):
         command = "rm -rf %s" % (self.fname)
         self.output(command)
-        (status, output) = commands.getstatusoutput(command)
-        if status != 0:
-            print('remove %s error. ' % (self.fname))
-        else:
-            self.output('remove %s successed ' % (self.fname))
+        #(status, output) = commands.getstatusoutput(command)
+        #if status != 0:
+        #    print('remove %s error. ' % (self.fname))
+        #else:
+        #    self.output('remove %s successed ' % (self.fname))
 
 
     def execute(self):

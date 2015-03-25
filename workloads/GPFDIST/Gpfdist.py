@@ -152,7 +152,7 @@ class Gpfdist(Workload):
                         cmd1 = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
                         (ok1, output1) = psql.runcmd(cmd = cmd1)
                         self.output(cmd1)
-                        self.output(output1)
+                        self.output('\n'.join(output1))
                     break
                 if count == 10:
                     print cmd
@@ -182,7 +182,7 @@ class Gpfdist(Workload):
 
                     self.output(cmd)    
                     beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'gpfdist_loading_temp.sql', dbname = self.database_name, flag = '-t -A', username = self.user)
+                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'gpfdist_loading_temp.sql', dbname = self.database_name, flag = '-t -A') #, username = self.user)
                     end_time = datetime.now()
                     self.output(result[0].split('***')[0])
 
@@ -213,7 +213,7 @@ class Gpfdist(Workload):
             cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s;' % (self.database_name, self.user)
             (ok1, output1) = psql.runcmd(cmd = cmd1)
             self.output(cmd1)
-            self.output(output1)
+            self.output('\n'.join(output1))
 
         self.output('-- Complete loading data')      
     

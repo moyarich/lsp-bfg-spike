@@ -70,7 +70,7 @@ class Sri(Workload):
                         cmd1 = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
                         (ok1, output1) = psql.runcmd(cmd = cmd1)
                         self.output(cmd1)
-                        self.output(output1)
+                        self.output('\n'.join(output1))
                     break
                 if count == 10:
                     print cmd
@@ -104,7 +104,7 @@ class Sri(Workload):
             f.write(cmd)
         
         self.output(cmd)    
-        (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'sri_loading_temp.sql', dbname = self.database_name, flag = '-t -A', username = self.user)
+        (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'sri_loading_temp.sql', dbname = self.database_name, flag = '-t -A')
         self.output('\n'.join(result))
         
         niteration = 1
@@ -158,7 +158,7 @@ class Sri(Workload):
             cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s;' % (self.database_name, self.user)
             (ok1, output1) = psql.runcmd(cmd = cmd1)
             self.output(cmd1)
-            self.output(output1)
+            self.output('\n'.join(output1))
 
         self.output('-- Complete loading data')
         
