@@ -93,8 +93,7 @@ class Sri(Workload):
                 partition_query = partition_query.replace(', compresstype=table_compresstype', '')
             else:
                 partition_query = partition_query.replace('table_compresstype', str(self.compression_type))
-
-            if self.compression_level is None:
+            if self.compression_level is None or self.compression_level < 0:
                 partition_query = partition_query.replace(', compresslevel=table_compresslevel', '')
             else:
                 partition_query = partition_query.replace('table_compresslevel', str(self.compression_level))
