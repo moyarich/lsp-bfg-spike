@@ -153,10 +153,10 @@ class RQ:
 
 		print "hawq restart now..."
 		out = commands.getoutput("hawq cluster stop")
-		print out
+		#print out
 		out = commands.getoutput("hawq cluster start")
-		print out
-		#print "hawq restart success!"
+		#print out
+		print "hawq restart success!"
 
 		rqsql = "%s/RQ.sql"%self.report_directory
 		os.system("cp %s %sRQtmp.sql"%(rqsql, self.report_directory))

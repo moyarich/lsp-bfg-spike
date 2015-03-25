@@ -102,6 +102,8 @@ class Sri(Workload):
 
         with open(self.tmp_folder + os.sep + 'sri_loading_temp.sql', 'w') as f:
             f.write(cmd)
+            if self.user != 'gpadmin':
+                f.write('GRANT ALL ON TABLE %s TO %s;' % (table_name, self.user))
         
         self.output(cmd)    
         (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'sri_loading_temp.sql', dbname = self.database_name, flag = '-t -A')
@@ -155,7 +157,7 @@ class Sri(Workload):
             niteration += 1
 
         if self.user != 'gpadmin':
-            cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s;' % (self.database_name, self.user)
+            cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s; REVOKE ALL ON TABLE %s FROM %s;' % (self.database_name, self.user, table_name, self.user)
             (ok1, output1) = psql.runcmd(cmd = cmd1)
             self.output(cmd1)
             self.output('\n'.join(output1))
