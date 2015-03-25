@@ -141,7 +141,7 @@ class Executor(object):
                     continue
 
                 # add one workload into the workloads_instance list
-                if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH', 'STREAMTPCH'):
+                if workload_category not in ('TPCH', 'XMARQ', 'TPCDS', 'COPY', 'SRI', 'GPFDIST', 'RETAILDW', 'RQTPCH'):
                     print 'No appropreciate workload type found for workload %s' % (workload_name)
                 else:
                     user_count = 0
