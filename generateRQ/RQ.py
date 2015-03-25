@@ -333,18 +333,6 @@ class node:
 	if name == 'pg_default':
 		new._memory_limit_cluster = new.listJudge(new._memory_limit_cluster,new.yaml_parser['default']['MEMORY_LIMIT_CLUSTER'])
 		new._core_limit_cluster = new.listJudge(new._core_limit_cluster,new.yaml_parser['default']['CORE_LIMIT_CLUSTER'])
-	elif new._parent == 'pg_root' and name != 'pg_default':
-		#initialize the node according to parent
-		if str(new.yaml_parser['default']['MEMORY_LIMIT_CLUSTER']).find(',') != -1:
-			memoryList = new.yaml_parser['default']['MEMORY_LIMIT_CLUSTER'].split(',')
-			new._memory_limit_cluster = int((100 - int(memoryList[0])) * (percentMem / 100.0))
-		else:
-			new._memory_limit_cluster = int((100 - int(new.yaml_parser['default']['MEMORY_LIMIT_CLUSTER'])) * (percentMem / 100.0))
-		if str(new.yaml_parser['default']['CORE_LIMIT_CLUSTER']).find(',') != -1:
-			coreList = new.yaml_parser['default']['CORE_LIMIT_CLUSTER'].split(',')
-			new._core_limit_cluster = int((100 - int(coreList[0])) * (percentCore / 100.0))
-		else:
-			new._core_limit_cluster = int((100 - int(new.yaml_parser['default']['CORE_LIMIT_CLUSTER'])) * (percentCore / 100.0))
 	else:
 		new._memory_limit_cluster = percentMem
 		new._core_limit_cluster = percentCore
@@ -358,8 +346,14 @@ class node:
     def addToNode(path,curNode,childrenNum,param_name,param_value):
 	global curqueue
 	parentList = []
-	percentSumMem = 100
-	percentSumCore = 100
+	if curNode._name == 'pg_root':
+		with open(path,"r") as yamlfile:
+                	yaml_parser = yaml.load(yamlfile)
+                percentSumMem = 100 - int(yaml_parser['default']['MEMORY_LIMIT_CLUSTER'])
+                percentSumCore = percentSumMem
+	else:
+		percentSumMem = 100
+		percentSumCore = 100
 	for i in range(1,childrenNum+1):
 		if i != childrenNum:
 			percentMem = random.randint(1, percentSumMem-1)
