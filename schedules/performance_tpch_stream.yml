@@ -1,6 +1,4 @@
-workloads_list: tpch_row_200gpn_quicklz1_part_stream
-#, tpch_row_200gpn_quicklz1_nopart_stream
-#, tpch_parquet_200gpn_snappy_nopart_stream
+workloads_list: tpch_row_200gpn_quicklz1_part_stream, tpch_row_200gpn_quicklz1_nopart_stream, tpch_parquet_200gpn_snappy_nopart_stream
 workloads_mode: sequential
 #workloads_mode: concurrent
 
