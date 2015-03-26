@@ -254,6 +254,8 @@ if __name__ == "__main__" :
 		print str(os.getpid()) + ': ', cmd
 		os.system(cmd)
 	#os.system('rm -rf /tmp/monitor_report/*')
+	cmd = 'rm -rf /tmp/monitor_report/%s' % (os.getcwd().split('/')[-1])
+	#os.system(cmd)
 
 	
 	
