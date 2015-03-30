@@ -34,8 +34,8 @@ except ImportError:
 
 
 class Xmarq(Tpch):
-    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user): 
+    def __init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user): 
         # init base common setting such as dbname, load_data, run_workload , niteration etc
-        Tpch.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, user)
+        Tpch.__init__(self, workload_specification, workload_directory, report_directory, report_sql_file, cs_id, tr_id, user)
 
 
