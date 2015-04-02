@@ -258,7 +258,7 @@ if __name__ == '__main__':
 
             for one_tuple in result:
                 msg = str(one_tuple).strip()
-                Report('./report/summary_report.txt' , msg)
+                Report('./report/summary_report_v2.txt' , msg)
 
             sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
             from hst.f_generate_test_report_summary(%d, %d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946 GVA ORCA OFF') where lower(wl_name) not like '%s' order by action_type, tr_id, s_id;" % (start_run_id, tr_id, '%' + 'rwithd' + '%')
@@ -268,7 +268,7 @@ if __name__ == '__main__':
 
             for one_tuple in result:
                 msg = str(one_tuple).strip()
-                Report('./report/summary_report_baseline1x.txt' , msg)
+                Report('./report/summary_report_v1.txt' , msg)
 
         # add resource parameter and run info into backend database
         if options.param is not None:
