@@ -281,7 +281,7 @@ if __name__ == '__main__':
         # generate monitor report
         if monitor_interval > 0 and report_num > 0:
             start_run_id = int(tr_id) - int(report_num) + 1
-            sql = 'select hst.f_generate_monitor_report(%d, %d, false);' % (start_run_id, tr_id)
+            sql = 'select hst.f_generate_monitor_report(%d, %d, true);' % (start_run_id, tr_id)
             print sql
             result = check.get_result_by_sql(sql = sql)
             print 'generate monitor report: ', result
