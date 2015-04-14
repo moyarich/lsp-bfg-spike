@@ -1,4 +1,4 @@
--------------------
+mx------------------
 Schema Creation
 ---------------------
 DROP TABLE IF EXISTS test_result_info;
@@ -244,6 +244,9 @@ BEGIN
                               MAX(CASE WHEN qde.hostname = 'gva-w15' THEN qde.rss ELSE 0 END) as w15, 
                               MAX(CASE WHEN qde.hostname = 'gva-w16' THEN qde.rss ELSE 0 END) as w16, 
                               min(qde.begintime), 
+                              max(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.rss ELSE 0 END) as maxrss,
+                            sum(CASE WHEN qde.hostname != 'gva-mst1' THEN qde.rss ELSE 0 END)/16 as avgrss,
+                            min(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.rss ELSE 9999999 END) as minrss,
                                32000
 	             FROM qde_mem_cpu_per_node as qde
                  WHERE qde.timeslot = v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time 
@@ -269,7 +272,10 @@ BEGIN
                                MAX(CASE WHEN qde.hostname = 'gva-w14' THEN qde.rss ELSE 0 END) as w14, 
                               MAX(CASE WHEN qde.hostname = 'gva-w15' THEN qde.rss ELSE 0 END) as w15, 
                               MAX(CASE WHEN qde.hostname = 'gva-w16' THEN qde.rss ELSE 0 END) as w16, 
-                              min(qde.begintime), 
+                              min(qde.begintime),
+                            max(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.rss ELSE 0 END) as maxrss,
+                            sum(CASE WHEN qde.hostname != 'gva-mst1' THEN qde.rss ELSE 0 END)/16 as avgrss,
+                            min(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.rss ELSE 9999999 END) as minrss ,
                                0
 	         FROM qde_mem_cpu_per_node as qde
 	         WHERE qde.timeslot != v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time 
@@ -297,6 +303,9 @@ BEGIN
                               MAX(CASE WHEN qde.hostname = 'gva-w15' THEN qde.pcpu ELSE 0 END) as w15, 
                               MAX(CASE WHEN qde.hostname = 'gva-w16' THEN qde.pcpu ELSE 0 END) as w16, 
                               min(qde.begintime),
+                            max(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.pcpu ELSE 0 END) as maxcpu,
+                            sum(CASE WHEN qde.hostname != 'gva-mst1' THEN qde.pcpu ELSE 0 END)/16 as avgcpu,
+                            min(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.pcpu ELSE 9999999 END) as mincpu,
                               32000
 	         FROM qde_mem_cpu_per_node as qde
 	         WHERE qde.timeslot = v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
@@ -323,6 +332,9 @@ BEGIN
                               MAX(CASE WHEN qde.hostname = 'gva-w15' THEN qde.pcpu ELSE 0 END) as w15, 
                               MAX(CASE WHEN qde.hostname = 'gva-w16' THEN qde.pcpu ELSE 0 END) as w16, 
                               min(qde.begintime),
+                            max(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.pcpu ELSE 0 END) as maxcpu,
+                            sum(CASE WHEN qde.hostname != 'gva-mst1' THEN qde.pcpu ELSE 0 END)/16 as avgcpu,
+                            min(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.pcpu ELSE 9999999 END) as mincpu ,
                               0
 	         FROM qde_mem_cpu_per_node as qde
 	         WHERE qde.timeslot != v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
@@ -348,6 +360,9 @@ BEGIN
                               MAX(CASE WHEN qde.hostname = 'gva-w15' THEN qde.segnum ELSE 0 END) as w15,
                               MAX(CASE WHEN qde.hostname = 'gva-w16' THEN qde.segnum ELSE 0 END) as w16,
                               min(qde.begintime),
+                            max(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.segnum ELSE 0 END) as maxsegnum,
+                            sum(CASE WHEN qde.hostname != 'gva-mst1' THEN qde.segnum ELSE 0 END)/16 as avgsegnum,
+                            min(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.segnum ELSE 9999999 END) as minsegnum,
                                32000
                  FROM qde_mem_cpu_per_node as qde
                  WHERE qde.timeslot = v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
@@ -374,12 +389,14 @@ BEGIN
                               MAX(CASE WHEN qde.hostname = 'gva-w15' THEN qde.segnum ELSE 0 END) as w15,
                               MAX(CASE WHEN qde.hostname = 'gva-w16' THEN qde.segnum ELSE 0 END) as w16,
                               min(qde.begintime),
+                            max(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.segnum ELSE 0 END) as maxsegnum,
+                            sum(CASE WHEN qde.hostname != 'gva-mst1' THEN qde.segnum ELSE 0 END)/16 as avgsegnum,
+                            min(cASE WHEN qde.hostname != 'gva-mst1' THEN qde.segnum ELSE 9999999 END) as minsegnum,
                                0
              FROM qde_mem_cpu_per_node as qde
              WHERE qde.timeslot != v_timebound and qde.begintime BETWEEN v_start_time AND v_end_time
                  GROUP BY qde.timeslot;
-
-    v_i = v_i + 1;
+            v_i = v_i + 1;
       END LOOP;
       CLOSE qe_cur;
       RETURN v_i;
