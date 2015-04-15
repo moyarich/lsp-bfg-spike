@@ -1,4 +1,4 @@
-workloads_list: tpcds_parquet_3000g_snappy_nopart, tpcds_row_3000g_quicklz1_nopart, tpcds_column_3000g_quicklz1_nopart
+workloads_list: tpcds_parquet_1600g_snappy_nopart, tpcds_row_1600g_quicklz1_nopart, tpcds_column_1600g_quicklz1_nopart
 
 workloads_mode: sequential
 
@@ -6,12 +6,12 @@ cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
 
-    - workload_name: tpcds_parquet_3000g_snappy_nopart
-      database_name: tpcds_parquet_3000g_snappy_nopart
+    - workload_name: tpcds_parquet_1600g_snappy_nopart
+      database_name: tpcds_parquet_1600g_snappy_nopart
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 3000
+          data_volume_size: 1600
           append_only: true
           orientation: PARQUET
           row_group_size: 8388608
@@ -23,12 +23,12 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpcds_row_3000g_quicklz1_nopart
-      database_name: tpcds_row_3000g_quicklz1_nopart
+    - workload_name: tpcds_row_1600g_quicklz1_nopart
+      database_name: tpcds_row_1600g_quicklz1_nopart
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 3000
+          data_volume_size: 1600
           append_only: true
           orientation: ROW
           compression_type: QUICKLZ
@@ -39,12 +39,12 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpcds_column_3000g_quicklz1_nopart
-      database_name: tpcds_column_3000g_quicklz1_nopart
+    - workload_name: tpcds_column_1600g_quicklz1_nopart
+      database_name: tpcds_column_1600g_quicklz1_nopart
       user: gpadmin
       table_setting:
           data_volume_type: total
-          data_volume_size: 3000
+          data_volume_size: 1600
           append_only: true
           orientation: COLUMN
           compression_type: QUICKLZ
