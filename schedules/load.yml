@@ -1,0 +1,35 @@
+workloads_list: sri_ao_nopart, copy
+
+workloads_mode: SEQUENTIAL
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+
+    - workload_name: sri_ao_part
+      database_name: gpsqltest_sri_ao_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 1000
+
+    - workload_name: copy
+      database_name: gpsqltest_copy
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 1000
