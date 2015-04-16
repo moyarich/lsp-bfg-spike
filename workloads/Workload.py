@@ -245,6 +245,11 @@ class Workload(object):
         assert self.run_workload_flag in [True, False]
 
         try:
+            self.num_insert_pertran = int(str(workload_specification['num_insert_pertran']).strip())
+        except Exception, e:
+            self.num_insert_pertran = 10
+
+        try:
             self.num_iteration = int(str(workload_specification['num_iteration']).strip())
         except Exception, e:
             self.num_iteration = 1
@@ -403,7 +408,35 @@ class Workload(object):
     
     def load_data(self):
         '''Load data for workload'''
-        pass
+        if self.load_data_flag:
+            cmd = 'drop database if exists %s;' % (self.database_name)
+            (ok, output) = psql.runcmd(cmd = cmd)
+            if not ok:
+                print cmd
+                print '\n'.join(output)
+                sys.exit(2)
+            self.output(cmd)
+            self.output('\n'.join(output))
+            count = 0
+            while(True):
+                cmd = 'create database %s;' % (self.database_name)
+                (ok, output) = psql.runcmd(cmd = cmd)
+                if not ok:
+                    count = count + 1
+                    time.sleep(1)
+                else:
+                    self.output(cmd)
+                    self.output('\n'.join(output))
+                    if self.user != 'gpadmin':
+                        cmd1 = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
+                        (ok1, output1) = psql.runcmd(cmd = cmd1)
+                        self.output(cmd1)
+                        self.output('\n'.join(output1))
+                    break
+                if count == 10:
+                    print cmd
+                    print '\n'.join(output)
+                    sys.exit(2)
 
     def run_one_query(self, iteration, stream, qf_name, query):
         con_id = -1

@@ -1,10 +1,48 @@
-workloads_list: sri_ao_nopart, copy
+workloads_list: sri_ao_nopart, sri_ao_part, sri_parquet_nopart, sri_parquet_part, copy_ao_nopart, copy_ao_part, copy_parquet_nopart, copy_parquet_part
+
 
 workloads_mode: SEQUENTIAL
 
 cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
+
+    - workload_name: sri_ao_nopart
+      database_name: gpsqltest_sri_ao_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+      num_concurrency: 2
+      num_insert_pertran: 10
+
+    - workload_name: sri_parquet_part
+      database_name: gpsqltest_sri_parquet_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+      num_concurrency: 2
+      num_insert_pertran: 10
 
     - workload_name: sri_ao_part
       database_name: gpsqltest_sri_ao_part
@@ -16,9 +54,111 @@ workloads_content:
           orientation: ROW
           compression_type: QuickLZ
           compression_level: 1
+          partitions: 128
       load_data_flag: true
+      run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_iteration: 1000
+      num_iteration: 2
+      num_concurrency: 2
+      num_insert_pertran: 10
+
+
+    - workload_name: sri_parquet_nopart
+      database_name: gpsqltest_sri_parquet_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+          compression_level: 1
+          partitions: 0
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+      num_concurrency: 2
+      num_insert_pertran: 10
+
+    - workload_name: copy_ao_nopart
+      database_name: gpsqltest_copy_ao_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+      num_concurrency: 2
+      
+
+    - workload_name: copy_parquet_part
+      database_name: gpsqltest_copy_parquet_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+      num_concurrency: 2
+      
+
+    - workload_name: copy_ao_part
+      database_name: gpsqltest_copy_ao_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+          partitions: 128
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+      num_concurrency: 2
+      
+
+
+    - workload_name: copy_parquet_nopart
+      database_name: gpsqltest_copy_parquet_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+          compression_level: 1
+          partitions: 0
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 2
+      num_concurrency: 2
+      
+
 
     - workload_name: copy
       database_name: gpsqltest_copy

@@ -101,7 +101,6 @@ class Copy(Workload):
             print("generate data file %s error. " % (self.fname))
             sys.exit(2)
         self.output('generate data file successed. ')
-
         # get the data dir
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
@@ -139,27 +138,10 @@ class Copy(Workload):
                     print '\n'.join(output)
                     sys.exit(2)
         
-        tables = ['lineitem_copy']
-        niteration = 1
-        while niteration <= self.num_iteration:
-            self.output('-- Start iteration %d' % (niteration))
-            for table_name in tables:
-                con_id = -1
-                if self.load_data_flag or self.run_workload_flag:
-                    with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
-                        cmd = f.read()
-                    cmd = self.replace_sql(sql = cmd, table_name = table_name, num = niteration)
-
-                    # get con_id use this query
-                    unique_string1 = '%s_%s_' % (self.workload_name, self.user) + table_name
-                    unique_string2 = '%' + unique_string1 + '%'
-                    get_con_id_sql = "select '***', '%s', sess_id from pg_stat_activity where current_query like '%s';" % (unique_string1, unique_string2)
-                    
-                    with open(self.tmp_folder + os.sep + 'copy_loading_temp.sql', 'w') as f:
-                        f.write(cmd)
-                        f.write(get_con_id_sql)
-
-                    self.output(cmd)    
+        table_name = 'lineitem_copy'
+        with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
+               cmd = f.read()
+               cmd = self.replace_sql(sql = cmd, table_name = table_name)
                     beg_time = datetime.now()
                     (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name, flag = '-t -A') #, username = self.user)
                     end_time = datetime.now()
@@ -199,23 +181,14 @@ class Copy(Workload):
     def clean_up(self):
         command = "rm -rf %s" % (self.fname)
         self.output(command)
-        #(status, output) = commands.getstatusoutput(command)
-        #if status != 0:
-        #    print('remove %s error. ' % (self.fname))
-        #else:
-        #    self.output('remove %s successed ' % (self.fname))
 
+    def vacuum_analyze(self):
+        pass
 
-    def execute(self):
-        self.output('-- Start running workload %s' % (self.workload_name))
+    def grand_revoke_privileges(self, filename = ''):
+        pass
 
-        # setup
-        self.setup()
-
-        # load data
-        self.load_data()
-
-        # clean up 
-        self.clean_up()
-        
-        self.output('-- Complete running workload %s' % (self.workload_name))
+    def run_one_query(self, iteration, stream, qf_name, query):
+        query = query.replace('FNAME', self.fname)           
+        super(Sri)run_one_query(self, iteration, stream, qf_name, newquery)
+~        

@@ -1,4 +1,4 @@
-workloads_list: tpcds_parquet_1600g_snappy_nopart, tpcds_row_1600g_quicklz1_nopart, tpcds_column_1600g_quicklz1_nopart
+workloads_list: tpcds_row_1600g_quicklz1_nopart, tpcds_parquet_1600g_snappy_nopart
 
 workloads_mode: sequential
 
@@ -39,18 +39,3 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpcds_column_1600g_quicklz1_nopart
-      database_name: tpcds_column_1600g_quicklz1_nopart
-      user: gpadmin
-      table_setting:
-          data_volume_type: total
-          data_volume_size: 1600
-          append_only: true
-          orientation: COLUMN
-          compression_type: QUICKLZ
-          compression_level: 1
-      load_data_flag: true
-      run_workload_flag: true
-      run_workload_mode: SEQUENTIAL
-      num_concurrency: 1
-      num_iteration: 1
