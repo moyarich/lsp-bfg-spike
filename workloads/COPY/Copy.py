@@ -62,7 +62,7 @@ class Copy(Workload):
         return part 
         
 
-    def replace_sql(self, sql, table_name, num):
+    def replace_sql(self, sql, table_name):
         if gl.suffix:
             sql = sql.replace('TABLESUFFIX', self.tbl_suffix)
         else:
@@ -72,8 +72,6 @@ class Copy(Workload):
             sql = sql.replace('SQLSUFFIX', self.sql_suffix)
         else:
             sql = sql.replace('WITH (SQLSUFFIX)', self.sql_suffix)
-            
-        sql = sql.replace('NUMBER', str(num))
         sql = sql.replace('FNAME', self.fname)
 
         if self.distributed_randomly:
@@ -84,14 +82,12 @@ class Copy(Workload):
         if self.partitions == 0 or self.partitions is None:
             sql = sql.replace('PARTITIONS', '')
         else:
-            part_suffix = self.get_partition_suffix(num_partitions = self.partitions, table_name = table_name + '_' + str(num))
+            part_suffix = self.get_partition_suffix(self.partitions, table_name)
             sql = sql.replace('PARTITIONS', part_suffix)
 
         return sql
 
     def load_data(self):
-        self.output('-- Start loading data')
-        
         self.output('-- generate data file: %s' % (self.fname))
         cmd = "dbgen -b %s -s 1 -T L > %s " % (self.dss, self.fname)
         (status, output) = commands.getstatusoutput(cmd)
@@ -101,81 +97,30 @@ class Copy(Workload):
             print("generate data file %s error. " % (self.fname))
             sys.exit(2)
         self.output('generate data file successed. ')
+        
+        if self.load_data_flag == False:
+            return
+        self.output('-- Start loading data')
+        super(Copy,self).load_data()
+
         # get the data dir
         data_directory = self.workload_directory + os.sep + 'data'
         if not os.path.exists(data_directory):
             self.output('ERROR: Cannot find DDL to create tables for TPC-H: %s does not exists' % (data_directory))
             return
-
-        if self.load_data_flag:
-            cmd = 'drop database if exists %s;' % (self.database_name)
-            (ok, output) = psql.runcmd(cmd = cmd)
-            if not ok:
-                print cmd
-                print '\n'.join(output)
-                sys.exit(2)
-            self.output(cmd)
-            self.output('\n'.join(output))
-
-            count = 0
-            while(True):
-                cmd = 'create database %s;' % (self.database_name)
-                (ok, output) = psql.runcmd(cmd = cmd)
-                if not ok:
-                    count = count + 1
-                    time.sleep(1)
-                else:
-                    self.output(cmd)
-                    self.output('\n'.join(output))
-                    if self.user != 'gpadmin':
-                        cmd1 = 'GRANT ALL ON DATABASE %s TO %s;' % (self.database_name, self.user)
-                        (ok1, output1) = psql.runcmd(cmd = cmd1)
-                        self.output(cmd1)
-                        self.output('\n'.join(output1))
-                    break
-                if count == 10:
-                    print cmd
-                    print '\n'.join(output)
-                    sys.exit(2)
         
         table_name = 'lineitem_copy'
         with open(data_directory + os.sep + table_name + '.sql', 'r') as f:
                cmd = f.read()
                cmd = self.replace_sql(sql = cmd, table_name = table_name)
-                    beg_time = datetime.now()
-                    (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_loading_temp.sql', dbname = self.database_name, flag = '-t -A') #, username = self.user)
-                    end_time = datetime.now()
-                    self.output(result[0].split('***')[0])
 
-                    if ok and str(result).find('ERROR') == -1 and str(result).find('FATAL') == -1 and str(result).find('COPY ') != -1: 
-                        status = 'SUCCESS'
-                        con_id = int(result[0].split('***')[1].split('|')[2].strip()) 
-                    else:
-                        status = 'ERROR'
-                
-                else:
-                    status = 'SKIP'
-                    beg_time = datetime.now()
-                    end_time = beg_time
-                    
-                duration = end_time - beg_time
-                duration = duration.days*24*3600*1000 + duration.seconds*1000 + duration.microseconds /1000
-                beg_time = str(beg_time).split('.')[0]
-                end_time = str(end_time).split('.')[0]
-                
-                self.output('   Loading=%s   Iteration=%d   Stream=%d   Status=%s   Time=%d' % (table_name, niteration, 1, status, duration))
-                self.report_sql("INSERT INTO hst.test_result VALUES (%d, %d, %d, 'Loading', '%s', %d, 1, '%s', '%s', '%s', %d, NULL, NULL, NULL, %d);" 
-                    % (self.tr_id, self.s_id, con_id, table_name, niteration, status, beg_time, end_time, duration, self.adj_s_id))
-
-            self.output('-- Complete iteration %d' % (niteration))
-            niteration += 1
-
-        if self.user != 'gpadmin':
-            cmd1 = 'REVOKE ALL ON DATABASE %s FROM %s;' % (self.database_name, self.user)
-            (ok1, output1) = psql.runcmd(cmd = cmd1)
-            self.output(cmd1)
-            self.output('\n'.join(output1))
-
+        with open(self.tmp_folder + os.sep + 'copy_create.sql', 'w') as f:
+            f.write(cmd)
+            if self.user != 'gpadmin':
+                f.write('GRANT ALL ON TABLE %s TO %s;' % (self.table_name, self.user))
+        self.output(cmd)
+        (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'copy_create.sql', dbname = self.database_name, flag = '-t -A')
+        self.output('\n'.join(result))
         self.output('-- Complete loading data')      
     
     def clean_up(self):
@@ -190,5 +135,4 @@ class Copy(Workload):
 
     def run_one_query(self, iteration, stream, qf_name, query):
         query = query.replace('FNAME', self.fname)           
-        super(Sri)run_one_query(self, iteration, stream, qf_name, newquery)
-~        
+        super(Copy,self).run_one_query(iteration, stream, qf_name, query)
