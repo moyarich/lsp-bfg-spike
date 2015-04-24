@@ -99,10 +99,7 @@ class Executor(object):
                     os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
                     rq_instance = RQ(path = rq_path, report_directory = self.report_directory + os.sep + 'rqfile_%d/' % (self.rq_path_count), param_name = p_name, param_value = p_value)
                     # generate resource queue in two modes, inhert from pg_default or other
-                    if self.rq_generate_mode == 'default':
-                        rq_instance.generateRqForDefault()
-                    else:
-                        rq_instance.generateRq()
+                    rq_instance.generateRq()
                     
                     self.rq_instance.append(rq_instance)
                     self.rq_path_count += 1

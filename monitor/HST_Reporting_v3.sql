@@ -117,6 +117,7 @@ CREATE TABLE hst.test_result
 (
     tr_id		INT,
     s_id		INT,
+    con_id      INT,
     action_type	VARCHAR(128),
     action_target	VARCHAR(128),
     iteration		INT,
@@ -127,7 +128,8 @@ CREATE TABLE hst.test_result
     duration		INT,
     output		VARCHAR(10240),
     plan		VARCHAR(10240),
-    resource_usage	VARCHAR(10240)
+    resource_usage	VARCHAR(10240),
+    adj_s_id     int
 );
 
 

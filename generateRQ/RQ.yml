@@ -1,12 +1,20 @@
-height: 2
-width: 2
-nodeNum: 4
+height: 4
+#max_width it means the max degree of the tree
+max_width: 2
+fix_width: True
+#child_ratio even,random, customize
+child_ratio: 'even'
+#it is only when the child ratio is customize
+child_ratio_value: '8,1,1'
 parameter: 
-
 default:
         #percentage
         MEMORY_LIMIT_CLUSTER: 20
         CORE_LIMIT_CLUSTER: 20
+        ACTIVE_STATEMENTS: 4
+        RESOURCE_UPPER_FACTOR: 2
+        SEGMENT_RESOURCE_QUOTA: 'core:0.5'
+        ALLOCATION_POLICY: 'even'
 leaf:
         RESOURCE_UPPER_FACTOR: 2
         ACTIVE_STATEMENTS: 4
