@@ -15,6 +15,6 @@
 
    if [ "$2" = "HAWQ" ] || [ "$2" = "BOTH" ]; then
          for hawqnode in $hostlist; do
-                ssh $hawqnode "source /data1/pulse-agent-data/HAWQ-2.X-SystemTest-weekly/product/hawq-2.0.0.0/greenplum_path.sh;hawq segment $option "
+                ssh $hawqnode "source /data/pulse-agent-data/HAWQ-2.X-SystemTest/product/hawq-2.0.0.0/greenplum_path.sh;hawq segment $option "
           done
     fi
