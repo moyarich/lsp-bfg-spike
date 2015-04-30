@@ -33,11 +33,6 @@ class ConcurrentExecutor(Executor):
         while(1):
             # init workload and setup directories before execution
             result = self.setup()
-            if result == 'stop':
-                break
-            elif result == 'next':
-                continue
-
             # routine of workload running
             for wi in self.workloads_instance:
                 p = Process(target=wi.execute)

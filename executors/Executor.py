@@ -71,19 +71,12 @@ class Executor(object):
             print "workloads and users map mode must in ['loop', 'scan']"
             sys.exit(2)
 
-        self.rq_generate_mode = None
-        if 'rq_generate_mode' in schedule_parser.keys():
-            self.rq_generate_mode = schedule_parser['rq_generate_mode'].strip()
 
         # create report directory for schedule
         self.report_directory = report_directory + os.sep + schedule_name
         os.system('mkdir -p %s' % (self.report_directory))
 
         self.rq_instance = None
-        self.rq_path_num = 1
-        self.rq_path_count = 0
-        self.adjust_factor_count = 1
-
         if rq_param == '':
             p_name = ''
             p_value = ''
@@ -92,19 +85,10 @@ class Executor(object):
             p_value = rq_param.split(':')[1].strip()
 
         if 'rq_path_list' in schedule_parser.keys():
-            if schedule_parser['rq_path_list'] is not None:
-                self.rq_instance = []
-                for rq_path in schedule_parser['rq_path_list'].split(','):
-                    rq_path = os.getcwd() + '/generateRQ/' + rq_path.strip()
-                    os.system('mkdir -p %s' % (self.report_directory + os.sep + 'rqfile_%d' % (self.rq_path_count)))
-                    rq_instance = RQ(path = rq_path, report_directory = self.report_directory + os.sep + 'rqfile_%d/' % (self.rq_path_count), param_name = p_name, param_value = p_value)
-                    # generate resource queue in two modes, inhert from pg_default or other
-                    rq_instance.generateRq()
-                    
-                    self.rq_instance.append(rq_instance)
-                    self.rq_path_count += 1
-                self.rq_path_num = len(self.rq_instance)
-                self.rq_path_count = 0
+            rq_path = os.getcwd() + '/generateRQ/' + schedule_parser['rq_path_list'].strip()
+            self.rq_instance = RQ(rq_path, self.report_directory, p_name, p_value)
+            # generate resource queue in two modes, inhert from pg_default or other
+            rq_instance.generateRq()
         
         self.report_sql_file = report_sql_file
         self.cs_id = cs_id
@@ -205,26 +189,14 @@ class Executor(object):
     def setup(self):
         self.workloads_instance = []
         user_list = None
-        if self.rq_path_count == self.rq_path_num:
-            return 'stop'
-
+        report_directory = self.report_directory
         if self.rq_instance is None:
             user_list = None
-            self.rq_path_count += 1
-            report_directory = self.report_directory
         else:
-            report_directory = self.report_directory + os.sep + 'rqfile_%d/factor_%d' % (self.rq_path_count, self.adjust_factor_count)
-            user_list = self.rq_instance[self.rq_path_count].runRq()
-            if len(user_list) == 0:
-                self.rq_path_count += 1
-                self.adjust_factor_count = 1
-                return 'next'
-            else:
-                self.adjust_factor_count += 1
+            user_list = self.rq_instance.runRq()
 
         # instantiate and prepare workloads based on workloads content
         self.map_user_workload(user_list = user_list, report_directory = report_directory, mode = self.map_mode)
-        return 'start'
                 
     def cleanup(self):
         pass

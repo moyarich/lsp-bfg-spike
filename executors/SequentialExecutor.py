@@ -36,22 +36,15 @@ class SequentialExecutor(Executor):
 
     def execute(self):
         # instantiate and prepare workloads, prepare report directory
-        while(1):
-            result = self.setup()
-            if result == 'stop':
-                break
-            elif result == 'next':
-                continue
-                
-            # execute workloads sequentially,such as Tpch,Xmarq
-            for wi in self.workloads_instance:
-                p = Process(target=wi.execute)
-                p.start()
-                while True:
-                    if p.is_alive():
-                        self.handle_ongoing_workload(p)
-                        time.sleep(5)
-                    else:
-                        break
-            # clean up environment after all workload are finished
-            self.cleanup()
+        # execute workloads sequentially,such as Tpch,Xmarq
+        for wi in self.workloads_instance:
+            p = Process(target=wi.execute)
+            p.start()
+            while True:
+                if p.is_alive():
+                    self.handle_ongoing_workload(p)
+                    time.sleep(5)
+                else:
+                    break
+        # clean up environment after all workload are finished
+        self.cleanup()

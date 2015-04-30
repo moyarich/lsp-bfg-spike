@@ -50,9 +50,9 @@ class ParameterParser:
         self.quenelist = []
     
     def closefile(self):
-        self.userfile.write(self.rolelist[0])
-        for i in range(1, len(self.rolelist) - 1):
-            self.userfile.write(',')
+        for i in range(0, len(self.rolelist) ):
+            if i <> 0:
+                self.userfile.write(',')
             self.userfile.write(self.rolelist[i])
         
         for i in range(0, len(self.quenelist)):

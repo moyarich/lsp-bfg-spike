@@ -24,7 +24,7 @@
                 ssh $namenode sudo -u hdfs /usr/phd/current/hadoop-client/sbin/hadoop-daemon.sh  $option  namenode
           done
          if  [ $1 = 'start' ] ; then
-             ssh $namenode sudo -u hdfs sudo -u hdfs /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -safemode leave
+             ssh $namenode sudo -u hdfs /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -safemode leave
          fi
     fi
 
