@@ -88,7 +88,7 @@ class Executor(object):
             rq_path = os.getcwd() + '/generateRQ/' + schedule_parser['rq_path_list'].strip()
             self.rq_instance = RQ(rq_path, self.report_directory, p_name, p_value)
             # generate resource queue in two modes, inhert from pg_default or other
-            rq_instance.generateRq()
+            self.rq_instance.generateRq()
         
         self.report_sql_file = report_sql_file
         self.cs_id = cs_id
@@ -169,14 +169,14 @@ class Executor(object):
                             if user_count > 0 and 'db_reuse' in workload_specification.keys() and workload_specification['db_reuse']:
                                 workload_specification['load_data_flag'] = False
                             #print workload_specification
-                            user = user.keys()[0].strip()
+                            user = user.strip()
                             wl_instance = workload_category.lower().capitalize() + \
                             '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                             self.workloads_instance.append(eval(wl_instance))
                             user_count += 1
                             #print workload_name, user
                     elif mode == 'scan':
-                        user = user_list[scan_user_count].keys()[0].strip()
+                        user = user_list[scan_user_count].strip()
                         wl_instance = workload_category.lower().capitalize() + \
                         '(workload_specification, workload_directory, report_directory, self.report_sql_file, self.cs_id, self.tr_id, user)'
                         self.workloads_instance.append(eval(wl_instance))

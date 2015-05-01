@@ -30,30 +30,29 @@ class ConcurrentExecutor(Executor):
         pass
 
     def execute(self):
-        while(1):
-            # init workload and setup directories before execution
-            result = self.setup()
-            # routine of workload running
-            for wi in self.workloads_instance:
-                p = Process(target=wi.execute)
-                self.AllProcess.append(p)
-                p.start() 
+        # init workload and setup directories before execution
+        result = self.setup()
+        # routine of workload running
+        for wi in self.workloads_instance:
+            p = Process(target=wi.execute)
+            self.AllProcess.append(p)
+            p.start() 
      
-            self.should_stop = False
-            while True and not self.should_stop:
-                for process in self.AllProcess[:]:
-                    process.join(timeout = 1)
-                    if process.is_alive():
-                        self.handle_workload_not_done(process)
-                        continue
-                    else:
-                        self.handle_workload_done(process)
-                        self.AllProcess.remove(process)
-                    
-                if len(self.AllProcess) == 0:
-                    self.should_stop = True
+        self.should_stop = False
+        while True and not self.should_stop:
+            for process in self.AllProcess[:]:
+                process.join(timeout = 1)
+                if process.is_alive():
+                   self.handle_workload_not_done(process)
+                   continue
                 else:
-                    time.sleep(5)
+                   self.handle_workload_done(process)
+                   self.AllProcess.remove(process)
+                    
+            if len(self.AllProcess) == 0:
+                self.should_stop = True
+            else:
+                time.sleep(5)
 
-            # clean up after execution 
-            self.cleanup()
+        # clean up after execution 
+        self.cleanup()

@@ -37,6 +37,7 @@ class SequentialExecutor(Executor):
     def execute(self):
         # instantiate and prepare workloads, prepare report directory
         # execute workloads sequentially,such as Tpch,Xmarq
+        self.setup()
         for wi in self.workloads_instance:
             p = Process(target=wi.execute)
             p.start()

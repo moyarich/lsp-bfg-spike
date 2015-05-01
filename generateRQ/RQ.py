@@ -187,7 +187,19 @@ class RQ:
             print "    this level node is %d" %len(parentlist) 
             current_height += 1
         self.parameters.closefile()
-    
+
+    def __execute_sql_cmd(self,sqlstr):
+       print "execute sql is %s " %sqlstr
+       if len(sqlstr) == 0:
+           return ''
+       result = commands.getoutput('psql -d postgres -q -t -c "%s"'%sqlstr)
+       print "execute result is %s " %result
+       if str(result).find('ERROR') != -1 or str(result).find('FATAL') != -1 or str(result).find('PANIC') != -1:
+           print "Drop Resource Quene/User fail!"
+           print result
+           sys.exit(2)
+       return result
+     
     def dropRole(self):
         print "Note: We will remove all user and resource quene!!!!!!!!!"
         dropuser = "select  usename  from pg_user where usesuper is false;"
@@ -196,17 +208,18 @@ class RQ:
             user = user.lstrip(' ').rstrip(' ')
             if len(user) > 0 :
                 self.dropuserlist.append(user)
-        dropstr = "select 'drop role ' || usename || ';' from pg_user where usesuper is false union select 'drop resource queue ' || rsqname || ';' from pg_resqueue where rsqname not in ('pg_root', 'pg_default') order by 1 desc;"
-        dropsql = commands.getoutput('psql -d postgres -q -t -c "%s"' %dropstr)
-        if (len(dropsql) > 0):
-            print "drop SQL will be %s" %dropsql
-            dropresult = commands.getoutput('psql -d postgres -q -t -c "%s"'%dropsql)
-            if str(dropresult).find('ERROR') == -1 and str(dropresult).find('FATAL') == -1 and str(dropresult).find('PANIC') == -1:
-                print "Drop Resource Queue and role success!"
-            else:
-                print "Drop Resource Queue fail!"
-                print dropresult
-                sys.exit(2)
+        dropstr = "select 'drop role ' || usename || ';' from pg_user where usesuper is false"     
+
+        dropsql=self.__execute_sql_cmd(dropstr)
+        if dropsql != '':
+            self.__execute_sql_cmd(dropsql)
+        while True:
+            dropstr = "select 'drop resource queue ' || rsqname || ';' from pg_resqueue where rsqname not in ('pg_root', 'pg_default') and rsq_status != 'branch'"
+            dropsql = commands.getoutput('psql -d postgres -q -t -c "%s"' %dropstr)
+            print "drop quene  %s" %dropsql
+            if len(dropsql) == 0 or i > 10:
+                break
+            self.__execute_sql_cmd(dropsql)
 
     def runRq(self):      
         self.dropRole()
@@ -257,6 +270,6 @@ class RQ:
 
 if __name__ == '__main__':
     rq = RQ()
-    rq.generateRq()
-    #rq.dropRole()
-    rq.runRq()
+    #rq.generateRq()
+    rq.dropRole()
+    #rq.runRq()
