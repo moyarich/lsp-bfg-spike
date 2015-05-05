@@ -1,0 +1,70 @@
+workloads_list: tpch_row_10gpn_nocomp_nopart,tpch_parquet_10gpn_nocomp_nopart_stream,sri_ao_nopart
+#, tpch_parquet_10gpn_nocomp_part, tpch_row_10gpn_nocomp_nopart_random, tpch_parquet_10gpn_nocomp_part_random
+workloads_mode: sequential
+#CONCURRENT
+#sequential
+
+#rq_path_list: RQ.yml #,RQ1.yml,RQ2.yml
+#rq_generate_mode: default
+#workloads_user_map: loop
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+
+    - workload_name: tpch_row_10gpn_nocomp_nopart
+      database_name: tpch_row_10gpn_nocomp_nopart_gpadmin
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          partitions: 0
+          distributed_randomly: false
+          seg_num: 4
+      load_data_flag: true
+      run_workload_flag: false
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_10gpn_nocomp_nopart_stream
+      database_name: tpch_parquet_10gpn_nocomp_nopart_gpadmin
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 1
+          append_only: true
+          orientation: PARQUET
+          partitions: 0
+          row_group_size: 8388608
+          page_size: 1048576
+          distributed_randomly: false
+          seg_num: 4
+      load_data_flag: true
+      run_workload_flag: false
+      run_workload_mode: SEQUENTIAL
+      stream_mode: true
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: sri_ao_nopart
+      database_name: gpsqltest_sri_ao_nopart
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: false
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 1
+      num_concurrency: 1
+      num_insert_pertran: 1

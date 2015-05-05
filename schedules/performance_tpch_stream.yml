@@ -24,7 +24,7 @@ workloads_content:
       run_workload_mode: SEQUENTIAL
       stream_mode: true
       num_concurrency: 6
-      num_iteration: 10
+      num_iteration: 5
 
     - workload_name: tpch_row_200gpn_quicklz1_nopart_stream
       database_name: tpch_row_200gpn_quicklz1_nopart
@@ -44,7 +44,7 @@ workloads_content:
       run_workload_mode: SEQUENTIAL
       stream_mode: true
       num_concurrency: 6
-      num_iteration: 10
+      num_iteration: 5
 
     - workload_name: tpch_parquet_200gpn_snappy_nopart_stream
       database_name: tpch_parquet_200gpn_snappy_nopart
@@ -65,4 +65,4 @@ workloads_content:
       run_workload_mode: SEQUENTIAL
       stream_mode: true
       num_concurrency: 6
-      num_iteration: 10
+      num_iteration: 5

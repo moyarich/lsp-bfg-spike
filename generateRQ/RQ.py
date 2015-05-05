@@ -189,11 +189,9 @@ class RQ:
         self.parameters.closefile()
 
     def __execute_sql_cmd(self,sqlstr):
-       print "execute sql is %s " %sqlstr
        if len(sqlstr) == 0:
            return ''
        result = commands.getoutput('psql -d postgres -q -t -c "%s"'%sqlstr)
-       print "execute result is %s " %result
        if str(result).find('ERROR') != -1 or str(result).find('FATAL') != -1 or str(result).find('PANIC') != -1:
            print "Drop Resource Quene/User fail!"
            print result
@@ -208,17 +206,30 @@ class RQ:
             user = user.lstrip(' ').rstrip(' ')
             if len(user) > 0 :
                 self.dropuserlist.append(user)
+        dbstr = "select datname from pg_database where datname not in ('template0','template1', 'postgres');"
+        dblist = commands.getoutput('psql -d postgres -q -t -c "%s"' %dbstr).split("\n")
+        ndblist = []
+        for db in dblist:
+            db = db.lstrip(' ').rstrip(' ')
+            if len(db) > 0 :
+                ndblist.append(db)
+        for user in self.dropuserlist:
+            for db in ndblist:
+                print "execute on db %s drop user %s" %(db, user)
+                result = commands.getoutput('psql -d %s -q -t -c "DROP OWNED BY %s"' %(db, user))
         dropstr = "select 'drop role ' || usename || ';' from pg_user where usesuper is false"     
 
         dropsql=self.__execute_sql_cmd(dropstr)
         if dropsql != '':
             self.__execute_sql_cmd(dropsql)
+        i = 0
         while True:
             dropstr = "select 'drop resource queue ' || rsqname || ';' from pg_resqueue where rsqname not in ('pg_root', 'pg_default') and rsq_status != 'branch'"
             dropsql = commands.getoutput('psql -d postgres -q -t -c "%s"' %dropstr)
             print "drop quene  %s" %dropsql
             if len(dropsql) == 0 or i > 10:
                 break
+            i = i + 1
             self.__execute_sql_cmd(dropsql)
 
     def runRq(self):      

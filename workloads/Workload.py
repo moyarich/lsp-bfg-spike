@@ -704,10 +704,15 @@ class Workload(object):
             file_path = self.tmp_folder + os.sep + '%s_%s_' % (self.database_name, self.user) + filename
             with open(file_path, 'w') as f:
                 f.write(query)
-
-            (ok, output) = psql.runfile(ifile = file_path, dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
-            if not ok or str(output).find('ERROR:') != -1 or str(output).find('FATAL:') != -1 or str(output).find('psql:') != -1:
-                print query, '\n', '\n'.join(output)
+            for retry in (0, 20):
+                time.sleep(random.randint(5, 30))
+                (ok, output) = psql.runfile(ifile = file_path, dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
+                if not ok or str(output).find('ERROR:') != -1 or str(output).find('FATAL:') != -1 or str(output).find('psql:') != -1:
+                    self.output("Retry %d times:" %retry)
+                    self.output(query)
+                    self.output('\n'.join(output))
+                else:
+                    break
             self.output(query)
             self.output('\n'.join(output))
         self.output('-- Complete exec %s for database %s' % (filename, self.database_name))
