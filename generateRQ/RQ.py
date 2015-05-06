@@ -152,7 +152,7 @@ class Node:
          return parentList
 
 class RQ:
-    def __init__(self, yamlfile = './RQ.yml', report_directory = './', param_name = 'RESOURCE_UPPER_FACTOR', param_value = 3):
+    def __init__(self, yamlfile = './RQ.yml', report_directory = './', param_name = '', param_value = 0):
         self.param_name = param_name
         self.param_value = param_value
         self.count = 0
@@ -280,7 +280,8 @@ class RQ:
         return userlist
 
 if __name__ == '__main__':
-    rq = RQ()
-    #rq.generateRq()
-    rq.dropRole()
+    rq = RQ('RQ.yml')
+    #rq = RQ('SRI_Multiple.yml')
+    rq.generateRq()
+    #rq.dropRole()
     #rq.runRq()

@@ -1,0 +1,29 @@
+workloads_list: sri_ao_nopart
+workloads_mode: CONCURRENT
+#CONCURRENT
+#sequential
+
+rq_path_list: SRI_Multiple.yml
+#rq_generate_mode: default
+workloads_user_map: loop
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+    - workload_name: sri_ao_nopart
+      database_name: gpsqltest_sri_ao_nopart
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 10
+      num_concurrency: 1
+      num_insert_pertran: 10

@@ -1,0 +1,74 @@
+workloads_list: tpch_parquet_10gpn_nocomp_part_12, tpch_parquet_10gpn_nocomp_part_6, tpch_parquet_10gpn_nocomp_part_3
+workloads_mode: CONCURRENT
+#CONCURRENT
+#sequential
+
+#3 role: 4:2:1 ratio
+rq_path_list: TPCH_421ratio.yml
+#rq_generate_mode: default
+workloads_user_map: scan
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+    - workload_name: tpch_parquet_10gpn_nocomp_part_12
+      database_name: tpch_parquet_10gpn_nocomp_part
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 10
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+          seg_num: 4
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 12
+      num_iteration: 1
+
+    - workload_name: tpch_parquet_10gpn_nocomp_part_6
+      database_name: tpch_parquet_10gpn_nocomp_part
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 10
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+          seg_num: 4
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 6
+      num_iteration: 1
+
+
+    - workload_name: tpch_parquet_10gpn_nocomp_part_3
+      database_name: tpch_parquet_10gpn_nocomp_part
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 10
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+          seg_num: 4
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 3
+      num_iteration: 1
+
