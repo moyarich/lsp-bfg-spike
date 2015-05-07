@@ -73,9 +73,6 @@ class Sri(Workload):
 
         with open(self.tmp_folder + os.sep + 'sri_create.sql', 'w') as f:
             f.write(cmd)
-            if self.user != 'gpadmin':
-                f.write('GRANT ALL ON TABLE %s TO %s;' % (self.table_name, self.user))
-                f.write('GRANT ALL ON SEQUENCE %s TO %s;' % ( self.user))
         
         self.output(cmd)    
         (ok, result) = psql.runfile(ifile = self.tmp_folder + os.sep + 'sri_create.sql', dbname = self.database_name, flag = '-t -A')
@@ -83,8 +80,6 @@ class Sri(Workload):
         
         self.output('-- Complete loading data')
 
-    def grand_revoke_privileges(self, filename = ''):
-        pass
 
     def vacuum_analyze(self):
         pass

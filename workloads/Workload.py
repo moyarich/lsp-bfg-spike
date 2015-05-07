@@ -704,8 +704,8 @@ class Workload(object):
             file_path = self.tmp_folder + os.sep + '%s_%s_' % (self.database_name, self.user) + filename
             with open(file_path, 'w') as f:
                 f.write(query)
-            for retry in (0, 20):
-                time.sleep(random.randint(5, 30))
+            for retry in range(0, 20):
+                time.sleep(random.randint(1, 10))
                 (ok, output) = psql.runfile(ifile = file_path, dbname = self.database_name, username = 'gpadmin', flag = '-t -A')
                 if not ok or str(output).find('ERROR:') != -1 or str(output).find('FATAL:') != -1 or str(output).find('psql:') != -1:
                     self.output("Retry %d times:" %retry)
