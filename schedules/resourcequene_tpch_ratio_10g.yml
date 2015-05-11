@@ -1,4 +1,4 @@
-workloads_list: tpch_parquet_10gpn_nocomp_part_12, tpch_parquet_10gpn_nocomp_part_6, tpch_parquet_10gpn_nocomp_part_3
+workloads_list: tpch_parquet_10gpn_nocomp_part_3, tpch_parquet_10gpn_nocomp_part_12, tpch_parquet_10gpn_nocomp_part_6
 workloads_mode: CONCURRENT
 #CONCURRENT
 #sequential

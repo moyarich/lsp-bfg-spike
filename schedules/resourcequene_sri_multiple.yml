@@ -25,5 +25,5 @@ workloads_content:
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
       num_iteration: 10
-      num_concurrency: 1
+      num_concurrency: 2
       num_insert_pertran: 10

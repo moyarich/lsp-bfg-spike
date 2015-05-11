@@ -1,4 +1,4 @@
-workloads_list: tpch_row_200gpn_quicklz1_part_random_4, tpch_row_200gpn_quicklz1_part_random_2, tpch_row_200gpn_quicklz1_part_random_1
+workloads_list: tpch_row_200gpn_quicklz1_part_random_1, tpch_row_200gpn_quicklz1_part_random_4, tpch_row_200gpn_quicklz1_part_random_2
 workloads_mode: CONCURRENT
 #CONCURRENT
 #sequential

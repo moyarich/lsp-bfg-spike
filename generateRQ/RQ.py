@@ -12,6 +12,7 @@ class ParameterParser:
         with open(yamlfile, "r") as fyaml:
             yaml_parser = yaml.load(fyaml)
         self.height = yaml_parser['height']
+        self.issuperuser = yaml_parser['issuperuser']
         self.max_width = yaml_parser['max_width']
         self.fix_width = yaml_parser['fix_width']
         self.child_ratio = yaml_parser['child_ratio']
@@ -106,7 +107,11 @@ class Node:
                        ",SEGMENT_RESOURCE_QUOTA='" + str(node._segment_resource_quota) + "'" + \
                        ",ALLOCATION_POLICY='" + str(node._allocation_policy) + "');\n"
          if isbranch == False:
-             quenesql = quenesql + "CREATE ROLE " + rolename + " WITH LOGIN RESOURCE QUEUE " + node._name + ";\n"
+             quenesql = quenesql + "CREATE ROLE " + rolename + " WITH LOGIN RESOURCE QUEUE " + node._name
+             if self.parameters.issuperuser == True:
+                 quenesql = quenesql  + " SUPERUSER ;\n"
+             else:
+                 quenesql = quenesql  + " ;\n"
              self.parameters.rolelist.append(rolename)
          #print quenesql
          self.parameters.rqfile.write(quenesql)
@@ -200,7 +205,7 @@ class RQ:
      
     def dropRole(self):
         print "Note: We will remove all user and resource quene!!!!!!!!!"
-        dropuser = "select  usename  from pg_user where usesuper is false;"
+        dropuser = "select  usename  from pg_user where usename like 'role%';"
         dulist = commands.getoutput('psql -d postgres -q -t -c "%s"' %dropuser).split("\n")
         for user in dulist:
             user = user.lstrip(' ').rstrip(' ')
