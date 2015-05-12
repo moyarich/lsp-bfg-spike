@@ -12,7 +12,10 @@ class ParameterParser:
         with open(yamlfile, "r") as fyaml:
             yaml_parser = yaml.load(fyaml)
         self.height = yaml_parser['height']
-        self.issuperuser = yaml_parser['issuperuser']
+        try:
+            self.issuperuser = yaml_parser['issuperuser']
+        except Exception, e:
+            self.issuperuser = False        
         self.max_width = yaml_parser['max_width']
         self.fix_width = yaml_parser['fix_width']
         self.child_ratio = yaml_parser['child_ratio']

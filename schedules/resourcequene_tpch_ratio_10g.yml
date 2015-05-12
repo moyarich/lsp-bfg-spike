@@ -12,7 +12,7 @@ cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
     - workload_name: tpch_parquet_10gpn_nocomp_part_12
-      database_name: tpch_parquet_10gpn_nocomp_part
+      database_name: tpch_parquet_10gpn_nocomp_part_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -32,7 +32,7 @@ workloads_content:
       num_iteration: 1
 
     - workload_name: tpch_parquet_10gpn_nocomp_part_6
-      database_name: tpch_parquet_10gpn_nocomp_part
+      database_name: tpch_parquet_10gpn_nocomp_part_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -53,7 +53,7 @@ workloads_content:
 
 
     - workload_name: tpch_parquet_10gpn_nocomp_part_3
-      database_name: tpch_parquet_10gpn_nocomp_part
+      database_name: tpch_parquet_10gpn_nocomp_part_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:

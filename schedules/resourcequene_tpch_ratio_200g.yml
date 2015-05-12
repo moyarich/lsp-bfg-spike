@@ -12,7 +12,7 @@ cluster_name: HAWQ main performance on Geneva cluster
 
 workloads_content:
     - workload_name: tpch_row_200gpn_quicklz1_part_random_4
-      database_name: tpch_row_200gpn_quicklz1_part_random
+      database_name: tpch_row_200gpn_quicklz1_part_random_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -32,7 +32,7 @@ workloads_content:
       num_iteration: 1
 
     - workload_name: tpch_row_200gpn_quicklz1_part_random_2
-      database_name: tpch_row_200gpn_quicklz1_part_random
+      database_name: tpch_row_200gpn_quicklz1_part_random_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -53,7 +53,7 @@ workloads_content:
 
 
     - workload_name: tpch_row_200gpn_quicklz1_part_random_1
-      database_name: tpch_row_200gpn_quicklz1_part_random
+      database_name: tpch_row_200gpn_quicklz1_part_random_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:

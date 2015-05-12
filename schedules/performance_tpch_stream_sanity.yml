@@ -1,0 +1,48 @@
+workloads_list: tpch_row_200gpn_quicklz1_part_random_stream
+workloads_mode: sequential
+#workloads_mode: concurrent
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_random_stream
+      database_name: tpch_row_200gpn_quicklz1_part_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 128
+          distributed_randomly: true
+          seg_num: 4
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      stream_mode: true
+      num_concurrency: 6
+      num_iteration: 2
+
+    - workload_name: tpch_row_200gpn_quicklz1_part_stream
+      database_name: tpch_row_200gpn_quicklz1_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: PER_NODE
+          data_volume_size: 200
+          append_only: true
+          orientation: ROW
+          compression_type: QUICKLZ
+          compression_level: 1
+          partitions: 0
+          distributed_randomly: false
+          seg_num: 4
+      load_data_flag: false
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      stream_mode: true
+      num_concurrency: 6
+      num_iteration: 6
+
