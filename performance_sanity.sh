@@ -5,6 +5,7 @@ source ~/qa.sh
 
 
 
+hawqconfig -c hawq_resourceenforcer_cpu_enable -v false
 hawqconfig -c default_segment_num -v 64
 hawqconfig -c hawq_resourcemanager_query_vsegment_number_per_segment_limit -v 4
 hawq stop cluster -a
