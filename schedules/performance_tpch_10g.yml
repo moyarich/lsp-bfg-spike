@@ -16,7 +16,7 @@ workloads_content:
           orientation: ROW
           partitions: 0
           distributed_randomly: false
-          seg_num: 4
+          seg_num: 8
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -35,7 +35,7 @@ workloads_content:
           page_size: 1048576
           partitions: 128
           distributed_randomly: false
-          seg_num: 4
+          seg_num: 8
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -52,7 +52,7 @@ workloads_content:
           orientation: ROW
           partitions: 0
           distributed_randomly: true
-          seg_num: 4
+          seg_num: 8
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
@@ -71,7 +71,7 @@ workloads_content:
           page_size: 1048576
           partitions: 128
           distributed_randomly: true
-          seg_num: 4
+          seg_num: 8
       load_data_flag: true
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL

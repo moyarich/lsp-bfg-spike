@@ -97,7 +97,7 @@ class Workload(object):
         self.compression_type = None
         self.compression_level = -1
         self.partitions = 0
-        self.seg_num = 2
+        self.seg_num = 8
 
         self.scale_factor = None
         self.ans_directory = ''
