@@ -28,7 +28,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 12
+      num_concurrency: 8
       num_iteration: 1
 
     - workload_name: tpch_parquet_10gpn_nocomp_part_6
@@ -48,7 +48,7 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 6
+      num_concurrency: 4
       num_iteration: 1
 
 
@@ -69,6 +69,6 @@ workloads_content:
       load_data_flag: false
       run_workload_flag: true
       run_workload_mode: SEQUENTIAL
-      num_concurrency: 3
+      num_concurrency: 2
       num_iteration: 1
 
