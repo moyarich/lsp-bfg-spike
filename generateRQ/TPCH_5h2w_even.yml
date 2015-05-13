@@ -13,12 +13,12 @@ default:
         CORE_LIMIT_CLUSTER: 10
         ACTIVE_STATEMENTS: 100
         RESOURCE_UPPER_FACTOR: 100
-        SEGMENT_RESOURCE_QUOTA: 'mem:128mb'
+        SEGMENT_RESOURCE_QUOTA: 'mem:512mb'
         ALLOCATION_POLICY: 'even'
 leaf:
         RESOURCE_UPPER_FACTOR: 100
         ACTIVE_STATEMENTS: 100
-        #SEGMENT_RESOURCE_QUOTA = ['mem:128mb' | 'mem:1gb']
-        SEGMENT_RESOURCE_QUOTA: 'mem:128mb'
+        #SEGMENT_RESOURCE_QUOTA = ['mem:512mb' | 'mem:1gb']
+        SEGMENT_RESOURCE_QUOTA: 'mem:512mb'
         #ALLOCATION_POLICY:['FIFO'|'EVEN']
         ALLOCATION_POLICY: 'even'
