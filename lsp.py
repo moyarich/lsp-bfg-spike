@@ -239,13 +239,29 @@ if __name__ == '__main__':
         || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
         || '|Test Status|' || test_result \
         from \
-            hst.f_generate_test_report_detail(%d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946 GVA ORCA ON') where lower(wl_name) not like '%s';" % (tr_id, '%' + 'rwithd' + '%')
+            hst.f_generate_test_report_detail(%d, 'PHD 3.0', 'HAWQ 1.3.0.0 build 13048 GVA') where lower(wl_name) not like '%s';" % (tr_id, '%' + 'rwithd' + '%')
 
         result = check.get_result_by_sql(sql = sql)
         result = str(result).strip().split('\r\n')
         for one_tuple in result:
             msg = str(one_tuple).strip()
             Report(result_file , msg)
+
+        # retrieve test report from backend database for pulse report purpose
+        result_file = os.path.join(report_directory, 'result_v2.txt')
+        tr_id = check.check_id(result_id = 'tr_id', table_name = 'hst.test_run', search_condition = "start_time = '%s'" % ( str(beg_time) ))
+        sql = "select 'Test Suite Name|'|| wl_name || '|Test Case Name|' || action_type ||'.' || action_target \
+        || '|Test Detail|' \
+        || 'Actural Run time is: ' || CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE 'N.A.' END || ' ms, ' \
+        || 'Baseline time is: ' || CASE WHEN baseline_execution_time IS NOT NULL THEN baseline_execution_time::int::text ELSE 'N.A.' END || ' ms, ' \
+        || 'Comparision is: ' || CASE WHEN deviation is NOT NULL THEN deviation::decimal(5,2)::text ELSE 'N.A.' END \
+        || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
+        || '|Test Status|' || test_result \
+        from \
+            hst.f_generate_test_report_detail(%d, 'PHD 3.0', 'HAWQ 2.0.0.0 build 14055') where lower(wl_name) not like '%s';" % (tr_id, '%' + 'rwithd' + '%')
+
+        result = check.get_result_by_sql(sql = sql)
+        result = str(result).strip().split('\r\n')
 
         # generate summary report
         if report_num > 0:
@@ -261,7 +277,7 @@ if __name__ == '__main__':
                 Report('./report/summary_report_v2.txt' , msg)
 
             sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
-            from hst.f_generate_test_report_summary(%d, %d, 'PHD 2.2 build 59', 'HAWQ 1.2.1.2 build 11946 GVA ORCA ON') where lower(wl_name) not like '%s' order by action_type, tr_id, s_id;" % (start_run_id, tr_id, '%' + 'rwithd' + '%')
+            from hst.f_generate_test_report_summary(%d, %d, 'PHD 3.0', 'HAWQ 1.3.0.0 build 13048 GVA') where lower(wl_name) not like '%s' order by action_type, tr_id, s_id;" % (start_run_id, tr_id, '%' + 'rwithd' + '%')
 
             result = check.get_result_by_sql(sql = sql)
             result = str(result).strip().split('\r\n')
