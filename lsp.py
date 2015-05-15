@@ -258,16 +258,19 @@ if __name__ == '__main__':
         || ' ('|| CASE WHEN actual_execution_time is NOT NULL THEN actual_execution_time::int::text ELSE '0' END || ' ms)' \
         || '|Test Status|' || test_result \
         from \
-            hst.f_generate_test_report_detail(%d, 'PHD 3.0', 'HAWQ 2.0.0.0 build 14055') where lower(wl_name) not like '%s';" % (tr_id, '%' + 'rwithd' + '%')
+            hst.f_generate_test_report_detail(%d, 'PHD 3.0', 'HAWQ 2.0.0.0 build 14246') where lower(wl_name) not like '%s';" % (tr_id, '%' + 'rwithd' + '%')
 
         result = check.get_result_by_sql(sql = sql)
         result = str(result).strip().split('\r\n')
+        for one_tuple in result:
+            msg = str(one_tuple).strip()
+            Report(result_file , msg)
 
         # generate summary report
         if report_num > 0:
             start_run_id = int(tr_id) - int(report_num) + 1
             sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
-            from hst.f_generate_test_report_summary(%d, %d, 'PHD 3.0', 'HAWQ 2.0.0.0 build 14055') where lower(wl_name) not like '%s' order by action_type, tr_id, s_id;" % (start_run_id, tr_id, '%' + 'rwithd' + '%')
+            from hst.f_generate_test_report_summary(%d, %d, 'PHD 3.0', 'HAWQ 2.0.0.0 build 14246') where lower(wl_name) not like '%s' order by action_type, tr_id, s_id;" % (start_run_id, tr_id, '%' + 'rwithd' + '%')
 
             result = check.get_result_by_sql(sql = sql)
             result = str(result).strip().split('\r\n')
