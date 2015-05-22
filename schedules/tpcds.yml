@@ -1,4 +1,4 @@
-workloads_list: tpcds_row_1600g_quicklz1_nopart,  tpcds_row_1600g_quicklz1_nopart_random
+workloads_list: tpcds_row_1600g_quicklz1_part,  tpcds_row_1600g_quicklz1_part_random
 #tpcds_parquet_1600g_snappy_nopart
 
 workloads_mode: sequential
@@ -24,14 +24,15 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpcds_row_1600g_quicklz1_nopart_random
-      database_name: tpcds_row_1600g_quicklz1_nopart_random
+    - workload_name: tpcds_row_1600g_quicklz1_part_random
+      database_name: tpcds_row_1600g_quicklz1_part_random
       user: gpadmin
       table_setting:
           data_volume_type: total
           data_volume_size: 1600
           append_only: true
           orientation: ROW
+          partitions: 128
           compression_type: QUICKLZ
           compression_level: 1
           distributed_randomly: true
@@ -41,14 +42,15 @@ workloads_content:
       num_concurrency: 1
       num_iteration: 1
 
-    - workload_name: tpcds_row_1600g_quicklz1_nopart
-      database_name: tpcds_row_1600g_quicklz1_nopart
+    - workload_name: tpcds_row_1600g_quicklz1_part
+      database_name: tpcds_row_1600g_quicklz1_part
       user: gpadmin
       table_setting:
           data_volume_type: total
           data_volume_size: 1600
           append_only: true
           orientation: ROW
+          partitions: 128
           compression_type: QUICKLZ
           compression_level: 1
       load_data_flag: true
