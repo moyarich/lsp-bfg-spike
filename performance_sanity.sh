@@ -19,9 +19,9 @@ python -u lsp.py -s performance_tpch_10g -m 5 -a -c  > ./performance_tpch_10g.lo
 sleep 10
 python -u lsp.py -s performance_tpch_200g -m 30 -a -c  > ./performance_tpch_200g.log 2>&1
 sleep 10
-python -u lsp.py -s performance_tpch_concurrent -m 60 -a -c -r 3 > ./performance_tpch_concurrent.log 2>&1
-sleep 10
+#python -u lsp.py -s performance_tpch_concurrent -m 60 -a -c -r 3 > ./performance_tpch_concurrent.log 2>&1
+#sleep 10
 #4. 2. 1 ratio concurrent to run tpch 10G 
-python -u lsp.py -s resourcequene_tpch_ratio_10g -m 30 -a -c  > ./resourcequene_tpch_ratio_10g 2>&1
+python -u lsp.py -s resourcequene_tpch_ratio_10g -m 30 -a -c -r 3 > ./resourcequene_tpch_ratio_10g 2>&1
 
 
