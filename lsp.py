@@ -279,7 +279,7 @@ if __name__ == '__main__':
                 msg = str(one_tuple).strip()
                 Report('./report/summary_report_v2.txt' , msg)
             
-                        sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
+            sql = "select wl_name, action_type,overral_test_result,  improvenum, passnum, failurenum, skipnum, errornum, actual_total_execution_time,baseline_total_execution_time,deviation \
             from hst.f_generate_test_report_summary_noq9(%d, %d, 'PHD 3.0', 'HAWQ 2.0.0.0 build 14246') where lower(wl_name) not like '%s' order by action_type, tr_id, s_id;" % (start_run_id, tr_id, '%' + 'rwithd' + '%')
 
             result = check.get_result_by_sql(sql = sql)
