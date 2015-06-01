@@ -55,6 +55,6 @@ group by c_last_name
         ,s_store_name
 having sum(netpaid) > (select 0.05*avg(netpaid)
                            from ssales)
-;
+ order by 1,2,3,4;
 
 -- end query 1 in stream 0 using template query24.tpl
