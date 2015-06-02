@@ -63,6 +63,7 @@ function runworkload() {
              sleep 30
          done
       fi
+      for i in bcn-mst1 bcn-mst2 bcn-w{1..16}; do ssh ${i} "hostname; ps -ef | grep [j]ava|wc"; done >> $2 2>&1 
       python -u lsp.py -s $1  >> $2 2>&1
 }
 
@@ -145,7 +146,7 @@ mv report report_8both
 #####################################################################################
 
 
-
+hawqconfig -c default_segment_num -v 64
 hawq stop cluster -a
 hawq start cluster -a
 localhdfs stop HA

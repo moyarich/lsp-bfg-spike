@@ -1,5 +1,5 @@
-workloads_list: sri_ao_nopart
-#,tpch_row_10gpn_nocomp_nopart,tpch_parquet_10gpn_nocomp_part,tpch_parquet_10gpn_nocomp_part, tpch_row_10gpn_nocomp_nopart_random, tpch_parquet_10gpn_nocomp_part_random,tpch_row_200gpn_quicklz1_part, tpch_row_200gpn_quicklz1_nopart_random
+workloads_list: sri_ao_nopart_random
+#sri_ao_nopart,tpch_row_10gpn_nocomp_nopart,tpch_parquet_10gpn_nocomp_part,tpch_parquet_10gpn_nocomp_part, tpch_row_10gpn_nocomp_nopart_random, tpch_parquet_10gpn_nocomp_part_random,tpch_row_200gpn_quicklz1_part, tpch_row_200gpn_quicklz1_nopart_random
 workloads_mode: sequential
 #CONCURRENT
 #sequential
@@ -28,8 +28,27 @@ workloads_content:
       num_concurrency: 1
       num_insert_pertran: 1
 
+    - workload_name: sri_ao_nopart_random
+      database_name: gpsqltest_sri_ao_nopart_random
+      db_reuse: true
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1
+          append_only: true
+          orientation: ROW
+          compression_type: QuickLZ
+          compression_level: 1
+          distributed_randomly: true
+      load_data_flag: true
+      run_workload_flag: false
+      run_workload_mode: SEQUENTIAL
+      num_iteration: 1
+      num_concurrency: 1
+      num_insert_pertran: 1
+
     - workload_name: tpch_row_10gpn_nocomp_nopart
-      database_name: tpch_row_10gpn_nocomp_nopart_gpamdin
+      database_name: tpch_row_10gpn_nocomp_nopart_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -47,7 +66,7 @@ workloads_content:
       num_iteration: 1
 
     - workload_name: tpch_parquet_10gpn_nocomp_part
-      database_name: tpch_parquet_10gpn_nocomp_part_gpamdin
+      database_name: tpch_parquet_10gpn_nocomp_part_gpadmin
       db_reuse: true 
       user: gpadmin
       table_setting:
@@ -68,7 +87,7 @@ workloads_content:
 
 
     - workload_name: tpch_row_10gpn_nocomp_nopart_random
-      database_name: tpch_row_10gpn_nocomp_nopart_random_gpamdin
+      database_name: tpch_row_10gpn_nocomp_nopart_random_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -86,7 +105,7 @@ workloads_content:
       num_iteration: 1
 
     - workload_name: tpch_parquet_10gpn_nocomp_part_random
-      database_name: tpch_parquet_10gpn_nocomp_part_random_gpamdin
+      database_name: tpch_parquet_10gpn_nocomp_part_random_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -107,7 +126,7 @@ workloads_content:
 
 
     - workload_name: tpch_row_200gpn_quicklz1_part_random
-      database_name: tpch_row_200gpn_quicklz1_part_random_gpamdin
+      database_name: tpch_row_200gpn_quicklz1_part_random_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:
@@ -128,7 +147,7 @@ workloads_content:
 
 
     - workload_name: tpch_row_200gpn_quicklz1_part
-      database_name: tpch_row_200gpn_quicklz1_part_gpamdin
+      database_name: tpch_row_200gpn_quicklz1_part_gpadmin
       db_reuse: true
       user: gpadmin
       table_setting:

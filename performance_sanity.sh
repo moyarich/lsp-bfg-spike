@@ -1,4 +1,4 @@
-s!/bin/sh
+#!/bin/sh
 
 source ~/.bashrc
 source ~/qa.sh
