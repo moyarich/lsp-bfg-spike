@@ -151,23 +151,26 @@ hawq stop cluster -a
 hawq start cluster -a
 localhdfs stop HA
 localhdfs start HA
+psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
 
 
 ##########Current There are 8 Nodes. Load Data into them##############################
+chmod 655 expand/slaves*
 echo '8 Nodes with HAWQ and HDFS'  > ./performance_tpch_nodechange_8.log 2>&1
+gpssh -f ~/hostfile -e "sudo chmod 655 /usr/phd/current//hadoop-client/etc/hadoop/slaves"
 gpscp -f ~/hostfile expand/slaves_8 =:$HADOOP_PATH_VAR/hadoop-client/etc/hadoop/slaves  >> ./performance_tpch_nodechange_8.log 2>&1
 nodeconfig_fun stop BOTH "bcn-w16 bcn-w15 bcn-w14 bcn-w13 bcn-w12 bcn-w11 bcn-w10 bcn-w9"  >> ./performance_tpch_nodechange_8.log 2>&1
 nodeconfig_fun stop NAMENODE "bcn-mst2 bcn-mst1"  >> ./performance_tpch_nodechange_8.log 2>&1
 nodeconfig_fun start NAMENODE "bcn-mst2 bcn-mst1"  >> ./performance_tpch_nodechange_8.log 2>&1
+sleep 300
 sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_8.log 2>&1
-sleep 300 
 psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_8.log 2>&1
 python -u lsp.py -s performance_tpch_nodechange  >> ./performance_tpch_nodechange_8.log 2>&1
 
 
 echo '#################################################'
-echo '16 Nodes with HAWQ and HDFS'  > ./performance_tpch_nodechange_8.log 2>&1
-gpscp -f ~/hostfile expand/slaves_16 =:$HADOOP_PATH_VAR/hadoop-client/etc/hadoop/slaves  > ./performance_tpch_nodechange_16node.log 2>&1
+echo '16 Nodes with HAWQ and HDFS'  > ./performance_tpch_nodechange_16.log 2>&1
+gpscp -f ~/hostfile expand/slaves_16 =:$HADOOP_PATH_VAR/hadoop-client/etc/hadoop/slaves  >> ./performance_tpch_nodechange_16node.log 2>&1
 nodeconfig_fun start HAWQ "bcn-w16 bcn-w15 bcn-w14 bcn-w13 bcn-w12 bcn-w11 bcn-w10 bcn-w9"  >> ./performance_tpch_nodechange_8.log 2>&1
 localhdfs stop HA  >> ./performance_tpch_nodechange_16node.log 2>&1
 localhdfs start HA  >> ./performance_tpch_nodechange_16node.log 2>&1
@@ -177,6 +180,8 @@ psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_
 python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node.log 2>&1
 
 
+echo '16 Nodes with HAWQ and HDFS after balcne'  > ./performance_tpch_nodechange_16node_balance.log 2>&1
 sudo -u hdfs $HADOOP_PATH_VAR/hadoop-client/bin/hdfs  balancer  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
+sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
 psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
 python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
