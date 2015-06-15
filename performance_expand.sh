@@ -91,7 +91,7 @@ python -u lsp.py -s performance_tpch_nodechange  >> ./performance_tpch_nodechang
 sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_8.log 2>&1
 
 gpscp -f ~/hostfile expand/slaves_16 =:$HADOOP_PATH_VAR/hadoop-client/etc/hadoop/slaves  > ./performance_tpch_nodechange_16node.log 2>&1
-nodeconfig_fun start HAWQ "bcn-w16 bcn-w15 bcn-w14 bcn-w13 bcn-w12 bcn-w11 bcn-w10 bcn-w9"  >> ./performance_tpch_nodechange_8.log 2>&1
+nodeconfig_fun start HAWQ "bcn-w16 bcn-w15 bcn-w14 bcn-w13 bcn-w12 bcn-w11 bcn-w10 bcn-w9"  >> ./performance_tpch_nodechange_16node.log 2>&1
 localhdfs stop HA  >> ./performance_tpch_nodechange_16node.log 2>&1
 localhdfs start HA  >> ./performance_tpch_nodechange_16node.log 2>&1
 sleep 120
@@ -101,9 +101,8 @@ psql -d postgres -c "drop table if exists test; create table test(a int); insert
 python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node.log 2>&1
 
 ## It is for temporary disable the bug
-hawq restart master -a  >./performance_tpch_nodechange_16node_balance.log 2>&1
 date
-sudo -u hdfs $HADOOP_PATH_VAR/hadoop-client/bin/hdfs  balancer  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
+sudo -u hdfs $HADOOP_PATH_VAR/hadoop-client/bin/hdfs  balancer -threshold 1  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
 date
 sleep 300
 sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
@@ -111,7 +110,7 @@ psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_
 psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
 python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
 
-
+psql -d postgres -c "select gp_metadata_cache_clear();"
 psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_16node_balance_restart.log 2>&1
 psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
 python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node_balance_restart.log 2>&1
