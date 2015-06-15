@@ -1,0 +1,61 @@
+workloads_list: tpcds_row_1600g_quicklz1_part_random
+#tpcds_parquet_1600g_snappy_nopart, tpcds_row_1600g_quicklz1_part
+
+workloads_mode: sequential
+
+cluster_name: HAWQ main performance on Geneva cluster
+
+workloads_content:
+
+    - workload_name: tpcds_parquet_1600g_snappy_nopart
+      database_name: tpcds_parquet_1600g_snappy_nopart
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1600
+          append_only: true
+          orientation: PARQUET
+          row_group_size: 8388608
+          page_size: 1048576
+          compression_type: SNAPPY
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpcds_row_1600g_quicklz1_part_random
+      database_name: tpcds_row_1600g_quicklz1_part_random
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1600
+          append_only: true
+          orientation: ROW
+          partitions: 128
+          compression_type: QUICKLZ
+          compression_level: 1
+          distributed_randomly: true
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
+    - workload_name: tpcds_row_1600g_quicklz1_part
+      database_name: tpcds_row_1600g_quicklz1_part
+      user: gpadmin
+      table_setting:
+          data_volume_type: total
+          data_volume_size: 1600
+          append_only: true
+          orientation: ROW
+          partitions: 128
+          compression_type: QUICKLZ
+          compression_level: 1
+      load_data_flag: true
+      run_workload_flag: true
+      run_workload_mode: SEQUENTIAL
+      num_concurrency: 1
+      num_iteration: 1
+
