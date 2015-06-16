@@ -71,6 +71,7 @@ function runworkload() {
 
 hawqconfig -c default_segment_num -v 64
 hawq stop cluster -a
+cp expand/slaves_8 $GPHOME/etc/slaves
 hawq start cluster -a
 localhdfs stop HA
 localhdfs start HA
@@ -91,6 +92,7 @@ python -u lsp.py -s performance_tpch_nodechange  >> ./performance_tpch_nodechang
 sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_8.log 2>&1
 
 gpscp -f ~/hostfile expand/slaves_16 =:$HADOOP_PATH_VAR/hadoop-client/etc/hadoop/slaves  > ./performance_tpch_nodechange_16node.log 2>&1
+cp expand/slaves_16 $GPHOME/etc/slaves
 nodeconfig_fun start HAWQ "bcn-w16 bcn-w15 bcn-w14 bcn-w13 bcn-w12 bcn-w11 bcn-w10 bcn-w9"  >> ./performance_tpch_nodechange_16node.log 2>&1
 localhdfs stop HA  >> ./performance_tpch_nodechange_16node.log 2>&1
 localhdfs start HA  >> ./performance_tpch_nodechange_16node.log 2>&1
@@ -101,9 +103,9 @@ psql -d postgres -c "drop table if exists test; create table test(a int); insert
 python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node.log 2>&1
 
 ## It is for temporary disable the bug
-date
+date > ./performance_tpch_nodechange_16node_balance.log
 sudo -u hdfs $HADOOP_PATH_VAR/hadoop-client/bin/hdfs  balancer -threshold 1  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-date
+date >> ./performance_tpch_nodechange_16node_balance.log
 sleep 300
 sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
 psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
