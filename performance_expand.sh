@@ -2,6 +2,7 @@
 
 source ~/.bashrc
 source ~/qa.sh
+source ~/hdfs.sh
 
 export HADOOP_PATH_VAR=/usr/phd/current/
 
@@ -104,6 +105,7 @@ python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_no
 
 ## It is for temporary disable the bug
 date > ./performance_tpch_nodechange_16node_balance.log
+sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -setBalancerBandwidth 4294967296
 sudo -u hdfs $HADOOP_PATH_VAR/hadoop-client/bin/hdfs  balancer -threshold 1  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
 date >> ./performance_tpch_nodechange_16node_balance.log
 sleep 300
