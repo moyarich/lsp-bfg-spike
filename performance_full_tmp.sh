@@ -16,22 +16,22 @@ hawqconfig -s hawq_resourceenforcer_cpu_enable >>config
 psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
 
 ### TPCDS
-python -u lsp.py -s tpcds -m 10 -a   > ./tpcds 2>&1
+python -u lsp.py -s tpcds  -a   > ./tpcds 2>&1
 sleep 10
 
 ##### TPCH
-python -u lsp.py -s performance_tpch_10g -m 5 -a   > ./performance_tpch_10g.log 2>&1
+python -u lsp.py -s performance_tpch_10g  -a   > ./performance_tpch_10g.log 2>&1
 sleep 10
-python -u lsp.py -s performance_tpch_200g -m 30 -a  > ./performance_tpch_200g.log 2>&1
+python -u lsp.py -s performance_tpch_200g  -a  > ./performance_tpch_200g.log 2>&1
 sleep 10
-python -u lsp.py -s performance_xmarq_200g -m 10 -a > ./performance_xmarq_200g.log 2>&1
+python -u lsp.py -s performance_xmarq_200g  -a > ./performance_xmarq_200g.log 2>&1
 sleep 10
-python -u lsp.py -s performance_tpch_stream -m 60 -a  > ./performance_tpch_stream.log 2>&1
+python -u lsp.py -s performance_tpch_stream  -a  > ./performance_tpch_stream.log 2>&1
 sleep 10
-python -u lsp.py -s performance_tpch_concurrent -m 60 -a   > ./performance_tpch_concurrent.log 2>&1
+python -u lsp.py -s performance_tpch_concurrent  -a   > ./performance_tpch_concurrent.log 2>&1
 sleep 10
 
 
 ## Resource quene
-python -u lsp.py -s resourcequene_tpch_ratio_10g -m 30 -a  -r 7 > ./resourcequene_tpch_ratio_10g 2>&1
+python -u lsp.py -s resourcequene_tpch_ratio_10g  -a  -r 7 > ./resourcequene_tpch_ratio_10g 2>&1
 
