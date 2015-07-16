@@ -3,7 +3,7 @@
 source ~/.bashrc
 source ~/qa.sh
 
-hawqconfig -c default_segment_num -v 120
+#hawqconfig -c default_segment_num -v 120
 hawqconfig -c hawq_resourcemanager_query_vsegment_number_per_segment_limit -v 9
 hawqconfig -c hawq_resourceenforcer_cpu_enable -v false
 
@@ -18,7 +18,10 @@ psql -d postgres -c "drop table if exists test; create table test(a int); insert
 ### TPCDS
 python -u lsp.py -s tpcds  -a   > ./tpcds 2>&1
 sleep 10
-
+hawqconfig -c hawq_resourcemanager_query_vsegment_number_per_segment_limit -v 8
+hawq stop cluster -a
+hawq start cluster -a
+psql -d postgres -c "select * from gp_segment_configuration;" >config
 ##### TPCH
 python -u lsp.py -s performance_tpch_10g  -a   > ./performance_tpch_10g.log 2>&1
 sleep 10
