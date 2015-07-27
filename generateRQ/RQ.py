@@ -107,7 +107,7 @@ class Node:
                        ",MEMORY_LIMIT_CLUSTER=" + str(node._memory_limit_cluster) + "%" + \
                        ",CORE_LIMIT_CLUSTER=" + str(node._core_limit_cluster) + "%" + \
                        ",RESOURCE_UPPER_FACTOR=" + str(node._resource_upper_factor) + \
-                       ",SEGMENT_RESOURCE_QUOTA='" + str(node._segment_resource_quota) + "'" + \
+                       ",VSEGMENT_RESOURCE_QUOTA='" + str(node._segment_resource_quota) + "'" + \
                        ",ALLOCATION_POLICY='" + str(node._allocation_policy) + "');\n"
          if isbranch == False:
              quenesql = quenesql + "CREATE ROLE " + rolename + " WITH LOGIN RESOURCE QUEUE " + node._name
