@@ -3,12 +3,6 @@
 source ~/.bashrc
 source ~/qa.sh
 
-hawqconfig -c default_segment_num -v 128
-hawqconfig -c hawq_resourcemanager_query_vsegment_number_per_segment_limit -v 8
-hawqconfig -c hawq_resourceenforcer_cpu_enable -v false
-
-hawq stop cluster -a
-hawq start cluster -a
 psql -d postgres -c "select * from gp_segment_configuration;" >config
 hawqconfig -s default_segment_num >>config
 hawqconfig -s hawq_resourcemanager_query_vsegment_number_per_segment_limit >>config
