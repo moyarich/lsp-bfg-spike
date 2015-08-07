@@ -20,12 +20,13 @@ sleep 10
 ### TPCDS
 python -u lsp.py -s tpcds -m 10 -a -c  > ./tpcds 2>&1
 sleep 10
+## Resource quene
+python -u lsp.py -s resourcequene_tpch_ratio_10g -m 30 -a -c > ./resourcequene_tpch_ratio_10g 2>&1
+
 python -u lsp.py -s performance_tpch_stream -m 60 -a -c > ./performance_tpch_stream.log 2>&1
 sleep 10
-python -u lsp.py -s performance_tpch_concurrent -m 60 -a -c  > ./performance_tpch_concurrent.log 2>&1
+python -u lsp.py -s performance_tpch_concurrent -m 60 -a -c -r 7  > ./performance_tpch_concurrent.log 2>&1
 sleep 10
 
 
-## Resource quene
-python -u lsp.py -s resourcequene_tpch_ratio_10g -m 30 -a -c -r 7 > ./resourcequene_tpch_ratio_10g 2>&1
 
