@@ -12,7 +12,7 @@ psql -d postgres -c "drop table if exists test; create table test(a int); insert
 
 python -u lsp.py -s performance_tpch_10g  -c  > ./performance_tpch_10g.log 2>&1
 sleep 5
-python -u lsp.py -s performance_tpch_200g_full  -c > ./performance_tpch_200g.log 2>&1
+python -u lsp.py -s performance_tpch_200g  -c > ./performance_tpch_200g.log 2>&1
 sleep 5
 python -u lsp.py -s performance_xmarq_200g  > ./performance_xmarq_200g.log 2>&1
 sleep 10
