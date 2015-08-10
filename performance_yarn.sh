@@ -1,4 +1,3 @@
-gva-w7
 #!/bin/sh
 
 source ~/.bashrc
