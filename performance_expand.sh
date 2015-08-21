@@ -69,9 +69,8 @@ function runworkload() {
 }
 
 SUCCESS="The cluster is balanced"
-FAIL="failed"
 SIGN="CONTINUE"
-### $1 find success/fail in the logfile, $2 log file to log
+### $1 find success in the logfile, $2 log file to log
 function check_successed_or_failed() {
     if grep -Fq "$SUCCESS" $1
     then
@@ -79,20 +78,29 @@ function check_successed_or_failed() {
         echo "Find success: \"The cluster is balanced.\"" >> $2 2>&1
         SIGN="SUCCESS"
     else
-        if grep -Fq "$FAIL" $1
-        then
-            date >> $2 2>&1
-            echo "Find failed signal: \"failed.\"" >> $2 2>&1
-            SIGN="FAIL"
-        else
-            date >> $2 2>&1
-            echo "Not found success or fail signal yet." >> $2 2>&1
-            SIGN="CONTINUE"
-            sleep 600
-        fi
+        date >> $2 2>&1
+        echo "Not found success or fail signal yet." >> $2 2>&1
+        SIGN="CONTINUE"
+        sleep 600
     fi
 }
-
+## each check, if continue, sleep 600s (10 mins) . so check times 144 means the timeout is 24 hours.
+## $1 log name
+function check_balancer_finished(){
+    TOTAL_CHECK=144
+    COUNT=144
+    while [ $SIGN = "CONTINUE" ]
+    do
+        check_successed_or_failed $1 $1
+        COUNT=`expr $COUNT - 1`
+        date >> $1 2>&1
+        echo "This is the `expr $TOTAL_CHECK - $COUNT` times check." >> $1 2>&1
+        if [ $COUNT = 0 ]
+        then
+            SIGN="TIMEOUT"
+        fi
+    done
+}
 
 hawqconfig -c default_segment_num -v 64
 hawq stop cluster -a
@@ -116,15 +124,7 @@ psql -d postgres -c "drop table if exists test; create table test(a int); insert
 python -u lsp.py -s performance_tpch_nodechange  >> ./performance_tpch_nodechange_8.log 2>&1
 sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_8.log 2>&1
 
-udo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -report -live  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
-python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-
-psql -d postgres -c "select gp_metadata_cache_clear();"
-psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_16node_balance_restart.log 2>&1
-psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
-python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node_balance_restart.log 2>&1pscp -f ~/hostfile expand/slaves_16 =:$HADOOP_PATH_VAR/hadoop-client/etc/hadoop/slaves  > ./performance_tpch_nodechange_16node.log 2>&1
+gpscp -f ~/hostfile expand/slaves_16 =:$HADOOP_PATH_VAR/hadoop-client/etc/hadoop/slaves  > ./performance_tpch_nodechange_16node.log 2>&1
 cp expand/slaves_16 $GPHOME/etc/slaves
 nodeconfig_fun start HAWQ "bcn-w16 bcn-w15 bcn-w14 bcn-w13 bcn-w12 bcn-w11 bcn-w10 bcn-w9"  >> ./performance_tpch_nodechange_16node.log 2>&1
 localhdfs stop HA  >> ./performance_tpch_nodechange_16node.log 2>&1
@@ -140,23 +140,11 @@ date > ./performance_tpch_nodechange_16node_balance.log
 sudo -u hdfs  /usr/phd/current/hadoop-client/bin/hdfs dfsadmin -setBalancerBandwidth 4294967296
 sudo -u hdfs $HADOOP_PATH_VAR/hadoop-client/bin/hdfs  balancer -threshold 1  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
 date >> ./performance_tpch_nodechange_16node_balance.log
-
 sleep 300
 
-## each check, if continue, sleep 600s (10 mins) . so check times 144 means the timeout is 24 hours.
-COUNT=144
-while [ $SIGN = "CONTINUE" ]
-do
-    check_successed_or_failed ./performance_tpch_nodechange_16node_balance.log ./performance_tpch_nodechange_16node_balance.log
-    COUNT=`expr $COUNT - 1`
-    date >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-    echo "This is the `expr 144 - $COUNT` times check." >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-    if [ $COUNT = 0 ]
-    then
-        SIGN="TIMEOUT"
-    fi
-done
-
+## check balancer finished or not. it will check every 600s(10mins) and timeout is 24h(144times)
+check_balancer_finished ./performance_tpch_nodechange_16node_balance.log
+## if balancer finished then run workload, if timeout then exit.    
 if [ $SIGN = "SUCCESS" ]
 then
     date >> ./performance_tpch_nodechange_16node_balance.log 2>&1
@@ -166,7 +154,7 @@ then
     psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
     psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
     python -u lsp.py -s performance_tpch_nodechange_noload  >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-    
+
     psql -d postgres -c "select gp_metadata_cache_clear();"
     psql -d postgres -c "select * from gp_segment_configuration;"  >> ./performance_tpch_nodechange_16node_balance_restart.log 2>&1
     psql -d postgres -c "drop table if exists test; create table test(a int); insert into test values (1);"
@@ -178,10 +166,5 @@ else
     then
         date >> ./performance_tpch_nodechange_16node_balance.log 2>&1
         echo "Exit due to timeout." >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-    else
-        date >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-        echo "CANNOT FIND SUCCESS STRING." >> ./performance_tpch_nodechange_16node_balance.log 2>&1
-        echo "exit." >> ./performance_tpch_nodechange_16node_balance.log 2>&1
     fi
 fi
-
