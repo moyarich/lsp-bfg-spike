@@ -3,6 +3,10 @@
 source ~/.bashrc
 source ~/qa.sh
 
+hawqconfig -c optimizer -v off
+hawq stop cluster -a
+hawq start cluster -a
+
 psql -d postgres -c "select * from gp_segment_configuration;" >config
 hawqconfig -s default_segment_num >>config
 hawqconfig -s hawq_resourcemanager_query_vsegment_number_per_segment_limit >>config
