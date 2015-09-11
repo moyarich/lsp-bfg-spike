@@ -127,7 +127,7 @@ select
  or 
  store.currency_rank <= 10
  )
- order by 1,4,5
+ order by 1,4,5,2,3
  limit 100;
 
 -- end query 1 in stream 0 using template query49.tpl
