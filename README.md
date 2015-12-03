@@ -5,6 +5,7 @@
 
 
 ### Overview
+
 ```
 Git Large File Storage (LFS) replaces large files such as audio samples, videos, datasets, and graphics with text pointers inside Git, while storing the file contents on a remote server like GitHub.com or GitHub Enterprise.
 ```
@@ -13,8 +14,18 @@ More info [here]((https://git-lfs.github.com/).
 
 ### Prerequisites
 
-1. Install git (Homebrew users: `brew install git`)
-1. [Download](https://git-lfs.github.com/) and install git-lfs (Homebrew users: `brew install git-lfs`)
+It is required that you have a working installation of Git on your machine. Installation instructions for Git can be found [here](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git).
+
+
+### Installation
+
+You can install Git LFS in several different ways, depending on your setup and preferences.
+
+- Linux users can install Debian or RPM packages from [PackageCloud](https://packagecloud.io/github/git-lfs).
+- Mac users can install from [Homebrew](https://github.com/Homebrew/homebrew) with `brew install git-lfs`.
+- [Binary packages](https://github.com/github/git-lfs/releases) are also available for Windows, Mac, Linux, and FreeBSD.
+
+More info [here](https://github.com/github/git-lfs/#getting-started).
 
 
 ### Usage
@@ -37,7 +48,7 @@ In other words, if you want to immediately begin tracking `unicorn.py` with LFS,
     * Note that `unicorn.py` won't show up in `git lfs ls-files` yet, and the local copy won't have been replaced with its corresponding LFS representation.
 1. Force LFS to begin tracking `unicorn.py` immediately:
     * `git add .gitattributes`
-    * *Optional: commit change to `.gitattributes`*
+    * *Optional: Commit changes to `.gitattributes`*
     * Modify `unicorn.py` in some trivial way
     * `git add unicorn.py`
     * Commit.  `git lfs ls-files` now lists `unicorn.py`, but LFS is not yet tracking `unicorn.py` on the remote server.
